@@ -106,61 +106,63 @@ export function renderHtml() {
 
           const UPGRADES = {
             basic: {
-              A:[{cost:60,  set:{damage:2, atkSpeed:1, range:5}},{cost:120, set:{damage:4, atkSpeed:1, range:6}}],
-              B:[{cost:60,  set:{damage:1, atkSpeed:0.6, range:5}},{cost:120, set:{damage:1, atkSpeed:0.35, range:6}}],
-              C:[{cost:70,  set:{damage:1, atkSpeed:1, range:5, supportVuln:0.1}},{cost:140, set:{damage:1, atkSpeed:1, range:6, supportVuln:0.2}}],
+              A:[{cost:60,set:{damage:2,atkSpeed:1,range:5}},{cost:120,set:{damage:4,atkSpeed:1,range:6}},{cost:260,set:{damage:8,atkSpeed:1,range:7}},{cost:550,set:{damage:16,atkSpeed:1,range:8,critChance:0.25}}],
+              B:[{cost:60,set:{damage:1,atkSpeed:0.6,range:5}},{cost:120,set:{damage:1,atkSpeed:0.35,range:6}},{cost:260,set:{damage:1,atkSpeed:0.2,range:7}},{cost:550,set:{damage:2,atkSpeed:0.15,range:8,doubleEvery:5}}],
+              C:[{cost:70,set:{damage:1,atkSpeed:1,range:5,supportVuln:0.1}},{cost:140,set:{damage:1,atkSpeed:1,range:6,supportVuln:0.2}},{cost:300,set:{damage:1,atkSpeed:1,range:7,supportVuln:0.3}},{cost:600,set:{damage:2,atkSpeed:1,range:8,supportVuln:0.5,spreadVuln:1}}],
             },
             gatling: {
-              A:[{cost:90, set:{damage:1.5, atkSpeed:0.25, range:4}},{cost:160, set:{damage:2, atkSpeed:0.2, range:5}}],
-              B:[{cost:80, set:{damage:1, atkSpeed:0.3, range:4, shred:2}},{cost:150, set:{damage:1.5, atkSpeed:0.25, range:5, shred:4}}],
-              C:[{cost:80, set:{damage:1, atkSpeed:0.3, range:5, hitSlow:0.2}},{cost:150, set:{damage:1, atkSpeed:0.25, range:6, hitSlow:0.35}}],
+              A:[{cost:90,set:{damage:1.5,atkSpeed:0.25,range:4}},{cost:160,set:{damage:2,atkSpeed:0.2,range:5}},{cost:350,set:{damage:3,atkSpeed:0.18,range:6}},{cost:800,set:{damage:5,atkSpeed:0.12,range:7,pierceTargets:2}}],
+              B:[{cost:80,set:{damage:1,atkSpeed:0.3,range:4,shred:2}},{cost:150,set:{damage:1.5,atkSpeed:0.25,range:5,shred:4}},{cost:320,set:{damage:2,atkSpeed:0.22,range:6,shred:6}},{cost:750,set:{damage:3,atkSpeed:0.2,range:7,shred:6}}],
+              C:[{cost:80,set:{damage:1,atkSpeed:0.3,range:5,hitSlow:0.2}},{cost:150,set:{damage:1,atkSpeed:0.25,range:6,hitSlow:0.35}},{cost:320,set:{damage:1.5,atkSpeed:0.22,range:7,hitSlow:0.5}},{cost:700,set:{damage:2,atkSpeed:0.2,range:8,hitSlow:0.7,weakenDamage:0.25}}],
             },
             sniper: {
-              A:[{cost:150, set:{damage:8, atkSpeed:3, range:25}},{cost:300, set:{damage:14, atkSpeed:3, range:30}}],
-              B:[{cost:140, set:{damage:5, atkSpeed:2.2, range:25, lowHpBonus:0.5}},{cost:280, set:{damage:6, atkSpeed:2, range:30, lowHpBonus:1}}],
-              C:[{cost:160, set:{damage:5, atkSpeed:3, range:25, pierceTargets:1}},{cost:320, set:{damage:7, atkSpeed:3, range:30, pierceTargets:3}}],
+              A:[{cost:150,set:{damage:8,atkSpeed:3,range:25}},{cost:300,set:{damage:14,atkSpeed:3,range:30}},{cost:600,set:{damage:25,atkSpeed:3,range:35}},{cost:1200,set:{damage:50,atkSpeed:3,range:40,executeChance:0.2,executeHp:0.4}}],
+              B:[{cost:140,set:{damage:5,atkSpeed:2.2,range:25,lowHpBonus:0.5}},{cost:280,set:{damage:6,atkSpeed:2,range:30,lowHpBonus:1}},{cost:520,set:{damage:8,atkSpeed:2,range:35,lowHpBonus:1.5}},{cost:1000,set:{damage:12,atkSpeed:2,range:40,lowHpBonus:3}}],
+              C:[{cost:160,set:{damage:5,atkSpeed:3,range:25,pierceTargets:1}},{cost:320,set:{damage:7,atkSpeed:3,range:30,pierceTargets:3}},{cost:550,set:{damage:9,atkSpeed:3,range:35,pierceTargets:6}},{cost:1100,set:{damage:14,atkSpeed:3,range:40,pierceTargets:999,perPierceProjectileBonus:0.25}}],
             },
             frost: {
-              A:[{cost:80, set:{damage:0, atkSpeed:2, range:4, frostSlow:0.5}},{cost:150, set:{damage:0, atkSpeed:2, range:5, frostSlow:0.5, freezeOnMaxSlow:60}}],
-              B:[{cost:90, set:{damage:1, atkSpeed:2, range:3, cryoHitSlow:true}},{cost:170, set:{damage:2, atkSpeed:2, range:4, cryoHitSlow:true}}],
-              C:[{cost:70, set:{damage:0, atkSpeed:2, range:5, supportAtkAura:0.1}},{cost:140, set:{damage:0, atkSpeed:2, range:6, supportAtkAura:0.2}}],
+              A:[{cost:80,set:{damage:0,atkSpeed:2,range:4,frostSlow:0.5}},{cost:150,set:{damage:0,atkSpeed:2,range:5,frostSlow:0.5,freezeOnMaxSlow:60}},{cost:300,set:{damage:0,atkSpeed:2,range:6,frostSlow:0.5,freezeOnMaxSlow:90}},{cost:700,set:{damage:0,atkSpeed:2,range:7,frostSlow:0.5,freezeOnMaxSlow:90,frozenVuln:0.5}}],
+              B:[{cost:90,set:{damage:1,atkSpeed:2,range:3,cryoHitSlow:true}},{cost:170,set:{damage:2,atkSpeed:2,range:4,cryoHitSlow:true}},{cost:320,set:{damage:3,atkSpeed:2,range:5,cryoHitSlow:true,hitSlow:0.4}},{cost:700,set:{damage:5,atkSpeed:2,range:6,cryoHitSlow:true,freezeEvery:4,freezeOnHitTicks:60}}],
+              C:[{cost:70,set:{damage:0,atkSpeed:2,range:5,supportAtkAura:0.1}},{cost:140,set:{damage:0,atkSpeed:2,range:6,supportAtkAura:0.2}},{cost:300,set:{damage:0,atkSpeed:2,range:7,supportAtkAura:0.3}},{cost:700,set:{damage:0,atkSpeed:2,range:8,supportAtkAura:0.4,supportDmgAura:0.2}}],
             },
             tesla: {
-              A:[{cost:160, set:{damage:7, atkSpeed:4, range:10, chainCount:4}},{cost:300, set:{damage:9, atkSpeed:4, range:12, chainCount:6}}],
-              B:[{cost:180, set:{damage:9, atkSpeed:4, range:10}},{cost:350, set:{damage:14, atkSpeed:4, range:12}}],
-              C:[{cost:150, set:{damage:6, atkSpeed:4, range:10, hitSlow:0.2}},{cost:300, set:{damage:7, atkSpeed:4, range:12, hitSlow:0.4}}],
+              A:[{cost:160,set:{damage:7,atkSpeed:4,range:10,chainCount:4}},{cost:300,set:{damage:9,atkSpeed:4,range:12,chainCount:6}},{cost:600,set:{damage:11,atkSpeed:4,range:14,chainCount:8}},{cost:1200,set:{damage:16,atkSpeed:4,range:16,chainCount:999,chainNoFalloff:true}}],
+              B:[{cost:180,set:{damage:9,atkSpeed:4,range:10}},{cost:350,set:{damage:14,atkSpeed:4,range:12}},{cost:650,set:{damage:22,atkSpeed:4,range:14}},{cost:1300,set:{damage:40,atkSpeed:4,range:16,lightningExplosion:true}}],
+              C:[{cost:150,set:{damage:6,atkSpeed:4,range:10,hitSlow:0.2}},{cost:300,set:{damage:7,atkSpeed:4,range:12,hitSlow:0.4}},{cost:600,set:{damage:9,atkSpeed:4,range:14,hitSlow:0.6}},{cost:1200,set:{damage:12,atkSpeed:4,range:16,permaSlowInRange:0.4}}],
             },
             flame: {
-              A:[{cost:200, set:{damage:1.5, atkSpeed:0.1, range:7, burnDuration:360, burnDps:3}},{cost:350, set:{damage:2, atkSpeed:0.1, range:8, burnDuration:360, burnDps:5}}],
-              B:[{cost:220, set:{damage:2, atkSpeed:0.08, range:6}},{cost:400, set:{damage:3, atkSpeed:0.07, range:7}}],
-              C:[{cost:200, set:{damage:1.5, atkSpeed:0.1, range:6, burnExplode:3}},{cost:350, set:{damage:2, atkSpeed:0.1, range:7, burnExplode:6}}],
+              A:[{cost:200,set:{damage:1.5,atkSpeed:0.1,range:7,burnDuration:360,burnDps:3}},{cost:350,set:{damage:2,atkSpeed:0.1,range:8,burnDuration:360,burnDps:5}},{cost:650,set:{damage:3,atkSpeed:0.1,range:9,burnDuration:480,burnDps:5}},{cost:1300,set:{damage:5,atkSpeed:0.1,range:10,burnDuration:480,burnDps:5,burnSpread:true}}],
+              B:[{cost:220,set:{damage:2,atkSpeed:0.08,range:6}},{cost:400,set:{damage:3,atkSpeed:0.07,range:7}},{cost:700,set:{damage:5,atkSpeed:0.06,range:8}},{cost:1400,set:{damage:8,atkSpeed:0.05,range:9,rampOnTarget:true}}],
+              C:[{cost:200,set:{damage:1.5,atkSpeed:0.1,range:6,burnExplode:3}},{cost:350,set:{damage:2,atkSpeed:0.1,range:7,burnExplode:6}},{cost:650,set:{damage:3,atkSpeed:0.1,range:8,burnExplode:10}},{cost:1300,set:{damage:4,atkSpeed:0.1,range:9,burnExplode:20,igniteOnExplode:true}}],
             },
             acid: {
-              A:[{cost:260, set:{damage:7, armoredBonus:7, atkSpeed:3, range:12}},{cost:450, set:{damage:10, armoredBonus:10, atkSpeed:3, range:14}}],
-              B:[{cost:240, set:{damage:5, atkSpeed:2, range:12, acidDotDps:2}},{cost:420, set:{damage:6, atkSpeed:2, range:14, acidDotDps:4}}],
-              C:[{cost:230, set:{damage:5, atkSpeed:3, range:12, splashRadius:68}},{cost:400, set:{damage:6, atkSpeed:3, range:14, splashRadius:95}}],
+              A:[{cost:260,set:{damage:7,armoredBonus:7,atkSpeed:3,range:12}},{cost:450,set:{damage:10,armoredBonus:10,atkSpeed:3,range:14}},{cost:750,set:{damage:16,armoredBonus:16,atkSpeed:3,range:16}},{cost:1500,set:{damage:30,armoredBonus:30,atkSpeed:3,range:18,ignoreDefense:true}}],
+              B:[{cost:240,set:{damage:5,atkSpeed:2,range:12,acidDotDps:2}},{cost:420,set:{damage:6,atkSpeed:2,range:14,acidDotDps:4}},{cost:700,set:{damage:7,atkSpeed:2,range:16,acidDotDps:6}},{cost:1400,set:{damage:10,atkSpeed:2,range:18,acidDotDps:12,acidSpreadOnDeath:true}}],
+              C:[{cost:230,set:{damage:5,atkSpeed:3,range:12,splashRadius:68}},{cost:400,set:{damage:6,atkSpeed:3,range:14,splashRadius:95}},{cost:700,set:{damage:7,atkSpeed:3,range:16,splashRadius:140}},{cost:1400,set:{damage:10,atkSpeed:3,range:18,splashRadius:160,splashAppliesAcid:true,acidDotDps:6}}],
             },
             commander: {
-              A:[{cost:350, set:{auraDamage:0.4, auraSpeed:0.4}},{cost:600, set:{auraDamage:0.6, auraSpeed:0.6}}],
-              B:[{cost:300, set:{range:10}},{cost:550, set:{range:14}}],
-              C:[{cost:300, set:{auraCrit:0.1}},{cost:550, set:{auraCrit:0.2, auraImmuneStun:true}}],
+              A:[{cost:350,set:{auraDamage:0.4,auraSpeed:0.4}},{cost:600,set:{auraDamage:0.6,auraSpeed:0.6}},{cost:900,set:{auraDamage:0.8,auraSpeed:0.8}},{cost:1800,set:{auraDamage:1.2,auraSpeed:1.2,trueDamageWindow:true}}],
+              B:[{cost:300,set:{range:10}},{cost:550,set:{range:14}},{cost:800,set:{range:18}},{cost:1600,set:{globalAuraHalf:true}}],
+              C:[{cost:300,set:{auraCrit:0.1}},{cost:550,set:{auraCrit:0.2,auraImmuneStun:true}},{cost:850,set:{auraCrit:0.3,auraImmuneStun:true}},{cost:1600,set:{auraCrit:0.5,auraImmuneStun:true,lifesteal:0.1}}],
             },
             railgun: {
-              A:[{cost:500, set:{damage:40, atkSpeed:5, range:20}},{cost:900, set:{damage:70, atkSpeed:5, range:25}}],
-              B:[{cost:450, set:{damage:25, atkSpeed:5, range:20, linePierceCount:5}},{cost:800, set:{damage:35, atkSpeed:5, range:25, linePierceCount:9999}}],
-              C:[{cost:450, set:{damage:30, atkSpeed:5, range:20, ignoreDefense:true}},{cost:800, set:{damage:45, atkSpeed:5, range:25, ignoreDefense:true, antiArmorBonus:0.5}}],
+              A:[{cost:500,set:{damage:40,atkSpeed:5,range:20}},{cost:900,set:{damage:70,atkSpeed:5,range:25}},{cost:1400,set:{damage:120,atkSpeed:5,range:30}},{cost:3000,set:{damage:250,atkSpeed:5,range:35,railShockwave:true}}],
+              B:[{cost:450,set:{damage:25,atkSpeed:5,range:20,linePierceCount:5}},{cost:800,set:{damage:35,atkSpeed:5,range:25,linePierceCount:9999}},{cost:1300,set:{damage:60,atkSpeed:5,range:30,linePierceCount:9999}},{cost:2800,set:{damage:100,atkSpeed:5,range:35,linePierceCount:9999,perPierceBeamBonus:0.1}}],
+              C:[{cost:450,set:{damage:30,atkSpeed:5,range:20,ignoreDefense:true}},{cost:800,set:{damage:45,atkSpeed:5,range:25,ignoreDefense:true,antiArmorBonus:0.5}},{cost:1300,set:{damage:70,atkSpeed:5,range:30,ignoreDefense:true,antiArmorBonus:1}},{cost:2800,set:{damage:120,atkSpeed:5,range:35,ignoreDefense:true,antiArmorBonus:2}}],
             },
             factory: {
-              A:[{cost:450, set:{spawnRateMult:1.3}},{cost:800, set:{spawnRateMult:1.6}}],
-              B:[{cost:500, set:{unitDamage:1, unitAtkSpeed:0.4, unitRange:7, unitHp:10}},{cost:900, set:{unitDamage:2, unitAtkSpeed:0.35, unitRange:8, unitHp:20}}],
-              C:[{cost:450, set:{unitDeathExplosion:5}},{cost:800, set:{unitDeathExplosion:12, unitDeathBurn:true}}],
+              A:[{cost:450,set:{spawnRateMult:1.3}},{cost:800,set:{spawnRateMult:1.6}},{cost:1200,set:{spawnRateMult:2}},{cost:2500,set:{spawnRateMult:3,doubleSpawn:true}}],
+              B:[{cost:500,set:{unitDamage:1,unitAtkSpeed:0.4,unitRange:7,unitHp:10}},{cost:900,set:{unitDamage:2,unitAtkSpeed:0.35,unitRange:8,unitHp:20}},{cost:1400,set:{unitDamage:4,unitAtkSpeed:0.3,unitRange:9,unitHp:30}},{cost:3000,set:{unitDamage:8,unitAtkSpeed:0.25,unitRange:11,unitHp:60}}],
+              C:[{cost:450,set:{unitDeathExplosion:5}},{cost:800,set:{unitDeathExplosion:12,unitDeathBurn:true}},{cost:1200,set:{unitDeathExplosion:25}},{cost:2500,set:{unitDeathExplosion:60,unitDeathBurn:true,burningGround:true}}],
             },
             bomb: {
-              A:[{cost:240, set:{damage:12, atkSpeed:3, range:9}},{cost:420, set:{damage:20, atkSpeed:3, range:11}}],
-              B:[{cost:220, set:{damage:8, atkSpeed:3, range:9, clusterCount:2}},{cost:400, set:{damage:10, atkSpeed:3, range:11, clusterCount:4}}],
-              C:[{cost:230, set:{damage:8, atkSpeed:3, range:9, hitStun:30}},{cost:420, set:{damage:10, atkSpeed:3, range:11, hitStun:72}}],
+              A:[{cost:240,set:{damage:12,atkSpeed:3,range:9}},{cost:420,set:{damage:20,atkSpeed:3,range:11}},{cost:700,set:{damage:35,atkSpeed:3,range:13}},{cost:1500,set:{damage:80,atkSpeed:3,range:15,doubleShockwave:true}}],
+              B:[{cost:220,set:{damage:8,atkSpeed:3,range:9,clusterCount:2}},{cost:400,set:{damage:10,atkSpeed:3,range:11,clusterCount:4}},{cost:650,set:{damage:15,atkSpeed:3,range:13,clusterCount:6}},{cost:1400,set:{damage:25,atkSpeed:3,range:15,clusterCount:10}}],
+              C:[{cost:230,set:{damage:8,atkSpeed:3,range:9,hitStun:30}},{cost:420,set:{damage:10,atkSpeed:3,range:11,hitStun:72}},{cost:700,set:{damage:12,atkSpeed:3,range:13,hitStun:120}},{cost:1500,set:{damage:18,atkSpeed:3,range:15,hitStun:120,chainStun:true}}],
             },
           };
+
+          const GOLD_MULTIPLIER = 2.2;
 
           const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null };
 
@@ -248,7 +250,7 @@ export function renderHtml() {
 
           function createEnemy(typeKey) {
             const type=ENEMY_TYPES[typeKey];
-            return { id:crypto.randomUUID(), type:typeKey, x:path[0].x, y:path[0].y, hp:type.hp, maxHp:type.hp, speed:type.speed*SPEED_SCALE, defense:type.defense, reward:type.reward, pathIndex:1, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0 };
+            return { id:crypto.randomUUID(), type:typeKey, x:path[0].x, y:path[0].y, hp:type.hp, maxHp:type.hp, speed:type.speed*SPEED_SCALE, defense:type.defense, reward:type.reward, pathIndex:1, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0, weakenedDamage:0, permaSlow:0, frozenVuln:0 };
           }
 
           function startWave(){ if(state.spawning||state.lives<=0) return; state.wave++; state.queue=fairWavePlan(state.wave); state.spawning=true; state.spawnCooldown=0; updateHud(); }
@@ -269,8 +271,10 @@ export function renderHtml() {
             if (options.shred) enemy.defense = Math.max(0, enemy.defense - options.shred);
             if (options.hitSlow) { enemy.slowTicks = Math.max(enemy.slowTicks, 60); enemy.slowAmount = Math.max(enemy.slowAmount, options.hitSlow); }
             if (options.supportVuln) enemy.vulnMult = Math.max(enemy.vulnMult, options.supportVuln);
-            if (options.acidDotDps) { enemy.acidTicks = Math.max(enemy.acidTicks, 240); enemy.acidDps = Math.max(enemy.acidDps, options.acidDotDps); }
+            if (options.acidDotDps) { enemy.acidTicks = Math.max(enemy.acidTicks, 240); enemy.acidDps = Math.max(enemy.acidDps, options.acidDotDps); if (options.acidSpreadOnDeath) enemy.acidSpreadOnDeath = true; }
             if (options.hitStun) enemy.stunTicks = Math.max(enemy.stunTicks, options.hitStun);
+            if (options.freezeOnHitTicks) enemy.stunTicks = Math.max(enemy.stunTicks, options.freezeOnHitTicks);
+            if (options.weakenDamage) enemy.weakenedDamage = Math.max(enemy.weakenedDamage || 0, options.weakenDamage);
             return dmg;
           }
 
@@ -284,7 +288,7 @@ export function renderHtml() {
           }
 
           function killEnemy(i, enemy) {
-            state.enemies.splice(i,1); state.gold += enemy.reward;
+            state.enemies.splice(i,1); state.gold += enemy.reward * GOLD_MULTIPLIER;
             if (enemy.type === "stunner") {
               for (const tower of state.towers) {
                 const buffs = computeBuffsForTower(tower);
@@ -295,6 +299,7 @@ export function renderHtml() {
               for (let n=0;n<2;n++) { const c=createEnemy("splitterChild"); c.x=enemy.x+(n===0?-8:8); c.y=enemy.y+(n===0?-4:4); c.pathIndex=enemy.pathIndex; state.enemies.push(c); }
             }
             if (enemy.burnExplode > 0) explodeAt(enemy.x, enemy.y, 55, enemy.burnExplode, false);
+            if (enemy.acidTicks > 0 && enemy.acidDps > 0 && enemy.acidSpreadOnDeath) { for (const near of state.enemies) { if (distance(near, enemy) <= 60) { near.acidTicks = Math.max(near.acidTicks, 180); near.acidDps = Math.max(near.acidDps, enemy.acidDps); } } }
           }
 
           function updateEnemies() {
@@ -304,10 +309,11 @@ export function renderHtml() {
               if (enemy.acidTicks>0) { enemy.hp -= enemy.acidDps / 60; enemy.acidTicks--; }
               if (enemy.hp <= 0) { killEnemy(i, enemy); continue; }
               if (enemy.stunTicks>0) { enemy.stunTicks--; continue; }
-              const speedMultiplier = enemy.slowTicks>0 ? Math.max(0.05, 1 - enemy.slowAmount) : 1;
+              const activeSlow = Math.max(enemy.permaSlow || 0, enemy.slowTicks>0 ? enemy.slowAmount : 0);
+              const speedMultiplier = activeSlow>0 ? Math.max(0.05, 1 - activeSlow) : 1;
               if (enemy.slowTicks>0) enemy.slowTicks--;
               const target=path[enemy.pathIndex];
-              if (!target) { state.enemies.splice(i,1); state.lives -= enemy.baseDamage; continue; }
+              if (!target) { state.enemies.splice(i,1); state.lives -= Math.max(0, enemy.baseDamage * (1 - (enemy.weakenedDamage || 0))); continue; }
               const dx=target.x-enemy.x, dy=target.y-enemy.y, len=Math.hypot(dx,dy), move=enemy.speed*speedMultiplier;
               if (len<move) { enemy.x=target.x; enemy.y=target.y; enemy.pathIndex++; } else { enemy.x += (dx/len)*move; enemy.y += (dy/len)*move; }
             }
@@ -326,15 +332,21 @@ export function renderHtml() {
           }
 
           function computeBuffsForTower(tower) {
-            const out = { dmg:0, spd:0, crit:0, immuneStun:false };
+            const out = { dmg:0, spd:0, crit:0, immuneStun:false, trueDamage:false, lifesteal:0 };
             for (const src of state.towers) {
               if (!src.stats.auraDamage && !src.stats.auraSpeed && !src.stats.auraCrit && !src.stats.supportAtkAura) continue;
               if (src === tower) continue;
-              if (distance(src,tower) > src.rangePx) continue;
-              out.dmg = Math.max(out.dmg, src.stats.auraDamage || 0);
-              out.spd = Math.max(out.spd, src.stats.auraSpeed || 0, src.stats.supportAtkAura || 0);
-              out.crit = Math.max(out.crit, src.stats.auraCrit || 0);
+              if (!src.stats.globalAuraHalf && distance(src,tower) > src.rangePx) continue;
+              const auraScale = src.stats.globalAuraHalf ? 0.5 : 1;
+              out.dmg = Math.max(out.dmg, (src.stats.auraDamage || 0) * auraScale, (src.stats.supportDmgAura || 0) * auraScale);
+              out.spd = Math.max(out.spd, (src.stats.auraSpeed || 0) * auraScale, (src.stats.supportAtkAura || 0) * auraScale);
+              out.crit = Math.max(out.crit, (src.stats.auraCrit || 0) * auraScale);
+              if (src.stats.trueDamageWindow) {
+                const phase = Math.floor(performance.now() / 1000) % 10;
+                if (phase < 3) out.trueDamage = true;
+              }
               out.immuneStun = out.immuneStun || !!src.stats.auraImmuneStun;
+              out.lifesteal = Math.max(out.lifesteal, (src.stats.lifesteal || 0) * auraScale);
             }
             return out;
           }
@@ -345,11 +357,16 @@ export function renderHtml() {
           function towerShoot(tower, target, buffs) {
             const s=tower.stats;
             let dmg=s.damage*(1+buffs.dmg);
-            if (buffs.crit > 0 && Math.random() < buffs.crit) dmg *= 2;
+            if (s.rampOnTarget && tower.lastTargetId === (target && target.id)) { tower.rampStacks = Math.min((tower.rampStacks || 0) + 1, 20); } else { tower.rampStacks = 0; }
+            tower.lastTargetId = target && target.id;
+            if (s.rampOnTarget && tower.rampStacks > 0) dmg *= 1 + tower.rampStacks * 0.08;
+            const critChance = Math.max(buffs.crit || 0, s.critChance || 0);
+            if (critChance > 0 && Math.random() < critChance) dmg *= 2;
 
             if (s.summonFactoryTurret) {
               const rateMult = s.spawnRateMult || 1;
-              state.alliedTurrets.push({ x:path[path.length-1].x, y:path[path.length-1].y, pathIndex:path.length-2, hp:s.unitHp||5, damage:s.unitDamage||0.6, atkSpeed:s.unitAtkSpeed||0.4, rangePx:(s.unitRange||7)*RANGE_UNIT, cooldown:0, deathExplosion:s.unitDeathExplosion||0, deathBurn:!!s.unitDeathBurn });
+              const spawnCount = s.doubleSpawn ? 2 : 1;
+              for (let i = 0; i < spawnCount; i++) state.alliedTurrets.push({ x:path[path.length-1].x, y:path[path.length-1].y, pathIndex:path.length-2, hp:s.unitHp||5, unitHp:s.unitHp||5, damage:s.unitDamage||0.6, atkSpeed:s.unitAtkSpeed||0.4, rangePx:(s.unitRange||7)*RANGE_UNIT, cooldown:0, deathExplosion:s.unitDeathExplosion||0, deathBurn:!!s.unitDeathBurn, burningGround:!!s.burningGround });
               tower.cooldown = Math.max(1, Math.round((s.atkSpeed / rateMult) * 60));
               return;
             }
@@ -360,8 +377,9 @@ export function renderHtml() {
                 if (distance(enemy, target) <= tower.rangePx) {
                   enemy.slowTicks = Math.max(enemy.slowTicks, 120);
                   enemy.slowAmount = Math.max(enemy.slowAmount, slowAmount);
-                  if (s.freezeOnMaxSlow && slowAmount >= 0.5) enemy.stunTicks = Math.max(enemy.stunTicks, s.freezeOnMaxSlow);
+                  if (s.freezeOnMaxSlow && slowAmount >= 0.5) { enemy.stunTicks = Math.max(enemy.stunTicks, s.freezeOnMaxSlow); if (s.frozenVuln) enemy.vulnMult = Math.max(enemy.vulnMult, s.frozenVuln); }
                   if (s.damage > 0) applyDamage(enemy, dmg, { hitSlow: s.cryoHitSlow ? slowAmount : 0 });
+                  if (s.permaSlowInRange) enemy.permaSlow = Math.max(enemy.permaSlow, s.permaSlowInRange);
                 }
               }
             }
@@ -370,8 +388,9 @@ export function renderHtml() {
               const impacted=[target];
               applyDamage(target,dmg,{ hitSlow:s.hitSlow||0 });
               const cap = s.chainCount || 3;
-              for(const enemy of state.enemies){ if(impacted.length>=cap) break; if(enemy===target) continue; if(distance(enemy, impacted[impacted.length-1])<=110){ impacted.push(enemy); applyDamage(enemy,dmg/2,{ hitSlow:s.hitSlow||0 }); } }
+              for(const enemy of state.enemies){ if(impacted.length>=cap) break; if(enemy===target) continue; if(distance(enemy, impacted[impacted.length-1])<=110){ impacted.push(enemy); applyDamage(enemy,s.chainNoFalloff ? dmg : dmg/2,{ hitSlow:s.hitSlow||0 }); } }
               state.projectiles.push({x:tower.x,y:tower.y,target,mode:"bolt",ttl:8});
+              if (s.lightningExplosion) explodeAt(target.x, target.y, 42, dmg * 0.35, false);
               return;
             }
 
@@ -380,16 +399,18 @@ export function renderHtml() {
               for (const enemy of state.enemies) {
                 if (distance(tower, enemy) > tower.rangePx) continue;
                 if (pointToSegmentDistance(enemy.x, enemy.y, tower.x, tower.y, target.x, target.y) <= 14) {
-                  applyDamage(enemy, dmg, { pierce:true, armoredBonus:s.armoredBonus||0, ignoreDefense:!!s.ignoreDefense, antiArmorBonus:s.antiArmorBonus||0 });
+                  const scaledDamage = dmg * (1 + (s.perPierceBeamBonus || 0) * hits);
+                  applyDamage(enemy, scaledDamage, { pierce:true, armoredBonus:s.armoredBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0 });
                   hits++;
                   if (hits >= (s.linePierceCount || 999)) break;
                 }
               }
               state.projectiles.push({x:tower.x,y:tower.y,target,mode:"beam",ttl:6,color:"#d9d9d9"});
+              if (s.railShockwave) explodeAt(target.x - 25, target.y, 48, dmg * 0.5, false);
               return;
             }
 
-            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:{ pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:s.acidDotDps||0, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense, antiArmorBonus:s.antiArmorBonus||0 }, pierceTargets:s.pierceTargets||0 });
+            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:{ pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:s.acidDotDps||0, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:buffs.lifesteal||0, weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, lifesteal:s.lifesteal||0 }, pierceTargets:s.pierceTargets||0, doubleShockwave:!!s.doubleShockwave, perPierceProjectileBonus:s.perPierceProjectileBonus||0 });
           }
 
           function updateTowers() {
@@ -401,7 +422,12 @@ export function renderHtml() {
               const target=findTargetForTower(tower); if(!target && !tower.stats.summonFactoryTurret) continue;
               const atkSpeed = tower.stats.atkSpeed > 0 ? tower.stats.atkSpeed / (1 + buffs.spd) : 99999;
               tower.cooldown = Math.max(1, Math.round(atkSpeed * 60));
+              tower.shotCount = (tower.shotCount || 0) + 1;
+              tower.tempFreezeTicks = 0;
+              if (tower.stats.freezeEvery && tower.shotCount % tower.stats.freezeEvery === 0) tower.tempFreezeTicks = tower.stats.freezeOnHitTicks || 60;
+              if (tower.stats.executeChance && target && target.hp <= target.maxHp * (tower.stats.executeHp || 0.4) && Math.random() < tower.stats.executeChance && target.type !== "tank") target.hp = 0;
               towerShoot(tower,target||{x:tower.x,y:tower.y},buffs);
+              if (tower.stats.doubleEvery && tower.shotCount % tower.stats.doubleEvery === 0 && target) towerShoot(tower,target,buffs);
             }
           }
 
@@ -415,24 +441,31 @@ export function renderHtml() {
                 const deal = (enemy) => {
                   const dealt=applyDamage(enemy,p.damage,p.options||{});
                   if (dealt>0 && p.options.burn) { enemy.burnTicks=Math.max(enemy.burnTicks,p.options.burnDuration); enemy.burnDps=Math.max(enemy.burnDps,p.options.burnDps); enemy.burnExplode=Math.max(enemy.burnExplode||0,p.options.burnExplode||0); }
+                  if (p.options.lifesteal) { for (const t of state.towers) if (distance(t, enemy) <= 120) t.stunTicks = Math.max(0, t.stunTicks - dealt * p.options.lifesteal); }
+                  if (p.options.supportVuln && p.options.spreadVuln) { for (const near of state.enemies) { if (near !== enemy && distance(near, enemy) <= 48) { near.vulnMult = Math.max(near.vulnMult, p.options.supportVuln); break; } } }
                 };
                 deal(p.target);
                 let pierced=0;
                 if (p.pierceTargets > 0) {
                   for (const e of state.enemies) {
                     if (e===p.target) continue;
-                    if (distance(e,p.target) <= 50) { deal(e); pierced++; if (pierced >= p.pierceTargets) break; }
+                    if (distance(e,p.target) <= 50) {
+                      if (p.perPierceProjectileBonus) p.damage *= 1 + p.perPierceProjectileBonus;
+                      deal(e); pierced++; if (pierced >= p.pierceTargets) break;
+                    }
                   }
                 }
                 if (p.splashRadius>0) {
-                  for (const e of state.enemies) if (e!==p.target && distance(e,p.target)<=p.splashRadius) deal(e);
+                  for (const e of state.enemies) if (e!==p.target && distance(e,p.target)<=p.splashRadius) { deal(e); if (p.options.splashAppliesAcid) { e.acidTicks = Math.max(e.acidTicks, 240); e.acidDps = Math.max(e.acidDps, p.options.acidDotDps || 4); } }
                 }
+                if (p.doubleShockwave) explodeAt(p.target.x, p.target.y, 70, p.damage * 0.75, false);
                 if (p.clusterCount>0) {
                   for (let c=0;c<p.clusterCount;c++) {
                     const ang=(Math.PI*2*c)/p.clusterCount;
-                    explodeAt(p.target.x + Math.cos(ang)*18, p.target.y + Math.sin(ang)*18, 40, p.damage*0.45, false);
+                    explodeAt(p.target.x + Math.cos(ang)*18, p.target.y + Math.sin(ang)*18, 40, p.damage*0.45, !!p.options.igniteOnExplode);
                   }
                 }
+                if (p.options.chainStun) { for (const e of state.enemies) if (distance(e,p.target)<=60) e.stunTicks=Math.max(e.stunTicks, Math.round((p.options.hitStun||0)*0.7)); }
                 state.projectiles.splice(i,1);
               } else {
                 p.x += (dx/len)*p.speed; p.y += (dy/len)*p.speed;
@@ -488,7 +521,7 @@ export function renderHtml() {
             if(!canPlaceTower(x,y)) return;
 
             state.gold -= model.cost;
-            state.towers.push({ id:crypto.randomUUID(), baseId:model.id, baseName:model.name, x, y, stats:copyStats(model), rangePx:model.range*RANGE_UNIT, cooldown:0, stunTicks:0, upgradePath:null, upgradeTier:0 });
+            state.towers.push({ id:crypto.randomUUID(), baseId:model.id, baseName:model.name, x, y, stats:copyStats(model), rangePx:model.range*RANGE_UNIT, cooldown:0, stunTicks:0, upgradePath:null, upgradeTier:0, shotCount:0 });
             updateHud(); buildTowerMenu(); renderUpgradePanel();
           });
 
