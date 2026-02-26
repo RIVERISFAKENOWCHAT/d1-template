@@ -30,6 +30,7 @@ export function renderHtml() {
           .u-btn.locked { background:#403344; opacity:0.65; }
           .u-btn.maxed { background:#22543d; }
           .small { font-size:0.82rem; opacity:0.9; }
+          .buffed { color:#ffd60a; }
         </style>
       </head>
       <body>
@@ -393,6 +394,13 @@ export function renderHtml() {
 
           function getPlacedTower() { return state.towers.find((t)=>t.id===state.selectedPlacedTowerId) || null; }
 
+          function formatBaseBuffed(baseValue, buffedValue, suffix = "") {
+            const baseText = Number(baseValue).toFixed(2).replace(/\.00$/, "");
+            const buffedText = Number(buffedValue).toFixed(2).replace(/\.00$/, "");
+            if (buffedText === baseText) return baseText + suffix;
+            return baseText + '<span class="buffed">(' + buffedText + ')</span>' + suffix;
+          }
+
           function renderUpgradePanel() {
             const tower = getPlacedTower();
             upgradePathsEl.innerHTML = "";
@@ -420,8 +428,14 @@ export function renderHtml() {
             if (s.burstCount) extras.push("Burst: " + s.burstCount);
             if (s.splashRadius) extras.push("Splash: " + Math.round(s.splashRadius));
             if (s.placeMine) extras.push("Mine Layer");
-            towerStatsEl.innerHTML = "<strong>Placed Tower Stats</strong><br>DMG: " + (s.damage ?? 0) +
-              "<br>ATK SPD: " + (s.atkSpeed ?? 0) + "s" +
+            const buffs = computeBuffsForTower(tower);
+            const baseDamage = s.damage ?? 0;
+            const buffedDamage = baseDamage * (1 + (buffs.dmg || 0));
+            const baseAtkSpeed = s.atkSpeed ?? 0;
+            const buffedAtkSpeed = baseAtkSpeed > 0 ? baseAtkSpeed / (1 + (buffs.spd || 0)) : baseAtkSpeed;
+
+            towerStatsEl.innerHTML = "<strong>Placed Tower Stats</strong><br>DMG: " + formatBaseBuffed(baseDamage, buffedDamage) +
+              "<br>ATK SPD: " + formatBaseBuffed(baseAtkSpeed, buffedAtkSpeed, "s") +
               "<br>Range: " + (s.range ?? 0) +
               (extras.length ? "<br>" + extras.join(" | ") : "");
 
