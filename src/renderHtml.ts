@@ -75,6 +75,12 @@ export function renderHtml() {
           const SPEED_SCALE = 0.08;
           const NON_PROJECTILE_TOWERS = new Set(["mine","gravity","poison","emp","void","cryomines","fence","oil","static","snare","spore","firetotem","shocknet","nanoswarm","timespire","arctrap","spikewall","plaguetower","heatsink","magnet","stormpillar","decaytotem"]);
           const BEAM_TOWERS = new Set(["laser","beamsplit","thermalray","cryobeam"]);
+          const NERF_IDS = new Set(["railgun","bomb","laser","beamsplit","scatterlaser","ion","voidemperorkiller"]);
+          const BUFF_IDS = new Set(["wind","snare","spore","firetotem","decaytotem","shockwavetotem","overwatch","heatsink","pulse"]);
+          const NERF_DMG_MULT = 0.88;
+          const NERF_RANGE_MULT = 0.93;
+          const BUFF_DMG_MULT = 1.12;
+          const BUFF_RANGE_BONUS = 0.4;
 
           const path = [
             { x: 0, y: 280 }, { x: 220, y: 280 }, { x: 220, y: 110 }, { x: 500, y: 110 },
@@ -310,7 +316,7 @@ export function renderHtml() {
             },
           };
 
-          const GOLD_MULTIPLIER = 2.2;
+          const GOLD_MULTIPLIER = 1.85;
 
           function ensureTowerUpgrades() {
             for (const tower of TOWERS) {
@@ -577,6 +583,8 @@ export function renderHtml() {
           function towerShoot(tower, target, buffs) {
             const s=tower.stats;
             let dmg=s.damage*(1+buffs.dmg);
+            if (NERF_IDS.has(s.id)) dmg *= NERF_DMG_MULT;
+            if (BUFF_IDS.has(s.id)) dmg *= BUFF_DMG_MULT;
             if (s.rampOnTarget && tower.lastTargetId === (target && target.id)) { tower.rampStacks = Math.min((tower.rampStacks || 0) + 1, 20); } else { tower.rampStacks = 0; }
             tower.lastTargetId = target && target.id;
             if (s.rampOnTarget && tower.rampStacks > 0) dmg *= 1 + tower.rampStacks * 0.08;
@@ -707,7 +715,9 @@ export function renderHtml() {
               if ((tower.stats.auraDamage || tower.stats.auraSpeed || tower.stats.auraCrit) && !tower.stats.damage && !tower.stats.summonFactoryTurret) continue;
               tower.cooldown--; if(tower.cooldown>0) continue;
               const target=findTargetForTower(tower); if(!target && !tower.stats.summonFactoryTurret) continue;
-              const atkSpeed = tower.stats.atkSpeed > 0 ? tower.stats.atkSpeed / (1 + buffs.spd) : 99999;
+              let atkSpeed = tower.stats.atkSpeed > 0 ? tower.stats.atkSpeed / (1 + buffs.spd) : 99999;
+              if (NERF_IDS.has(tower.stats.id)) atkSpeed *= 1.08;
+              if (BUFF_IDS.has(tower.stats.id)) atkSpeed *= 0.94;
               tower.cooldown = Math.max(1, Math.round(atkSpeed * 60));
               tower.shotCount = (tower.shotCount || 0) + 1;
               tower.tempFreezeTicks = 0;
@@ -845,7 +855,10 @@ export function renderHtml() {
             if(!canPlaceTower(x,y)) return;
 
             state.gold -= model.cost;
-            state.towers.push({ id:crypto.randomUUID(), baseId:model.id, baseName:model.name, x, y, stats:copyStats(model), rangePx:model.range*RANGE_UNIT, cooldown:0, stunTicks:0, upgradePath:null, upgradeTier:0, shotCount:0 });
+            const stats = copyStats(model);
+            if (NERF_IDS.has(stats.id)) stats.range = +(stats.range * NERF_RANGE_MULT).toFixed(2);
+            if (BUFF_IDS.has(stats.id)) stats.range = +(stats.range + BUFF_RANGE_BONUS).toFixed(2);
+            state.towers.push({ id:crypto.randomUUID(), baseId:model.id, baseName:model.name, x, y, stats, rangePx:stats.range*RANGE_UNIT, cooldown:0, stunTicks:0, upgradePath:null, upgradeTier:0, shotCount:0 });
             updateHud(); buildTowerMenu(); renderUpgradePanel();
           });
 
