@@ -158,6 +158,46 @@ export function renderHtml() {
             { id:"static", name:"Static Totem", cost:110, damage:0, atkSpeed:2, range:6, color:"#f5cb5c", shape:"static", hitSlow:0.3 },
             { id:"snare", name:"Snare Trap", cost:60, damage:0, atkSpeed:1, range:3, color:"#6c757d", shape:"snare", hitStun:35 },
             { id:"beamsplit", name:"Beam Splitter", cost:140, damage:2, atkSpeed:0.1, range:10, color:"#ff0000", shape:"beamsplit", splitBeams:2 },
+            { id:"flak", name:"Flak Cannon", cost:130, damage:6, atkSpeed:3, range:8, color:"#111", shape:"flak", fastBonus:1.0 },
+            { id:"spore", name:"Spore Pod", cost:90, damage:0, atkSpeed:1, range:5, color:"#3a5a40", shape:"spore", acidDotDps:2 },
+            { id:"kinetic", name:"Kinetic Ram", cost:120, damage:5, atkSpeed:2, range:3, color:"#6c757d", shape:"kinetic", knockback:14 },
+            { id:"volt", name:"Volt Rifle", cost:100, damage:3, atkSpeed:1, range:9, color:"#4361ee", shape:"volt", chain:true, chainCount:2 },
+            { id:"obsidian", name:"Obsidian Spike", cost:130, damage:6, atkSpeed:1, range:7, color:"#111", shape:"obsidian", antiArmorBonus:0.5 },
+            { id:"firetotem", name:"Fire Totem", cost:110, damage:0, atkSpeed:1, range:6, color:"#d90429", shape:"firetotem", burn:true, burnDuration:300, burnDps:3 },
+            { id:"shocknet", name:"Shock Net", cost:100, damage:1, atkSpeed:2, range:5, color:"#ffd60a", shape:"shocknet", hitStun:24 },
+            { id:"nanoswarm", name:"Nano Swarm", cost:140, damage:1, atkSpeed:0.2, range:6, color:"#adb5bd", shape:"nanoswarm", acidDotDps:1 },
+            { id:"timespire", name:"Time Spire", cost:160, damage:0, atkSpeed:2, range:6, color:"#e9c46a", shape:"timespire", hitSlow:0.35 },
+            { id:"shardmortar", name:"Shard Mortar", cost:200, damage:8, atkSpeed:4, range:14, color:"#4cc9f0", shape:"shardmortar", splashRadius:80, clusterCount:2 },
+            { id:"thermalray", name:"Thermal Ray", cost:170, damage:2, atkSpeed:0.08, range:9, color:"#f77f00", shape:"thermalray", burn:true, burnDuration:360, burnDps:4, rampOnTarget:true },
+            { id:"frostnet", name:"Frost Net", cost:80, damage:0, atkSpeed:1, range:4, color:"#90e0ef", shape:"frostnet", hitStun:28, hitSlow:0.35 },
+            { id:"arctrap", name:"Arc Trap", cost:90, damage:4, atkSpeed:1, range:3, color:"#ffdd00", shape:"arctrap", hitStun:20 },
+            { id:"spikewall", name:"Spike Wall", cost:100, damage:3, atkSpeed:1, range:2, color:"#495057", shape:"spikewall" },
+            { id:"gravcannon", name:"Grav Cannon", cost:160, damage:5, atkSpeed:1, range:7, color:"#7b2cbf", shape:"gravcannon", pullStrength:0.5 },
+            { id:"plaguetower", name:"Plague Tower", cost:140, damage:0, atkSpeed:1, range:6, color:"#2d6a4f", shape:"plaguetower", acidDotDps:3, acidSpreadOnDeath:true },
+            { id:"chainblaster", name:"Chain Blaster", cost:140, damage:4, atkSpeed:1, range:8, color:"#4895ef", shape:"chainblaster", splitBeams:1 },
+            { id:"cryobeam", name:"Cryo Beam", cost:130, damage:1, atkSpeed:0.1, range:8, color:"#a8dadc", shape:"cryobeam", permaSlowInRange:0.35 },
+            { id:"pulsemine", name:"Pulse Mine", cost:100, damage:6, atkSpeed:1, range:3, color:"#e0fbfc", shape:"pulsemine", placeMine:true, mineDamage:6, mineRadius:45, mineFreeze:35 },
+            { id:"heatsink", name:"Heat Sink", cost:90, damage:0, atkSpeed:0, range:6, color:"#212529", shape:"heatsink", fireAura:0.3 },
+            { id:"magnet", name:"Magnet Tower", cost:120, damage:0, atkSpeed:1, range:6, color:"#d00000", shape:"magnet", pullStrength:0.45, antiArmorBonus:0.4 },
+            { id:"bleed", name:"Bleed Turret", cost:110, damage:2, atkSpeed:1, range:6, color:"#9d0208", shape:"bleed", acidDotDps:2 },
+            { id:"ion", name:"Ion Cannon", cost:260, damage:10, atkSpeed:4, range:14, color:"#fff", shape:"ion", ignoreDefense:true },
+            { id:"frostflare", name:"Frost Flare", cost:140, damage:3, atkSpeed:2, range:7, color:"#4cc9f0", shape:"frostflare", hitStun:24 },
+            { id:"moltenmortar", name:"Molten Mortar", cost:220, damage:9, atkSpeed:5, range:15, color:"#e85d04", shape:"moltenmortar", splashRadius:90, burn:true, burnDuration:240, burnDps:4 },
+            { id:"shrapnel", name:"Shrapnel Gun", cost:120, damage:4, atkSpeed:1, range:7, color:"#6c757d", shape:"shrapnel", clusterCount:3 },
+            { id:"stormpillar", name:"Storm Pillar", cost:150, damage:0, atkSpeed:1, range:7, color:"#457b9d", shape:"stormpillar", hitStun:18 },
+            { id:"decaytotem", name:"Decay Totem", cost:140, damage:0, atkSpeed:1, range:6, color:"#6a040f", shape:"decaytotem", stripDefense:4 },
+            { id:"overwatch", name:"Overwatch Drone", cost:130, damage:2, atkSpeed:0.5, range:10, color:"#adb5bd", shape:"overwatch" },
+            { id:"shardfan", name:"Shard Fan", cost:100, damage:3, atkSpeed:1, range:5, color:"#48cae4", shape:"shardfan", splitBeams:2 },
+            { id:"pulsebarrage", name:"Pulse Barrage", cost:120, damage:3, atkSpeed:1, range:7, color:"#f1faee", shape:"pulsebarrage", burstCount:3 },
+            { id:"cryoturbine", name:"Cryo Turbine", cost:130, damage:1, atkSpeed:1.5, range:6, color:"#a8dadc", shape:"cryoturbine", hitSlow:0.25 },
+            { id:"arcshotgun", name:"Arc Shotgun", cost:140, damage:5, atkSpeed:0.6, range:5, color:"#4361ee", shape:"arcshotgun", splitBeams:2 },
+            { id:"corrosion", name:"Corrosion Spitter", cost:150, damage:4, atkSpeed:1, range:7, color:"#80ed99", shape:"corrosion", shred:3 },
+            { id:"shockwavetotem", name:"Shockwave Totem", cost:120, damage:0, atkSpeed:1, range:6, color:"#6c757d", shape:"shockwavetotem", hitSlow:0.2 },
+            { id:"embertrap", name:"Ember Trap", cost:90, damage:2, atkSpeed:1, range:3, color:"#ff5400", shape:"embertrap", placeMine:true, mineDamage:2, mineRadius:30, burn:true, burnDuration:240, burnDps:3 },
+            { id:"sentry", name:"Sentry Drone", cost:130, damage:2, atkSpeed:0.5, range:9, color:"#8d99ae", shape:"sentry" },
+            { id:"rift", name:"Rift Beacon", cost:160, damage:0, atkSpeed:1, range:7, color:"#7209b7", shape:"rift", pullStrength:0.4, supportVuln:0.1 },
+            { id:"scatterlaser", name:"Scatter Laser", cost:150, damage:2, atkSpeed:0.12, range:10, color:"#ef233c", shape:"scatterlaser", splitBeams:3 },
+            { id:"bastion", name:"Bastion Turret", cost:200, damage:8, atkSpeed:2, range:8, color:"#495057", shape:"bastion", defenseAura:0.3 },
           ];
 
           const UPGRADES = {
@@ -269,6 +309,22 @@ export function renderHtml() {
           };
 
           const GOLD_MULTIPLIER = 2.2;
+
+          function ensureTowerUpgrades() {
+            for (const tower of TOWERS) {
+              if (UPGRADES[tower.id]) continue;
+              const dmg=tower.damage||0;
+              const sp=tower.atkSpeed||1;
+              const rg=tower.range||5;
+              UPGRADES[tower.id] = {
+                A:[{cost:Math.round(tower.cost*1.4),set:{damage:+(dmg*1.4+1).toFixed(2),atkSpeed:sp,range:rg}},{cost:Math.round(tower.cost*2.4),set:{damage:+(dmg*2+2).toFixed(2),atkSpeed:sp,range:rg+1}},{cost:Math.round(tower.cost*4.2),set:{damage:+(dmg*3+3).toFixed(2),atkSpeed:sp,range:rg+2}},{cost:Math.round(tower.cost*7),set:{damage:+(dmg*4.2+5).toFixed(2),atkSpeed:sp,range:rg+3}}],
+                B:[{cost:Math.round(tower.cost*1.3),set:{damage:dmg,atkSpeed:+Math.max(0.05,sp*0.85).toFixed(2),range:rg}},{cost:Math.round(tower.cost*2.2),set:{damage:+(dmg+1).toFixed(2),atkSpeed:+Math.max(0.04,sp*0.7).toFixed(2),range:rg+1}},{cost:Math.round(tower.cost*3.8),set:{damage:+(dmg+2).toFixed(2),atkSpeed:+Math.max(0.03,sp*0.55).toFixed(2),range:rg+2}},{cost:Math.round(tower.cost*6.4),set:{damage:+(dmg+3).toFixed(2),atkSpeed:+Math.max(0.02,sp*0.45).toFixed(2),range:rg+3}}],
+                C:[{cost:Math.round(tower.cost*1.5),set:{damage:dmg,atkSpeed:sp,range:rg+1,supportVuln:0.1}},{cost:Math.round(tower.cost*2.6),set:{damage:+(dmg+0.5).toFixed(2),atkSpeed:sp,range:rg+2,supportVuln:0.2}},{cost:Math.round(tower.cost*4.4),set:{damage:+(dmg+1).toFixed(2),atkSpeed:sp,range:rg+3,supportVuln:0.35}},{cost:Math.round(tower.cost*7.2),set:{damage:+(dmg+2).toFixed(2),atkSpeed:sp,range:rg+4,supportVuln:0.5}}],
+              };
+            }
+          }
+
+          ensureTowerUpgrades();
 
           const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null };
 
@@ -605,7 +661,7 @@ export function renderHtml() {
             for (const tower of state.towers) {
               const buffs = computeBuffsForTower(tower);
               if (tower.stunTicks>0) { if (!buffs.immuneStun) { tower.stunTicks--; continue; } tower.stunTicks = 0; }
-              if (tower.stats.auraDamage || tower.stats.auraSpeed || tower.stats.auraCrit) continue;
+              if ((tower.stats.auraDamage || tower.stats.auraSpeed || tower.stats.auraCrit) && !tower.stats.damage && !tower.stats.summonFactoryTurret) continue;
               tower.cooldown--; if(tower.cooldown>0) continue;
               const target=findTargetForTower(tower); if(!target && !tower.stats.summonFactoryTurret) continue;
               const atkSpeed = tower.stats.atkSpeed > 0 ? tower.stats.atkSpeed / (1 + buffs.spd) : 99999;
@@ -714,6 +770,7 @@ export function renderHtml() {
             else if(m.shape==="static"){ctx.fillStyle="#f5cb5c";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();}
             else if(m.shape==="snare"){ctx.strokeStyle="#6c757d";ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.stroke();}
             else if(m.shape==="beamsplit"){ctx.fillStyle="#ff0000";ctx.beginPath();ctx.moveTo(x,y-12);ctx.lineTo(x+10,y+8);ctx.lineTo(x-10,y+8);ctx.closePath();ctx.fill();}
+            else {ctx.fillStyle=m.color||"#fff";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();}
           }
 
           function drawAlliedTurrets(){ for(const u of state.alliedTurrets){ ctx.fillStyle="#313a46";ctx.fillRect(u.x-8,u.y-8,16,16);ctx.fillStyle="#89fcff";ctx.beginPath();ctx.arc(u.x,u.y,4,0,Math.PI*2);ctx.fill(); ctx.fillStyle="#111";ctx.fillRect(u.x-10,u.y-14,20,3);ctx.fillStyle="#57cc99";ctx.fillRect(u.x-10,u.y-14,20*Math.max(0,u.hp)/(u.unitHp||5),3);} }
