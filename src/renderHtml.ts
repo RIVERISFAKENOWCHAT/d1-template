@@ -90,6 +90,42 @@ export function renderHtml() {
             tank: { label:"Tank", hp:40, speed:3, defense:15, reward:20, color:"#123b69", shape:"oct", baseDamage:3, budget:5 },
           };
 
+          Object.assign(ENEMY_TYPES, {
+            juggernaut:{label:"Juggernaut",hp:120,speed:2,defense:20,reward:120,color:"#7f1d1d",shape:"oct",baseDamage:5,budget:10,knockbackImmune:true},
+            bulwark:{label:"Bulwark",hp:150,speed:3,defense:30,reward:150,color:"#7c8894",shape:"square",baseDamage:5,budget:11,shieldHalf:true},
+            titan:{label:"Titan",hp:300,speed:1,defense:25,reward:250,color:"#111",shape:"hex",baseDamage:8,budget:18,aoeResist:0.5},
+            warden:{label:"Warden",hp:180,speed:4,defense:15,reward:160,color:"#d4af37",shape:"pent",baseDamage:5,budget:12,redirectNearby:0.3},
+            phalanx:{label:"Phalanx",hp:80,speed:4,defense:20,reward:30,color:"#c0c0c0",shape:"triangle",baseDamage:2,budget:2,groupReduce:true},
+            colossus:{label:"Colossus",hp:400,speed:2,defense:25,reward:350,color:"#0b2d5e",shape:"oct",baseDamage:10,budget:22,stunImmune:true},
+            ironback:{label:"Ironback",hp:220,speed:3,defense:30,reward:180,color:"#8d99ae",shape:"circle",baseDamage:6,budget:14,reflect:0.2},
+            siegebeast:{label:"Siege Beast",hp:260,speed:3,defense:10,reward:200,color:"#8b0000",shape:"square",baseDamage:12,budget:15},
+            behemoth:{label:"Behemoth",hp:500,speed:1,defense:35,reward:500,color:"#111",shape:"pent",baseDamage:12,budget:28,minSpeedMult:0.5},
+            fortifier:{label:"Fortifier",hp:140,speed:5,defense:10,reward:140,color:"#3a86ff",shape:"square",baseDamage:4,budget:11,defAura:5},
+            chronotitan:{label:"Chrono Titan",hp:200,speed:4,defense:10,reward:180,color:"#c9a227",shape:"oct",baseDamage:6,budget:13,speedAura:0.25},
+            nullwalker:{label:"Null Walker",hp:120,speed:6,defense:0,reward:140,color:"#f8f9fa",shape:"square",baseDamage:4,budget:10,debuffImmune:true,dotImmune:true},
+            phasejuggernaut:{label:"Phase Juggernaut",hp:160,speed:6,defense:15,reward:170,color:"#b22222",shape:"hex",baseDamage:6,budget:13,phaseCycle:240,phaseDuration:60},
+            disruptor:{label:"Disruptor Core",hp:100,speed:5,defense:5,reward:130,color:"#7b2cbf",shape:"square",baseDamage:4,budget:9,disableTowerOnHit:60},
+            emptitan:{label:"EMP Titan",hp:180,speed:4,defense:15,reward:170,color:"#ffd60a",shape:"square",baseDamage:6,budget:13,empAura:true},
+            overlorddrone:{label:"Overlord Drone",hp:90,speed:12,defense:0,reward:120,color:"#111",shape:"diamond",baseDamage:3,budget:9,spawnOnDeath:["fast","fast"]},
+            warengine:{label:"War Engine",hp:350,speed:2,defense:20,reward:300,color:"#4a4e69",shape:"square",baseDamage:14,budget:21},
+            voidbrute:{label:"Void Brute",hp:220,speed:3,defense:15,reward:190,color:"#5a189a",shape:"square",baseDamage:6,budget:14,beamResist:0.35},
+            plaguehulk:{label:"Plague Hulk",hp:180,speed:3,defense:5,reward:160,color:"#2d6a4f",shape:"circle",baseDamage:6,budget:12,poisonAura:true},
+            mirrorknight:{label:"Mirror Knight",hp:140,speed:4,defense:10,reward:150,color:"#adb5bd",shape:"diamond",baseDamage:5,budget:11,mirrorCd:180},
+            leviathan:{label:"Leviathan Spawn",hp:450,speed:2,defense:20,reward:400,color:"#0a9396",shape:"oct",baseDamage:12,budget:24,spawnPeriodic:"swarm"},
+            bloodreaver:{label:"Blood Reaver",hp:120,speed:10,defense:5,reward:140,color:"#9d0208",shape:"triangle",baseDamage:6,budget:10,regenOnBase:0.2},
+            sentinelprime:{label:"Sentinel Prime",hp:300,speed:3,defense:25,reward:350,color:"#ffbf00",shape:"square",baseDamage:9,budget:20,buffsAll:true},
+            oblivionguard:{label:"Oblivion Guard",hp:260,speed:4,defense:20,reward:240,color:"#111",shape:"pent",baseDamage:8,budget:17,dotImmune:true},
+            grimcarrier:{label:"Grim Carrier",hp:150,speed:5,defense:10,reward:170,color:"#1b4332",shape:"square",baseDamage:6,budget:12,spawnOnDeath:["swarm","swarm","swarm","swarm"]},
+            dreadhowler:{label:"Dread Howler",hp:100,speed:12,defense:0,reward:120,color:"#111",shape:"triangle",baseDamage:5,budget:10,globalSpeedAura:0.2},
+            voidshield:{label:"Void Shieldbearer",hp:180,speed:4,defense:25,reward:190,color:"#6a4c93",shape:"square",baseDamage:6,budget:14,shieldAura:true},
+            flametyrant:{label:"Flame Tyrant",hp:220,speed:4,defense:10,reward:200,color:"#e85d04",shape:"circle",baseDamage:7,budget:14,burnImmune:true,fireTrail:true},
+            cryocolossus:{label:"Cryo Colossus",hp:240,speed:3,defense:20,reward:210,color:"#90e0ef",shape:"hex",baseDamage:7,budget:15,stunImmune:true},
+            blackwall:{label:"Blackwall Sentinel",hp:500,speed:1,defense:40,reward:500,color:"#222",shape:"monolith",baseDamage:12,budget:30,noPierce:true},
+            voidemperor:{label:"Void Emperor",hp:800,speed:2,defense:35,reward:800,color:"#6d28d9",shape:"oct",baseDamage:18,budget:45,boss:true},
+            endbringer:{label:"Endbringer",hp:1000,speed:1,defense:50,reward:1200,color:"#000",shape:"sun",baseDamage:25,budget:60,boss:true,spawnOnly:true},
+          });
+
+
           const TOWERS = [
             { id:"basic", name:"Basic Tower", cost:40, damage:1, atkSpeed:1, range:5, color:"#ffffff", shape:"circle" },
             { id:"gatling", name:"Gatling Turret", cost:60, damage:1, atkSpeed:0.3, range:4, color:"#274c77", shape:"gatling" },
@@ -312,23 +348,38 @@ export function renderHtml() {
           function fairWavePlan(wave) {
             const budget=14 + wave*5; const plan=[]; let left=budget;
             const unlocked=["normal"]; if (wave>=2) unlocked.push("fast","swarm"); if (wave>=3) unlocked.push("strong","splitter"); if (wave>=4) unlocked.push("stunner"); if (wave>=5) unlocked.push("tank");
+            if (wave>=7) unlocked.push("juggernaut","bulwark","phalanx");
+            if (wave>=10) unlocked.push("warden","fortifier","chronotitan","nullwalker");
+            if (wave>=12) unlocked.push("titan","ironback","phasejuggernaut","disruptor");
+            if (wave>=14) unlocked.push("colossus","warengine","voidbrute","plaguehulk","mirrorknight");
+            if (wave>=16) unlocked.push("leviathan","sentinelprime","oblivionguard","grimcarrier","dreadhowler");
+            if (wave>=18) unlocked.push("voidshield","flametyrant","cryocolossus","blackwall");
+            if (wave>=20) unlocked.push("voidemperor");
             const limits={ fast:Math.max(4,wave*2), stunner:Math.max(1,Math.floor(wave/2)), tank:Math.max(1,Math.floor(wave/3))}; const c={fast:0,stunner:0,tank:0};
             while (left>0.8) { const pool=unlocked.filter((t)=>ENEMY_TYPES[t].budget<=left+0.2 && (limits[t]===undefined || c[t]<limits[t])); if(!pool.length) break; const p=pool[Math.floor(Math.random()*pool.length)]; if(p==="swarm"){ const count=5+Math.floor(Math.random()*6); for(let i=0;i<count;i++) plan.push("swarm"); left-=ENEMY_TYPES.swarm.budget*count; } else { plan.push(p); left-=ENEMY_TYPES[p].budget; if(c[p]!==undefined)c[p]++; } }
             if (plan.filter((x)=>x==="normal").length<3) plan.push("normal","normal","normal");
+            if (wave % 20 === 0) plan.push("endbringer");
             return plan.sort(()=>Math.random()-0.5);
           }
 
           function createEnemy(typeKey) {
             const type=ENEMY_TYPES[typeKey];
-            return { id:crypto.randomUUID(), type:typeKey, x:path[0].x, y:path[0].y, hp:type.hp, maxHp:type.hp, speed:type.speed*SPEED_SCALE, defense:type.defense, reward:type.reward, pathIndex:1, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0, weakenedDamage:0, permaSlow:0, frozenVuln:0 };
+            return { id:crypto.randomUUID(), type:typeKey, x:path[0].x, y:path[0].y, hp:type.hp, maxHp:type.hp, speed:type.speed*SPEED_SCALE, defense:type.defense, reward:type.reward, pathIndex:1, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0, weakenedDamage:0, permaSlow:0, frozenVuln:0, debuffImmune:!!type.debuffImmune, dotImmune:!!type.dotImmune, burnImmune:!!type.burnImmune, knockbackImmune:!!type.knockbackImmune, stunImmune:!!type.stunImmune, noPierce:!!type.noPierce, noShred:!!type.noShred, shieldHalf:!!type.shieldHalf, aoeResist:type.aoeResist||0, beamResist:type.beamResist||0, allDamageHalf:type.allDamageHalf||0, minSpeedMult:type.minSpeedMult||0, phaseCycle:type.phaseCycle||0, phaseDuration:type.phaseDuration||0, phaseTick:0, disableTowerOnHit:type.disableTowerOnHit||0, reflect:type.reflect||0, defAura:type.defAura||0, speedAura:type.speedAura||0, globalSpeedAura:type.globalSpeedAura||0, mirrorCd:type.mirrorCd||0, mirrorTick:0, spawnOnDeath:type.spawnOnDeath||null, spawnPeriodic:type.spawnPeriodic||null, spawnTick:0, empAura:!!type.empAura, buffsAll:!!type.buffsAll, poisonAura:!!type.poisonAura, fireTrail:!!type.fireTrail, regenOnBase:type.regenOnBase||0 };
           }
 
           function startWave(){ if(state.spawning||state.lives<=0) return; state.wave++; state.queue=fairWavePlan(state.wave); state.spawning=true; state.spawnCooldown=0; updateHud(); }
           function spawnEnemyTick(){ if(!state.spawning) return; state.spawnCooldown--; if(state.spawnCooldown>0) return; if(!state.queue.length){state.spawning=false;return;} state.enemies.push(createEnemy(state.queue.shift())); state.spawnCooldown=10+Math.floor(Math.random()*12); }
 
           function applyDamage(enemy, amount, options={}) {
+            if (enemy.phaseDuration && enemy.phaseTick > 0) return 0;
+            if ((options.hitSlow || options.hitStun || options.supportVuln || options.weakenDamage) && enemy.debuffImmune) return 0;
+            if ((options.acidDotDps || options.burn) && enemy.dotImmune) return 0;
             let dmg = amount;
             if (enemy.vulnMult > 0) dmg *= 1 + enemy.vulnMult;
+            if (enemy.shieldHalf) dmg *= 0.5;
+            if (enemy.aoeResist && options.aoe) dmg *= (1 - enemy.aoeResist);
+            if (enemy.beamResist && options.beam) dmg *= (1 - enemy.beamResist);
+            if (enemy.allDamageHalf) dmg *= (1 - enemy.allDamageHalf);
             if (options.lowHpBonus && enemy.hp <= enemy.maxHp * 0.5) dmg *= 1 + options.lowHpBonus;
             if (options.antiArmorBonus && enemy.defense > 0) dmg *= 1 + options.antiArmorBonus;
             if (options.fireVuln && (options.burn || enemy.burnTicks > 0)) dmg *= 1 + options.fireVuln;
@@ -340,13 +391,13 @@ export function renderHtml() {
               else if (enemy.defense > 0 && !options.pierce) dmg = Math.max(0, dmg - enemy.defense);
             }
             enemy.hp -= dmg;
-            if (options.shred) enemy.defense = Math.max(0, enemy.defense - options.shred);
+            if (options.shred && !enemy.noShred) enemy.defense = Math.max(0, enemy.defense - options.shred);
             if (options.stripDefense) enemy.defense = Math.max(0, enemy.defense - options.stripDefense);
             if (options.hitSlow) { enemy.slowTicks = Math.max(enemy.slowTicks, 60); enemy.slowAmount = Math.max(enemy.slowAmount, options.hitSlow); }
             if (options.supportVuln) enemy.vulnMult = Math.max(enemy.vulnMult, options.supportVuln);
             if (options.acidDotDps) { enemy.acidTicks = Math.max(enemy.acidTicks, 240); enemy.acidDps = Math.max(enemy.acidDps, options.acidDotDps); if (options.acidSpreadOnDeath) enemy.acidSpreadOnDeath = true; }
-            if (options.hitStun) enemy.stunTicks = Math.max(enemy.stunTicks, options.hitStun);
-            if (options.freezeOnHitTicks) enemy.stunTicks = Math.max(enemy.stunTicks, options.freezeOnHitTicks);
+            if (options.hitStun && !enemy.stunImmune) enemy.stunTicks = Math.max(enemy.stunTicks, options.hitStun);
+            if (options.freezeOnHitTicks && !enemy.stunImmune) enemy.stunTicks = Math.max(enemy.stunTicks, options.freezeOnHitTicks);
             if (options.weakenDamage) enemy.weakenedDamage = Math.max(enemy.weakenedDamage || 0, options.weakenDamage);
             return dmg;
           }
@@ -372,23 +423,36 @@ export function renderHtml() {
               for (let n=0;n<2;n++) { const c=createEnemy("splitterChild"); c.x=enemy.x+(n===0?-8:8); c.y=enemy.y+(n===0?-4:4); c.pathIndex=enemy.pathIndex; state.enemies.push(c); }
             }
             if (enemy.burnExplode > 0) explodeAt(enemy.x, enemy.y, 55, enemy.burnExplode, false);
+            if (enemy.spawnOnDeath) {
+              for (const t of enemy.spawnOnDeath) {
+                const c = createEnemy(t); c.x = enemy.x + (Math.random()*12-6); c.y = enemy.y + (Math.random()*12-6); c.pathIndex = enemy.pathIndex; state.enemies.push(c);
+              }
+            }
             if (enemy.acidTicks > 0 && enemy.acidDps > 0 && enemy.acidSpreadOnDeath) { for (const near of state.enemies) { if (distance(near, enemy) <= 60) { near.acidTicks = Math.max(near.acidTicks, 180); near.acidDps = Math.max(near.acidDps, enemy.acidDps); } } }
           }
 
           function updateEnemies() {
             for (let i=state.enemies.length-1;i>=0;i--) {
               const enemy=state.enemies[i];
-              if (enemy.burnTicks>0) { enemy.hp -= enemy.burnDps / 60; enemy.burnTicks--; }
-              if (enemy.acidTicks>0) { enemy.hp -= enemy.acidDps / 60; enemy.acidTicks--; }
+              if (enemy.burnTicks>0 && !enemy.burnImmune && !enemy.dotImmune) { enemy.hp -= enemy.burnDps / 60; enemy.burnTicks--; }
+              if (enemy.acidTicks>0 && !enemy.dotImmune) { enemy.hp -= enemy.acidDps / 60; enemy.acidTicks--; }
               if (enemy.hp <= 0) { killEnemy(i, enemy); continue; }
-              if (enemy.stunTicks>0) { enemy.stunTicks--; continue; }
+              if (enemy.phaseCycle) { enemy.phaseTick = (enemy.phaseTick + 1) % enemy.phaseCycle; }
+              if (enemy.mirrorCd) enemy.mirrorTick = (enemy.mirrorTick + 1) % enemy.mirrorCd;
+              if (enemy.spawnPeriodic) { enemy.spawnTick++; if (enemy.spawnTick % 240 === 0) { const c=createEnemy(enemy.spawnPeriodic); c.x=enemy.x; c.y=enemy.y; c.pathIndex=enemy.pathIndex; state.enemies.push(c); } }
+              if (enemy.defAura) for (const other of state.enemies) if (other!==enemy && distance(enemy,other)<=90) other.defense = Math.max(other.defense, (ENEMY_TYPES[other.type]?.defense || other.defense) + enemy.defAura);
+              if (enemy.speedAura || enemy.globalSpeedAura || enemy.buffsAll) { const b = (enemy.speedAura||0) + (enemy.globalSpeedAura||0) + (enemy.buffsAll?0.2:0); for (const other of state.enemies) if (other!==enemy && (enemy.globalSpeedAura||enemy.buffsAll || distance(enemy,other)<=100)) other.speed = Math.max(other.speed, (ENEMY_TYPES[other.type].speed*SPEED_SCALE)*(1+b)); }
+              if (enemy.poisonAura) for (const t of state.towers) if (distance(enemy,t)<=90) t.stunTicks = Math.max(t.stunTicks, 5);
+              if (enemy.empAura) for (const t of state.towers) if (distance(enemy,t)<=95) t.stunTicks = Math.max(t.stunTicks, 15);
+              if (enemy.stunTicks>0 && !enemy.stunImmune) { enemy.stunTicks--; continue; }
               const activeSlow = Math.max(enemy.permaSlow || 0, enemy.slowTicks>0 ? enemy.slowAmount : 0);
-              const speedMultiplier = activeSlow>0 ? Math.max(0.05, 1 - activeSlow) : 1;
+              const minSlowFloor = enemy.minSpeedMult || 0;
+              const speedMultiplier = activeSlow>0 ? Math.max(minSlowFloor || 0.05, 1 - activeSlow) : 1;
               if (enemy.slowTicks>0) enemy.slowTicks--;
               const target=path[enemy.pathIndex];
-              if (!target) { state.enemies.splice(i,1); state.lives -= Math.max(0, enemy.baseDamage * (1 - (enemy.weakenedDamage || 0))); continue; }
+              if (!target) { state.enemies.splice(i,1); state.lives -= Math.max(0, enemy.baseDamage * (1 - (enemy.weakenedDamage || 0))); if (enemy.regenOnBase) enemy.hp = Math.min(enemy.maxHp, enemy.hp + enemy.maxHp * enemy.regenOnBase); continue; }
               const dx=target.x-enemy.x, dy=target.y-enemy.y, len=Math.hypot(dx,dy), move=enemy.speed*speedMultiplier;
-              if (len<move) { enemy.x=target.x; enemy.y=target.y; enemy.pathIndex++; } else { enemy.x += (dx/len)*move; enemy.y += (dy/len)*move; }
+              if (len<move) { enemy.x=target.x; enemy.y=target.y; enemy.pathIndex++; } else { enemy.x += (dx/len)*move; enemy.y += (dy/len)*move; if (enemy.fireTrail) explodeAt(enemy.x, enemy.y, 22, 0.4, true); if (enemy.type === "warengine") { for (const t of state.towers) if (distance(enemy,t)<=32) t.stunTicks = Math.max(t.stunTicks, 45); } }
             }
           }
 
@@ -446,7 +510,7 @@ export function renderHtml() {
             return out;
           }
 
-          function findTargetForTower(t){ let target=null,fur=-1; for(const e of state.enemies){ if(distance(t,e)<=t.rangePx && e.pathIndex>fur){target=e;fur=e.pathIndex;} } return target; }
+          function findTargetForTower(t){ let target=null,fur=-1; for(const e of state.enemies){ if(distance(t,e)<=t.rangePx && e.pathIndex>fur && !(e.phaseDuration && e.phaseTick>0) && !(e.mirrorCd && e.mirrorTick===0)){target=e;fur=e.pathIndex;} } return target; }
           function pointToSegmentDistance(px,py,x1,y1,x2,y2){ const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy; if(l2===0)return Math.hypot(px-x1,py-y1); let t=((px-x1)*dx+(py-y1)*dy)/l2; t=Math.max(0,Math.min(1,t)); const qx=x1+t*dx,qy=y1+t*dy; return Math.hypot(px-qx,py-qy); }
 
           function towerShoot(tower, target, buffs) {
@@ -523,7 +587,8 @@ export function renderHtml() {
                 if (distance(tower, enemy) > tower.rangePx) continue;
                 if (pointToSegmentDistance(enemy.x, enemy.y, tower.x, tower.y, target.x, target.y) <= 14) {
                   const scaledDamage = dmg * (1 + (s.perPierceBeamBonus || 0) * hits);
-                  applyDamage(enemy, scaledDamage, { pierce:true, armoredBonus:s.armoredBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0 });
+                  const dealt = applyDamage(enemy, scaledDamage, { pierce:true, beam:true, armoredBonus:s.armoredBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0 });
+                  if (enemy.reflect && dealt>0) tower.stunTicks = Math.max(tower.stunTicks, Math.round(dealt * enemy.reflect));
                   hits++;
                   if (hits >= (s.linePierceCount || 999)) break;
                 }
@@ -562,7 +627,9 @@ export function renderHtml() {
               const dx=p.target.x-p.x, dy=p.target.y-p.y, len=Math.hypot(dx,dy);
               if (len < p.speed + 2) {
                 const deal = (enemy) => {
-                  const dealt=applyDamage(enemy,p.damage,p.options||{});
+                  const dealt=applyDamage(enemy,p.damage,{...(p.options||{}), aoe: p.splashRadius>0});
+                  if (enemy.reflect && dealt>0) { const src = state.towers.find((t)=>distance(t,{x:p.x,y:p.y})<22); if (src) src.stunTicks = Math.max(src.stunTicks, Math.round(dealt * enemy.reflect)); }
+                  if (enemy.disableTowerOnHit) { const nearTower = state.towers.sort((a,b)=>distance(a,enemy)-distance(b,enemy))[0]; if (nearTower) nearTower.stunTicks = Math.max(nearTower.stunTicks, enemy.disableTowerOnHit); }
                   if (dealt>0 && p.options.burn) { enemy.burnTicks=Math.max(enemy.burnTicks,p.options.burnDuration); enemy.burnDps=Math.max(enemy.burnDps,p.options.burnDps); enemy.burnExplode=Math.max(enemy.burnExplode||0,p.options.burnExplode||0); }
                   if (p.options.lifesteal) { for (const t of state.towers) if (distance(t, enemy) <= 120) t.stunTicks = Math.max(0, t.stunTicks - dealt * p.options.lifesteal); }
                   if (p.options.knockback) { enemy.pathIndex = Math.max(1, enemy.pathIndex - 1); enemy.x = Math.max(0, enemy.x - p.options.knockback); }
@@ -610,7 +677,7 @@ export function renderHtml() {
 
           function polygon(x,y,r,sides,color,rot=0){ ctx.fillStyle=color; ctx.beginPath(); for(let i=0;i<sides;i++){ const a=rot+(i*Math.PI*2)/sides; const px=x+Math.cos(a)*r, py=y+Math.sin(a)*r; if(i===0)ctx.moveTo(px,py); else ctx.lineTo(px,py);} ctx.closePath(); ctx.fill(); }
 
-          function drawEnemy(enemy){ const s=ENEMY_TYPES[enemy.type]||ENEMY_TYPES.normal; if(s.shape==="circle"){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(enemy.x,enemy.y,12,0,Math.PI*2);ctx.fill();} else if(s.shape==="triangle"||s.shape==="smallTriangle"){polygon(enemy.x,enemy.y,s.shape==="smallTriangle"?8:12,3,s.color,-Math.PI/2);} else if(s.shape==="square"){ctx.fillStyle=s.color;ctx.fillRect(enemy.x-11,enemy.y-11,22,22);} else if(s.shape==="hex"){polygon(enemy.x,enemy.y,12,6,s.color,Math.PI/6);} else if(s.shape==="oct"){polygon(enemy.x,enemy.y,13,8,s.color,Math.PI/8);} else if(s.shape==="split"){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(enemy.x,enemy.y,12,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#0a3318";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(enemy.x-5,enemy.y-7);ctx.lineTo(enemy.x+2,enemy.y-1);ctx.lineTo(enemy.x-1,enemy.y+6);ctx.stroke();}
+          function drawEnemy(enemy){ const s=ENEMY_TYPES[enemy.type]||ENEMY_TYPES.normal; if(s.shape==="circle"){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(enemy.x,enemy.y,12,0,Math.PI*2);ctx.fill();} else if(s.shape==="triangle"||s.shape==="smallTriangle"){polygon(enemy.x,enemy.y,s.shape==="smallTriangle"?8:12,3,s.color,-Math.PI/2);} else if(s.shape==="square"){ctx.fillStyle=s.color;ctx.fillRect(enemy.x-11,enemy.y-11,22,22);} else if(s.shape==="hex"){polygon(enemy.x,enemy.y,12,6,s.color,Math.PI/6);} else if(s.shape==="oct"){polygon(enemy.x,enemy.y,13,8,s.color,Math.PI/8);} else if(s.shape==="pent"){polygon(enemy.x,enemy.y,12,5,s.color,Math.PI/10);} else if(s.shape==="diamond"){polygon(enemy.x,enemy.y,12,4,s.color,Math.PI/4);} else if(s.shape==="monolith"){ctx.fillStyle=s.color;ctx.fillRect(enemy.x-8,enemy.y-14,16,28);} else if(s.shape==="sun"){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(enemy.x,enemy.y,12,0,Math.PI*2);ctx.fill(); for(let k=0;k<8;k++){const a=(k*Math.PI)/4; ctx.beginPath(); ctx.moveTo(enemy.x,enemy.y); ctx.lineTo(enemy.x+Math.cos(a)*18, enemy.y+Math.sin(a)*18); ctx.strokeStyle="#333"; ctx.stroke();}} else if(s.shape==="split"){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(enemy.x,enemy.y,12,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#0a3318";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(enemy.x-5,enemy.y-7);ctx.lineTo(enemy.x+2,enemy.y-1);ctx.lineTo(enemy.x-1,enemy.y+6);ctx.stroke();}
             ctx.fillStyle="#111";ctx.fillRect(enemy.x-14,enemy.y-20,28,4);ctx.fillStyle="#57cc99";ctx.fillRect(enemy.x-14,enemy.y-20,28*(Math.max(enemy.hp,0)/enemy.maxHp),4);
           }
 
