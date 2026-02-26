@@ -73,6 +73,8 @@ export function renderHtml() {
 
           const RANGE_UNIT = 22;
           const SPEED_SCALE = 0.08;
+          const NON_PROJECTILE_TOWERS = new Set(["mine","gravity","poison","emp","void","cryomines","fence","oil","static","snare","spore","firetotem","shocknet","nanoswarm","timespire","arctrap","spikewall","plaguetower","heatsink","magnet","stormpillar","decaytotem"]);
+          const BEAM_TOWERS = new Set(["laser","beamsplit","thermalray","cryobeam"]);
 
           const path = [
             { x: 0, y: 280 }, { x: 220, y: 280 }, { x: 220, y: 110 }, { x: 500, y: 110 },
@@ -553,7 +555,10 @@ export function renderHtml() {
               if (src === tower) continue;
               if (!src.stats.globalAuraHalf && distance(src,tower) > src.rangePx) continue;
               const auraScale = src.stats.globalAuraHalf ? 0.5 : 1;
-              out.dmg = Math.max(out.dmg, (src.stats.auraDamage || 0) * auraScale, (src.stats.supportDmgAura || 0) * auraScale);
+              let extraFireAura = 0;
+              const fireShapes = new Set(["ellipse","plasma","thermalray","flame","firetotem","moltenmortar","embertrap"]);
+              if (src.stats.fireAura && fireShapes.has(tower.stats.shape)) extraFireAura = src.stats.fireAura;
+              out.dmg = Math.max(out.dmg, (src.stats.auraDamage || 0) * auraScale, (src.stats.supportDmgAura || 0) * auraScale, extraFireAura * auraScale);
               out.spd = Math.max(out.spd, (src.stats.auraSpeed || 0) * auraScale, (src.stats.supportAtkAura || 0) * auraScale);
               out.crit = Math.max(out.crit, (src.stats.auraCrit || 0) * auraScale);
               if (src.stats.trueDamageWindow) {
@@ -587,6 +592,44 @@ export function renderHtml() {
                 const t = Math.random();
                 state.mines.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, damage: s.mineDamage || s.damage || 0, radius: s.mineRadius || 32, slow: s.mineSlow || 0, root: s.mineRoot || 0, freeze: s.mineFreeze || 0, vuln: s.mineVuln || 0, splash: s.mineSplash || 0, ttl: 900 });
               }
+              return;
+            }
+
+            if (NON_PROJECTILE_TOWERS.has(s.id) && !s.placeMine) {
+              for (const enemy of state.enemies) {
+                if (distance(tower, enemy) > tower.rangePx) continue;
+                if (s.pullStrength) {
+                  const dx = tower.x - enemy.x;
+                  const dy = tower.y - enemy.y;
+                  const len = Math.max(1, Math.hypot(dx, dy));
+                  enemy.x += (dx / len) * s.pullStrength;
+                  enemy.y += (dy / len) * s.pullStrength;
+                }
+                if (s.supportVuln) enemy.vulnMult = Math.max(enemy.vulnMult, s.supportVuln);
+                if (s.hitSlow) { enemy.slowTicks = Math.max(enemy.slowTicks, 90); enemy.slowAmount = Math.max(enemy.slowAmount, s.hitSlow); }
+                if (s.hitStun && !enemy.stunImmune) enemy.stunTicks = Math.max(enemy.stunTicks, s.hitStun);
+                if (s.acidDotDps) { enemy.acidTicks = Math.max(enemy.acidTicks, s.poisonDuration || 360); enemy.acidDps = Math.max(enemy.acidDps, s.acidDotDps); if (s.acidSpreadOnDeath) enemy.acidSpreadOnDeath = true; }
+                if (s.burn) { enemy.burnTicks = Math.max(enemy.burnTicks, s.burnDuration || 240); enemy.burnDps = Math.max(enemy.burnDps, s.burnDps || 3); }
+                if (s.stripDefense) enemy.defense = Math.max(0, enemy.defense - s.stripDefense);
+                if (s.fireVuln) enemy.vulnMult = Math.max(enemy.vulnMult, s.fireVuln);
+                if (s.damage > 0) applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, hitStun:s.hitStun||0, supportVuln:s.supportVuln||0, stripDefense:s.stripDefense||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, acidDotDps:s.acidDotDps||0 });
+              }
+              return;
+            }
+
+            if (BEAM_TOWERS.has(s.id)) {
+              const options = { burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, ignoreDefense:!!s.ignoreDefense, antiArmorBonus:s.antiArmorBonus||0 };
+              applyDamage(target, dmg, options);
+              let beams = s.splitBeams || 0;
+              for (const enemy of state.enemies) {
+                if (beams <= 0) break;
+                if (enemy === target) continue;
+                if (distance(target, enemy) <= 130) {
+                  applyDamage(enemy, dmg * 0.8, options);
+                  beams--;
+                }
+              }
+              state.projectiles.push({ x:tower.x, y:tower.y, target, mode:"beam", ttl:10, color:s.color || "#ff5a5f" });
               return;
             }
 
