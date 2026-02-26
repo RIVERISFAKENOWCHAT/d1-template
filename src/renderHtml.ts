@@ -321,16 +321,53 @@ export function renderHtml() {
           const GOLD_MULTIPLIER = 1.85;
 
           function ensureTowerUpgrades() {
+            const scale = (value, mult, add = 0, precision = 2) => +((value || 0) * mult + add).toFixed(precision);
+            const hasDebuff = (tower) => (
+              tower.hitSlow || tower.hitStun || tower.supportVuln || tower.weakenDamage || tower.acidDotDps || tower.burnDps ||
+              tower.stripDefense || tower.fireVuln || tower.knockback || tower.pullStrength
+            );
+
             for (const tower of TOWERS) {
               if (UPGRADES[tower.id]) continue;
               const dmg=tower.damage||0;
               const sp=tower.atkSpeed||1;
               const rg=tower.range||5;
+              const baseDebuffs = {
+                hitSlow: tower.hitSlow || 0,
+                hitStun: tower.hitStun || 0,
+                supportVuln: tower.supportVuln || 0,
+                weakenDamage: tower.weakenDamage || 0,
+                acidDotDps: tower.acidDotDps || 0,
+                burnDps: tower.burnDps || 0,
+                stripDefense: tower.stripDefense || 0,
+                fireVuln: tower.fireVuln || 0,
+                knockback: tower.knockback || 0,
+                pullStrength: tower.pullStrength || 0,
+              };
+              const debuffTier = [1.15, 1.35, 1.6, 1.95].map((mult) => ({
+                hitSlow: Math.min(0.9, scale(baseDebuffs.hitSlow, mult)),
+                hitStun: Math.round(scale(baseDebuffs.hitStun, mult, 0, 0)),
+                supportVuln: Math.min(2, scale(baseDebuffs.supportVuln, mult)),
+                weakenDamage: Math.min(0.8, scale(baseDebuffs.weakenDamage, mult)),
+                acidDotDps: scale(baseDebuffs.acidDotDps, mult),
+                burnDps: scale(baseDebuffs.burnDps, mult),
+                stripDefense: scale(baseDebuffs.stripDefense, mult),
+                fireVuln: scale(baseDebuffs.fireVuln, mult),
+                knockback: scale(baseDebuffs.knockback, mult),
+                pullStrength: Math.min(1, scale(baseDebuffs.pullStrength, mult)),
+              }));
               UPGRADES[tower.id] = {
                 A:[{cost:Math.round(tower.cost*1.4),set:{damage:+(dmg*1.4+1).toFixed(2),atkSpeed:sp,range:rg}},{cost:Math.round(tower.cost*2.4),set:{damage:+(dmg*2+2).toFixed(2),atkSpeed:sp,range:rg+1}},{cost:Math.round(tower.cost*4.2),set:{damage:+(dmg*3+3).toFixed(2),atkSpeed:sp,range:rg+2}},{cost:Math.round(tower.cost*7),set:{damage:+(dmg*4.2+5).toFixed(2),atkSpeed:sp,range:rg+3}}],
                 B:[{cost:Math.round(tower.cost*1.3),set:{damage:dmg,atkSpeed:+Math.max(0.05,sp*0.85).toFixed(2),range:rg}},{cost:Math.round(tower.cost*2.2),set:{damage:+(dmg+1).toFixed(2),atkSpeed:+Math.max(0.04,sp*0.7).toFixed(2),range:rg+1}},{cost:Math.round(tower.cost*3.8),set:{damage:+(dmg+2).toFixed(2),atkSpeed:+Math.max(0.03,sp*0.55).toFixed(2),range:rg+2}},{cost:Math.round(tower.cost*6.4),set:{damage:+(dmg+3).toFixed(2),atkSpeed:+Math.max(0.02,sp*0.45).toFixed(2),range:rg+3}}],
                 C:[{cost:Math.round(tower.cost*1.5),set:{damage:dmg,atkSpeed:sp,range:rg+1,supportVuln:0.1}},{cost:Math.round(tower.cost*2.6),set:{damage:+(dmg+0.5).toFixed(2),atkSpeed:sp,range:rg+2,supportVuln:0.2}},{cost:Math.round(tower.cost*4.4),set:{damage:+(dmg+1).toFixed(2),atkSpeed:sp,range:rg+3,supportVuln:0.35}},{cost:Math.round(tower.cost*7.2),set:{damage:+(dmg+2).toFixed(2),atkSpeed:sp,range:rg+4,supportVuln:0.5}}],
               };
+              if (hasDebuff(tower)) {
+                for (let idx = 0; idx < 4; idx++) {
+                  Object.assign(UPGRADES[tower.id].A[idx].set, debuffTier[idx]);
+                  Object.assign(UPGRADES[tower.id].B[idx].set, debuffTier[idx]);
+                  Object.assign(UPGRADES[tower.id].C[idx].set, debuffTier[idx]);
+                }
+              }
             }
           }
 
@@ -370,9 +407,14 @@ export function renderHtml() {
             if (s.pierceTargets) extras.push("Pierce: " + s.pierceTargets);
             if (s.chainCount) extras.push("Chain: " + s.chainCount);
             if (s.hitSlow) extras.push("Slow: " + Math.round(s.hitSlow * 100) + "%");
+            if (s.hitStun) extras.push("Stun: " + s.hitStun + "f");
             if (s.supportVuln) extras.push("Vuln: +" + Math.round(s.supportVuln * 100) + "%");
+            if (s.weakenDamage) extras.push("Weaken: " + Math.round(s.weakenDamage * 100) + "%");
             if (s.acidDotDps) extras.push("DoT: " + s.acidDotDps + "/s");
             if (s.burnDps) extras.push("Burn: " + s.burnDps + "/s");
+            if (s.stripDefense) extras.push("Armor Strip: " + s.stripDefense);
+            if (s.fireVuln) extras.push("Fire Vuln: +" + Math.round(s.fireVuln * 100) + "%");
+            if (s.pullStrength) extras.push("Pull: " + s.pullStrength);
             if (s.knockback) extras.push("Knockback: " + s.knockback);
             if (s.splitBeams) extras.push("Split Beams: " + s.splitBeams);
             if (s.burstCount) extras.push("Burst: " + s.burstCount);
