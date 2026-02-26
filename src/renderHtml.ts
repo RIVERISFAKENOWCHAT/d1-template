@@ -102,6 +102,26 @@ export function renderHtml() {
             { id:"railgun", name:"Railgun", cost:300, damage:25, atkSpeed:5, range:20, color:"#c0c0c0", shape:"railgun", linePierce:true, linePierceCount:999, pierce:true },
             { id:"factory", name:"Turret Factory", cost:350, damage:0, atkSpeed:4, range:0, color:"#4a4e69", shape:"factory", summonFactoryTurret:true },
             { id:"bomb", name:"Bomb Tower", cost:150, damage:8, atkSpeed:3, range:9, color:"#8d99ae", shape:"bomb", splashRadius:68 },
+            { id:"laser", name:"Laser Pointer", cost:90, damage:2, atkSpeed:0.2, range:12, color:"#ff3b30", shape:"laser", rampOnTarget:true },
+            { id:"pulse", name:"Pulse Cannon", cost:120, damage:4, atkSpeed:2, range:8, color:"#ffffff", shape:"pulse", pulseEvery:5, pulseAllInRange:true },
+            { id:"mine", name:"Mine Layer", cost:90, damage:8, atkSpeed:1, range:3, color:"#8b5a2b", shape:"mine", placeMine:true, mineDamage:8, mineRadius:32 },
+            { id:"gravity", name:"Gravity Well", cost:180, damage:1, atkSpeed:3, range:6, color:"#8a2be2", shape:"gravity", pullStrength:0.35, hitSlow:0.35 },
+            { id:"wind", name:"Wind Turbine", cost:100, damage:0, atkSpeed:3, range:5, color:"#c9ced6", shape:"wind", knockback:10 },
+            { id:"poison", name:"Poison Tower", cost:120, damage:0, atkSpeed:2, range:5, color:"#39ff14", shape:"poison", acidDotDps:2, poisonDuration:360 },
+            { id:"emp", name:"EMP Spire", cost:140, damage:0, atkSpeed:5, range:7, color:"#111111", shape:"emp", stripDefense:999, hitStun:20 },
+            { id:"shard", name:"Shard Launcher", cost:90, damage:3, atkSpeed:1.5, range:9, color:"#4deeea", shape:"shard", pierceTargets:2 },
+            { id:"void", name:"Void Siphon", cost:160, damage:2, atkSpeed:1.5, range:7, color:"#2a003f", shape:"void", supportVuln:0.2, lifesteal:0.06 },
+            { id:"echo", name:"Echo Turret", cost:110, damage:2, atkSpeed:1.2, range:6, color:"#7d8597", shape:"echo", echoNearby:true, echoPower:0.5 },
+            { id:"arcmortar", name:"Arc Mortar", cost:210, damage:10, atkSpeed:5, range:16, color:"#495057", shape:"arcmortar", splashRadius:82 },
+            { id:"cryomines", name:"Cryo Mines", cost:80, damage:0, atkSpeed:1, range:3, color:"#7bdff2", shape:"cryomines", placeMine:true, mineDamage:0, mineRadius:34, mineFreeze:40 },
+            { id:"needle", name:"Needle Gun", cost:70, damage:2, atkSpeed:0.4, range:7, color:"#101010", shape:"needle", pierceTargets:1 },
+            { id:"fence", name:"Tesla Fence", cost:100, damage:1, atkSpeed:2, range:4, color:"#ffd60a", shape:"fence", hitSlow:0.2 },
+            { id:"oil", name:"Oil Sprayer", cost:90, damage:0, atkSpeed:1, range:5, color:"#111111", shape:"oil", fireVuln:1.0 },
+            { id:"burst", name:"Burst Turret", cost:100, damage:3, atkSpeed:0.5, range:6, color:"#5e503f", shape:"burst", burstCount:3 },
+            { id:"plasma", name:"Plasma Thrower", cost:160, damage:4, atkSpeed:0.15, range:6, color:"#ff66c4", shape:"plasma", shred:3 },
+            { id:"static", name:"Static Totem", cost:110, damage:0, atkSpeed:2, range:6, color:"#f5cb5c", shape:"static", hitSlow:0.3 },
+            { id:"snare", name:"Snare Trap", cost:60, damage:0, atkSpeed:1, range:3, color:"#6c757d", shape:"snare", hitStun:35 },
+            { id:"beamsplit", name:"Beam Splitter", cost:140, damage:2, atkSpeed:0.1, range:10, color:"#ff0000", shape:"beamsplit", splitBeams:2 },
           ];
 
           const UPGRADES = {
@@ -160,11 +180,61 @@ export function renderHtml() {
               B:[{cost:220,set:{damage:8,atkSpeed:3,range:9,clusterCount:2}},{cost:400,set:{damage:10,atkSpeed:3,range:11,clusterCount:4}},{cost:650,set:{damage:15,atkSpeed:3,range:13,clusterCount:6}},{cost:1400,set:{damage:25,atkSpeed:3,range:15,clusterCount:10}}],
               C:[{cost:230,set:{damage:8,atkSpeed:3,range:9,hitStun:30}},{cost:420,set:{damage:10,atkSpeed:3,range:11,hitStun:72}},{cost:700,set:{damage:12,atkSpeed:3,range:13,hitStun:120}},{cost:1500,set:{damage:18,atkSpeed:3,range:15,hitStun:120,chainStun:true}}],
             },
+            laser: {
+              A:[{cost:140,set:{damage:3,atkSpeed:0.2,range:12,rampOnTarget:true}},{cost:260,set:{damage:5,atkSpeed:0.2,range:13,rampOnTarget:true}},{cost:520,set:{damage:8,atkSpeed:0.2,range:14,rampOnTarget:true}},{cost:980,set:{damage:14,atkSpeed:0.2,range:15,rampOnTarget:true}}],
+              B:[{cost:130,set:{damage:2,atkSpeed:0.25,range:12,splitBeams:2}},{cost:250,set:{damage:2,atkSpeed:0.25,range:13,splitBeams:3}},{cost:500,set:{damage:3,atkSpeed:0.25,range:14,splitBeams:4}},{cost:900,set:{damage:4,atkSpeed:0.25,range:15,splitBeams:6}}],
+              C:[{cost:140,set:{damage:3,atkSpeed:0.2,range:12,ignoreArmorPct:0.25}},{cost:260,set:{damage:4,atkSpeed:0.2,range:13,ignoreArmorPct:0.5}},{cost:520,set:{damage:6,atkSpeed:0.2,range:14,ignoreArmorPct:0.75}},{cost:980,set:{damage:8,atkSpeed:0.2,range:15,ignoreDefense:true}}],
+            },
+            pulse: {
+              A:[{cost:180,set:{damage:5,atkSpeed:2,range:8,pulseEvery:5,pulseAllInRange:true}},{cost:320,set:{damage:7,atkSpeed:2,range:9,pulseEvery:5,pulseAllInRange:true}},{cost:620,set:{damage:10,atkSpeed:2,range:10,pulseEvery:5,pulseAllInRange:true}},{cost:1100,set:{damage:15,atkSpeed:2,range:11,pulseEvery:3,pulseAllInRange:true}}],
+              B:[{cost:180,set:{damage:4,atkSpeed:1.5,range:8,doubleEvery:2}},{cost:320,set:{damage:4,atkSpeed:1.2,range:9,doubleEvery:2}},{cost:620,set:{damage:5,atkSpeed:1,range:10,doubleEvery:2}},{cost:1100,set:{damage:6,atkSpeed:0.8,range:11,doubleEvery:2,burstCount:2}}],
+              C:[{cost:180,set:{damage:4,atkSpeed:2,range:8,hitSlow:0.2}},{cost:320,set:{damage:5,atkSpeed:2,range:9,hitSlow:0.35}},{cost:620,set:{damage:6,atkSpeed:2,range:10,hitSlow:0.5}},{cost:1100,set:{damage:7,atkSpeed:2,range:11,hitSlow:0.5,weakenDamage:0.25}}],
+            },
+            mine: {
+              A:[{cost:140,set:{mineDamage:12}},{cost:280,set:{mineDamage:18}},{cost:560,set:{mineDamage:25}},{cost:980,set:{mineDamage:40,mineRadius:55}}],
+              B:[{cost:140,set:{mineCount:2}},{cost:280,set:{mineCount:3}},{cost:560,set:{mineCount:4}},{cost:980,set:{mineCount:6}}],
+              C:[{cost:140,set:{mineSlow:0.25}},{cost:280,set:{mineRoot:25}},{cost:560,set:{mineFreeze:30}},{cost:980,set:{mineFreeze:40,mineVuln:0.5}}],
+            },
+            gravity: {
+              A:[{cost:260,set:{pullStrength:0.45}},{cost:420,set:{pullStrength:0.7}},{cost:760,set:{pullStrength:1}},{cost:1300,set:{pullStrength:1.6}}],
+              B:[{cost:260,set:{damage:2}},{cost:420,set:{damage:4}},{cost:760,set:{damage:7}},{cost:1300,set:{damage:12,rampOnTarget:true}}],
+              C:[{cost:260,set:{hitSlow:0.4}},{cost:420,set:{hitSlow:0.6}},{cost:760,set:{hitSlow:0.8}},{cost:1300,set:{hitSlow:0.85,hitStun:20}}],
+            },
+            wind: {
+              A:[{cost:180,set:{knockback:16}},{cost:320,set:{knockback:22}},{cost:620,set:{knockback:30}},{cost:1000,set:{knockback:42}}],
+              B:[{cost:180,set:{damage:1}},{cost:320,set:{damage:2}},{cost:620,set:{damage:4}},{cost:1000,set:{damage:7,acidDotDps:2}}],
+              C:[{cost:180,set:{hitSlow:0.2}},{cost:320,set:{hitSlow:0.4}},{cost:620,set:{hitSlow:0.6}},{cost:1000,set:{hitSlow:0.6,supportVuln:0.25}}],
+            },
+            poison: {
+              A:[{cost:190,set:{acidDotDps:2,poisonDuration:360}},{cost:330,set:{acidDotDps:4,poisonDuration:360}},{cost:640,set:{acidDotDps:7,poisonDuration:360}},{cost:1200,set:{acidDotDps:12,poisonDuration:420,acidSpreadOnDeath:true}}],
+              B:[{cost:190,set:{supportVuln:0.1}},{cost:330,set:{supportVuln:0.2}},{cost:640,set:{supportVuln:0.35}},{cost:1200,set:{supportVuln:0.5,shred:6}}],
+              C:[{cost:190,set:{spreadVuln:1}},{cost:330,set:{spreadVuln:2}},{cost:640,set:{spreadVuln:4}},{cost:1200,set:{spreadVuln:999}}],
+            },
+            emp: {
+              A:[{cost:220,set:{empDisable:60}},{cost:380,set:{empDisable:120}},{cost:700,set:{empDisable:180}},{cost:1200,set:{empDisable:9999}}],
+              B:[{cost:220,set:{hitStun:18}},{cost:380,set:{hitStun:36}},{cost:700,set:{hitStun:60}},{cost:1200,set:{hitStun:60,chainStun:true}}],
+              C:[{cost:220,set:{damage:1}},{cost:380,set:{damage:2}},{cost:700,set:{damage:4}},{cost:1200,set:{damage:4,supportVuln:1}}],
+            },
+            shard: {
+              A:[{cost:150,set:{pierceTargets:2}},{cost:300,set:{pierceTargets:3}},{cost:620,set:{pierceTargets:5}},{cost:1100,set:{pierceTargets:8}}],
+              B:[{cost:150,set:{pierceTargets:1}},{cost:300,set:{pierceTargets:3}},{cost:620,set:{pierceTargets:5}},{cost:1100,set:{pierceTargets:999}}],
+              C:[{cost:150,set:{acidDotDps:2}},{cost:300,set:{acidDotDps:3}},{cost:620,set:{acidDotDps:4,acidSpreadOnDeath:true}},{cost:1100,set:{acidDotDps:5,acidSpreadOnDeath:true,burnExplode:8}}],
+            },
+            void: {
+              A:[{cost:240,set:{supportVuln:0.15}},{cost:400,set:{supportVuln:0.3}},{cost:760,set:{supportVuln:0.5}},{cost:1300,set:{supportVuln:0.75}}],
+              B:[{cost:240,set:{lifesteal:0.04}},{cost:400,set:{lifesteal:0.08}},{cost:760,set:{lifesteal:0.12}},{cost:1300,set:{lifesteal:0.2}}],
+              C:[{cost:240,set:{hitSlow:0.2}},{cost:400,set:{hitSlow:0.4}},{cost:760,set:{hitSlow:0.5,hitStun:20}},{cost:1300,set:{hitSlow:0.6,burnExplode:10}}],
+            },
+            echo: {
+              A:[{cost:180,set:{echoPower:0.7}},{cost:340,set:{echoPower:1}},{cost:700,set:{echoPower:1.3}},{cost:1300,set:{echoPower:2}}],
+              B:[{cost:180,set:{echoCount:2}},{cost:340,set:{echoCount:3}},{cost:700,set:{echoCount:4}},{cost:1300,set:{echoCount:999}}],
+              C:[{cost:180,set:{echoStrongest:true}},{cost:340,set:{echoStrongestEnemy:true}},{cost:700,set:{echoSpecials:true}},{cost:1300,set:{echoSpecials:true,echoUltimate:true}}],
+            },
           };
 
           const GOLD_MULTIPLIER = 2.2;
 
-          const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null };
+          const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null };
 
           const copyStats = (m) => JSON.parse(JSON.stringify(m));
           const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -261,14 +331,17 @@ export function renderHtml() {
             if (enemy.vulnMult > 0) dmg *= 1 + enemy.vulnMult;
             if (options.lowHpBonus && enemy.hp <= enemy.maxHp * 0.5) dmg *= 1 + options.lowHpBonus;
             if (options.antiArmorBonus && enemy.defense > 0) dmg *= 1 + options.antiArmorBonus;
+            if (options.fireVuln && (options.burn || enemy.burnTicks > 0)) dmg *= 1 + options.fireVuln;
             if (options.ignoreDefense) {
             } else if (options.pierce && enemy.defense > 0) dmg += options.armoredBonus || 0;
+            if (options.ignoreArmorPct && enemy.defense > 0) enemy.defense = Math.max(0, enemy.defense * (1 - options.ignoreArmorPct));
             if (!options.ignoreDefense) {
               if (enemy.defense > 0 && !options.pierce && amount < enemy.defense) dmg = 0;
               else if (enemy.defense > 0 && !options.pierce) dmg = Math.max(0, dmg - enemy.defense);
             }
             enemy.hp -= dmg;
             if (options.shred) enemy.defense = Math.max(0, enemy.defense - options.shred);
+            if (options.stripDefense) enemy.defense = Math.max(0, enemy.defense - options.stripDefense);
             if (options.hitSlow) { enemy.slowTicks = Math.max(enemy.slowTicks, 60); enemy.slowAmount = Math.max(enemy.slowAmount, options.hitSlow); }
             if (options.supportVuln) enemy.vulnMult = Math.max(enemy.vulnMult, options.supportVuln);
             if (options.acidDotDps) { enemy.acidTicks = Math.max(enemy.acidTicks, 240); enemy.acidDps = Math.max(enemy.acidDps, options.acidDotDps); if (options.acidSpreadOnDeath) enemy.acidSpreadOnDeath = true; }
@@ -319,6 +392,28 @@ export function renderHtml() {
             }
           }
 
+
+          function updateMines() {
+            for (let i = state.mines.length - 1; i >= 0; i--) {
+              const mine = state.mines[i];
+              mine.ttl--;
+              let exploded = false;
+              for (const enemy of state.enemies) {
+                if (distance(mine, enemy) <= mine.radius) {
+                  if (mine.damage > 0) applyDamage(enemy, mine.damage, { supportVuln: mine.vuln || 0 });
+                  if (mine.slow) { enemy.slowTicks = Math.max(enemy.slowTicks, 90); enemy.slowAmount = Math.max(enemy.slowAmount, mine.slow); }
+                  if (mine.root) enemy.stunTicks = Math.max(enemy.stunTicks, mine.root);
+                  if (mine.freeze) enemy.stunTicks = Math.max(enemy.stunTicks, mine.freeze);
+                  if (mine.vuln) enemy.vulnMult = Math.max(enemy.vulnMult, mine.vuln);
+                  if (mine.splash) explodeAt(mine.x, mine.y, mine.splash, mine.damage * 0.8, false);
+                  exploded = true;
+                  break;
+                }
+              }
+              if (exploded || mine.ttl <= 0) state.mines.splice(i, 1);
+            }
+          }
+
           function updateAlliedTurrets() {
             for (let i=state.alliedTurrets.length-1;i>=0;i--) {
               const unit=state.alliedTurrets[i];
@@ -363,6 +458,18 @@ export function renderHtml() {
             const critChance = Math.max(buffs.crit || 0, s.critChance || 0);
             if (critChance > 0 && Math.random() < critChance) dmg *= 2;
 
+            if (s.placeMine) {
+              const count = s.mineCount || 1;
+              for (let m = 0; m < count; m++) {
+                const seg = 1 + Math.floor(Math.random() * (path.length - 2));
+                const a = path[seg - 1];
+                const b = path[seg];
+                const t = Math.random();
+                state.mines.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, damage: s.mineDamage || s.damage || 0, radius: s.mineRadius || 32, slow: s.mineSlow || 0, root: s.mineRoot || 0, freeze: s.mineFreeze || 0, vuln: s.mineVuln || 0, splash: s.mineSplash || 0, ttl: 900 });
+              }
+              return;
+            }
+
             if (s.summonFactoryTurret) {
               const rateMult = s.spawnRateMult || 1;
               const spawnCount = s.doubleSpawn ? 2 : 1;
@@ -384,6 +491,10 @@ export function renderHtml() {
               }
             }
 
+            if (s.pulseAllInRange && tower.shotCount && s.pulseEvery && tower.shotCount % s.pulseEvery === 0) {
+              for (const enemy of state.enemies) if (distance(tower, enemy) <= tower.rangePx) applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, weakenDamage:s.weakenDamage||0 });
+            }
+
             if (s.chain) {
               const impacted=[target];
               applyDamage(target,dmg,{ hitSlow:s.hitSlow||0 });
@@ -392,6 +503,18 @@ export function renderHtml() {
               state.projectiles.push({x:tower.x,y:tower.y,target,mode:"bolt",ttl:8});
               if (s.lightningExplosion) explodeAt(target.x, target.y, 42, dmg * 0.35, false);
               return;
+            }
+
+            if (s.pullStrength) {
+              for (const enemy of state.enemies) {
+                if (distance(tower, enemy) <= tower.rangePx) {
+                  const dx = tower.x - enemy.x;
+                  const dy = tower.y - enemy.y;
+                  const len = Math.max(1, Math.hypot(dx, dy));
+                  enemy.x += (dx / len) * s.pullStrength;
+                  enemy.y += (dy / len) * s.pullStrength;
+                }
+              }
             }
 
             if (s.linePierce) {
@@ -410,7 +533,7 @@ export function renderHtml() {
               return;
             }
 
-            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:{ pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:s.acidDotDps||0, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:buffs.lifesteal||0, weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, lifesteal:s.lifesteal||0 }, pierceTargets:s.pierceTargets||0, doubleShockwave:!!s.doubleShockwave, perPierceProjectileBonus:s.perPierceProjectileBonus||0 });
+            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:{ pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:s.acidDotDps||0, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:buffs.lifesteal||0, weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, lifesteal:s.lifesteal||0, knockback:s.knockback||0, fireVuln:s.fireVuln||0, stripDefense:s.stripDefense||0 }, pierceTargets:s.pierceTargets||0, doubleShockwave:!!s.doubleShockwave, perPierceProjectileBonus:s.perPierceProjectileBonus||0, splitBeams:s.splitBeams||0, burstCount:s.burstCount||0, echoNearby:!!s.echoNearby, echoPower:s.echoPower||0.5, echoCount:s.echoCount||1 });
           }
 
           function updateTowers() {
@@ -442,9 +565,21 @@ export function renderHtml() {
                   const dealt=applyDamage(enemy,p.damage,p.options||{});
                   if (dealt>0 && p.options.burn) { enemy.burnTicks=Math.max(enemy.burnTicks,p.options.burnDuration); enemy.burnDps=Math.max(enemy.burnDps,p.options.burnDps); enemy.burnExplode=Math.max(enemy.burnExplode||0,p.options.burnExplode||0); }
                   if (p.options.lifesteal) { for (const t of state.towers) if (distance(t, enemy) <= 120) t.stunTicks = Math.max(0, t.stunTicks - dealt * p.options.lifesteal); }
+                  if (p.options.knockback) { enemy.pathIndex = Math.max(1, enemy.pathIndex - 1); enemy.x = Math.max(0, enemy.x - p.options.knockback); }
                   if (p.options.supportVuln && p.options.spreadVuln) { for (const near of state.enemies) { if (near !== enemy && distance(near, enemy) <= 48) { near.vulnMult = Math.max(near.vulnMult, p.options.supportVuln); break; } } }
                 };
                 deal(p.target);
+                if (p.splitBeams > 0) {
+                  let splits = 0;
+                  for (const e of state.enemies) {
+                    if (e !== p.target && distance(e, p.target) <= 120) { deal(e); splits++; if (splits >= p.splitBeams) break; }
+                  }
+                }
+                if (p.burstCount > 1) { for (let b = 1; b < p.burstCount; b++) deal(p.target); }
+                if (p.echoNearby) {
+                  const echoes = state.towers.filter((t) => t.stats.id !== "echo" && distance(t, p.target) <= 180).slice(0, p.echoCount || 1);
+                  for (const eTower of echoes) applyDamage(p.target, p.damage * (p.echoPower || 0.5), p.options || {});
+                }
                 let pierced=0;
                 if (p.pierceTargets > 0) {
                   for (const e of state.enemies) {
@@ -492,6 +627,26 @@ export function renderHtml() {
             else if(m.shape==="railgun"){ctx.fillStyle="#a9b2bf";ctx.fillRect(x-18,y-4,34,8);ctx.fillStyle="#e0fbfc";ctx.beginPath();ctx.arc(x+17,y,4,0,Math.PI*2);ctx.fill();}
             else if(m.shape==="factory"){ctx.fillStyle="#40444f";ctx.fillRect(x-14,y-14,28,28);ctx.fillStyle="#00d4ff";ctx.beginPath();ctx.moveTo(x,y-8);ctx.lineTo(x+3,y-3);ctx.lineTo(x+9,y-3);ctx.lineTo(x+4,y+1);ctx.lineTo(x+6,y+8);ctx.lineTo(x,y+4);ctx.lineTo(x-6,y+8);ctx.lineTo(x-4,y+1);ctx.lineTo(x-9,y-3);ctx.lineTo(x-3,y-3);ctx.closePath();ctx.fill();}
             else if(m.shape==="bomb"){ctx.fillStyle="#9aa0a6";ctx.beginPath();ctx.arc(x,y,14,0,Math.PI*2);ctx.fill();ctx.fillStyle="#111";ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fill();}
+            else if(m.shape==="laser"){ctx.fillStyle="#ff3b30";ctx.fillRect(x-16,y-2,32,4);}
+            else if(m.shape==="pulse"){ctx.fillStyle="#fff";ctx.fillRect(x-10,y-10,20,20);ctx.strokeStyle="#4cc9f0";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.stroke();}
+            else if(m.shape==="mine"){ctx.fillStyle="#8b5a2b";ctx.fillRect(x-10,y-10,20,20);ctx.strokeStyle="#ffd60a";ctx.beginPath();ctx.moveTo(x-6,y-6);ctx.lineTo(x+6,y+6);ctx.moveTo(x+6,y-6);ctx.lineTo(x-6,y+6);ctx.stroke();}
+            else if(m.shape==="gravity"){ctx.fillStyle="#8a2be2";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();}
+            else if(m.shape==="wind"){ctx.fillStyle="#c9ced6";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();}
+            else if(m.shape==="poison"){ctx.fillStyle="#39ff14";ctx.beginPath();ctx.arc(x-5,y,7,0,Math.PI*2);ctx.arc(x+4,y-2,8,0,Math.PI*2);ctx.fill();}
+            else if(m.shape==="emp"){polygon(x,y,12,3,"#111",Math.PI/2);ctx.strokeStyle="#4cc9f0";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.stroke();}
+            else if(m.shape==="shard"){polygon(x,y,12,3,"#4deeea",-Math.PI/2);}
+            else if(m.shape==="void"){ctx.fillStyle="#000";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();ctx.fillStyle="#7b2cbf";ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();}
+            else if(m.shape==="echo"){ctx.fillStyle="#7d8597";ctx.fillRect(x-14,y-6,28,12);ctx.beginPath();ctx.arc(x-10,y,4,0,Math.PI*2);ctx.arc(x+10,y,4,0,Math.PI*2);ctx.fill();}
+            else if(m.shape==="arcmortar"){ctx.fillStyle="#495057";ctx.beginPath();ctx.arc(x,y+2,14,Math.PI,0);ctx.fill();}
+            else if(m.shape==="cryomines"){ctx.fillStyle="#7bdff2";ctx.beginPath();ctx.arc(x,y,11,0,Math.PI*2);ctx.fill();}
+            else if(m.shape==="needle"){ctx.fillStyle="#000";ctx.fillRect(x-15,y-2,30,4);}
+            else if(m.shape==="fence"){ctx.strokeStyle="#ffd60a";ctx.beginPath();ctx.moveTo(x-12,y+6);ctx.lineTo(x-6,y-6);ctx.lineTo(x,y+6);ctx.lineTo(x+6,y-6);ctx.lineTo(x+12,y+6);ctx.stroke();}
+            else if(m.shape==="oil"){ctx.fillStyle="#111";ctx.beginPath();ctx.moveTo(x,y-12);ctx.bezierCurveTo(x+10,y-4,x+8,y+8,x,y+12);ctx.bezierCurveTo(x-8,y+8,x-10,y-4,x,y-12);ctx.fill();}
+            else if(m.shape==="burst"){ctx.fillStyle="#5e503f";ctx.fillRect(x-12,y-6,24,12);}
+            else if(m.shape==="plasma"){ctx.fillStyle="#ff66c4";ctx.beginPath();ctx.ellipse(x,y,14,9,0,0,Math.PI*2);ctx.fill();}
+            else if(m.shape==="static"){ctx.fillStyle="#f5cb5c";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();}
+            else if(m.shape==="snare"){ctx.strokeStyle="#6c757d";ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.stroke();}
+            else if(m.shape==="beamsplit"){ctx.fillStyle="#ff0000";ctx.beginPath();ctx.moveTo(x,y-12);ctx.lineTo(x+10,y+8);ctx.lineTo(x-10,y+8);ctx.closePath();ctx.fill();}
           }
 
           function drawAlliedTurrets(){ for(const u of state.alliedTurrets){ ctx.fillStyle="#313a46";ctx.fillRect(u.x-8,u.y-8,16,16);ctx.fillStyle="#89fcff";ctx.beginPath();ctx.arc(u.x,u.y,4,0,Math.PI*2);ctx.fill(); ctx.fillStyle="#111";ctx.fillRect(u.x-10,u.y-14,20,3);ctx.fillStyle="#57cc99";ctx.fillRect(u.x-10,u.y-14,20*Math.max(0,u.hp)/(u.unitHp||5),3);} }
@@ -499,7 +654,9 @@ export function renderHtml() {
           function drawProjectiles(){ for(const p of state.projectiles){ if(p.mode==="bolt"){ctx.strokeStyle="#f7f45f";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p.x,p.y);if(p.target)ctx.lineTo(p.target.x,p.target.y);ctx.stroke();} else if(p.mode==="beam"){ctx.strokeStyle=p.color||"#d9d9d9";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(p.x,p.y);if(p.target)ctx.lineTo(p.target.x,p.target.y);ctx.stroke();} else {ctx.fillStyle=p.color||"#fff";ctx.beginPath();ctx.arc(p.x,p.y,3.5,0,Math.PI*2);ctx.fill();} } }
           function drawGameOver(){ if(state.lives>0)return; ctx.fillStyle="rgba(0,0,0,0.72)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 52px system-ui";ctx.fillText("Game Over",canvas.width/2,canvas.height/2-20);ctx.font="24px system-ui";ctx.fillText("Refresh to try again",canvas.width/2,canvas.height/2+24); }
 
-          function tick(){ ctx.clearRect(0,0,canvas.width,canvas.height); spawnEnemyTick(); updateEnemies(); updateAlliedTurrets(); updateTowers(); updateProjectiles(); updateHud(); drawPath(); for(const t of state.towers) drawTower(t); drawAlliedTurrets(); for(const e of state.enemies) drawEnemy(e); drawProjectiles(); drawGameOver(); requestAnimationFrame(tick); }
+          function tick(){ ctx.clearRect(0,0,canvas.width,canvas.height); spawnEnemyTick(); updateEnemies(); updateMines(); updateAlliedTurrets(); updateTowers(); updateProjectiles(); updateHud(); drawPath(); for(const t of state.towers) drawTower(t);
+            for (const m of state.mines) { ctx.fillStyle = "#d4af37"; ctx.beginPath(); ctx.arc(m.x, m.y, 5, 0, Math.PI * 2); ctx.fill(); }
+            drawAlliedTurrets(); for(const e of state.enemies) drawEnemy(e); drawProjectiles(); drawGameOver(); requestAnimationFrame(tick); }
 
           function canPlaceTower(x,y){ const onPath=path.some((pt,i)=>{ if(i===0)return false; const a=path[i-1],b=pt; return x>=Math.min(a.x,b.x)-26&&x<=Math.max(a.x,b.x)+26&&y>=Math.min(a.y,b.y)-26&&y<=Math.max(a.y,b.y)+26;}); if(onPath)return false; if(state.towers.some((t)=>distance(t,{x,y})<34)) return false; return true; }
 
