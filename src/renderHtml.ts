@@ -55,6 +55,7 @@ export function renderHtml() {
               <strong>Upgrades</strong>
               <div class="small" id="upgradeInfo">Select a placed tower to upgrade.</div>
               <div class="upgrade-paths" id="upgradePaths"></div>
+              <div class="small" id="towerStats">-</div>
             </div>
           </aside>
         </div>
@@ -70,6 +71,7 @@ export function renderHtml() {
           const towerListEl = document.getElementById("towerList");
           const upgradeInfoEl = document.getElementById("upgradeInfo");
           const upgradePathsEl = document.getElementById("upgradePaths");
+          const towerStatsEl = document.getElementById("towerStats");
 
           const RANGE_UNIT = 22;
           const SPEED_SCALE = 0.08;
@@ -357,11 +359,29 @@ export function renderHtml() {
           function renderUpgradePanel() {
             const tower = getPlacedTower();
             upgradePathsEl.innerHTML = "";
-            if (!tower) { upgradeInfoEl.textContent = "Select a placed tower to upgrade."; return; }
+            if (!tower) { upgradeInfoEl.textContent = "Select a placed tower to upgrade."; towerStatsEl.textContent = "-"; return; }
             const defs = UPGRADES[tower.baseId];
-            if (!defs) { upgradeInfoEl.textContent = tower.baseName + ": no upgrade paths"; return; }
+            if (!defs) { upgradeInfoEl.textContent = tower.baseName + ": no upgrade paths"; towerStatsEl.textContent = "-"; return; }
             const lockedPath = tower.upgradePath;
             upgradeInfoEl.textContent = tower.baseName + " | Path: " + (lockedPath || "none") + " | Tier: " + tower.upgradeTier;
+
+            const s = tower.stats;
+            const extras = [];
+            if (s.pierceTargets) extras.push("Pierce: " + s.pierceTargets);
+            if (s.chainCount) extras.push("Chain: " + s.chainCount);
+            if (s.hitSlow) extras.push("Slow: " + Math.round(s.hitSlow * 100) + "%");
+            if (s.supportVuln) extras.push("Vuln: +" + Math.round(s.supportVuln * 100) + "%");
+            if (s.acidDotDps) extras.push("DoT: " + s.acidDotDps + "/s");
+            if (s.burnDps) extras.push("Burn: " + s.burnDps + "/s");
+            if (s.knockback) extras.push("Knockback: " + s.knockback);
+            if (s.splitBeams) extras.push("Split Beams: " + s.splitBeams);
+            if (s.burstCount) extras.push("Burst: " + s.burstCount);
+            if (s.splashRadius) extras.push("Splash: " + Math.round(s.splashRadius));
+            if (s.placeMine) extras.push("Mine Layer");
+            towerStatsEl.innerHTML = "<strong>Placed Tower Stats</strong><br>DMG: " + (s.damage ?? 0) +
+              "<br>ATK SPD: " + (s.atkSpeed ?? 0) + "s" +
+              "<br>Range: " + (s.range ?? 0) +
+              (extras.length ? "<br>" + extras.join(" | ") : "");
 
             for (const pathKey of ["A","B","C"]) {
               const tiers = defs[pathKey];
