@@ -38,6 +38,15 @@ export function renderHtml() {
           .menu-btn { background:#2e3d58; color:#fff; text-align:left; }
           .menu-sub { color:#8aa0bf; font-size:0.9rem; }
           .hidden { display:none !important; }
+          @media (max-width: 768px) {
+            body { place-items:start; padding:8px; }
+            .layout { width:100%; grid-template-columns:1fr; gap:10px; }
+            .hud h1 { width:100%; margin:0; font-size:1.05rem; }
+            .side { max-height:none; }
+            .tower-list { max-height:220px; }
+            .upgrade-paths { max-height:220px; }
+            button { padding:10px; }
+          }
         </style>
       </head>
       <body>
@@ -80,6 +89,7 @@ export function renderHtml() {
               <div class="small" id="upgradeInfo">Select a placed tower to upgrade.</div>
               <div class="upgrade-paths" id="upgradePaths"></div>
               <div class="small" id="towerStats">-</div>
+              <button class="u-btn" id="sellTowerButton">Sell selected tower</button>
             </div>
           </aside>
         </div>
@@ -98,6 +108,7 @@ export function renderHtml() {
           const upgradeInfoEl = document.getElementById("upgradeInfo");
           const upgradePathsEl = document.getElementById("upgradePaths");
           const towerStatsEl = document.getElementById("towerStats");
+          const sellTowerButtonEl = document.getElementById("sellTowerButton");
           const menuOverlayEl = document.getElementById("menuOverlay");
           const gameLayoutEl = document.getElementById("gameLayout");
           const menuSubEl = document.getElementById("menuSub");
@@ -634,13 +645,31 @@ export function renderHtml() {
             for (const tower of TOWERS) {
               const card=document.createElement("div");
               card.className="tower-card" + (state.selectedTower===tower.id ? " active" : "");
-              card.innerHTML='<div class="tower-title">'+tower.name+' ('+tower.cost+'g)</div><div class="tower-meta">DMG: '+tower.damage+'<br>ATK SPD: '+tower.atkSpeed+'s<br>Range: '+tower.range+'</div>';
+              card.innerHTML='<div class="tower-title">'+tower.name+' ('+tower.cost+'g)</div><div class="tower-meta">'+describeTower(tower)+'<br>DMG: '+tower.damage+'<br>ATK SPD: '+tower.atkSpeed+'s<br>Range: '+tower.range+'</div>';
               card.onclick=()=>{ state.selectedTower=tower.id; buildTowerMenu(); };
               towerListEl.appendChild(card);
             }
           }
 
           function getPlacedTower() { return state.towers.find((t)=>t.id===state.selectedPlacedTowerId) || null; }
+
+          function describeTower(tower) {
+            if (tower.placeMine) return "Plants traps on lanes to control and punish passing enemies.";
+            if (tower.summonFactoryTurret) return "Deploys allied units that march and fire along enemy routes.";
+            if (tower.pullStrength) return "Manipulates movement by dragging enemies off their pace.";
+            if (tower.stripDefense) return "Breaks armor to boost follow-up damage from your whole setup.";
+            if (tower.supportVuln) return "Marks targets to take extra damage from all sources.";
+            if (tower.auraDamage || tower.supportDmgAura || tower.auraSpeed || tower.supportAtkAura || tower.auraCrit) return "Provides aura buffs that empower nearby towers.";
+            if (tower.chain) return "Arcs through nearby enemies to spread pressure across packs.";
+            if (tower.linePierce || tower.pierceTargets) return "Piercing shots punish lined-up enemies in one lane.";
+            if (tower.frost || tower.hitSlow || tower.freezeEvery) return "Slows and freezes enemies to control wave tempo.";
+            if (tower.splashRadius || tower.clusterCount) return "Area damage specialist built to clear grouped enemies.";
+            if (tower.burn || tower.fireVuln) return "Applies burning pressure that scales through prolonged fights.";
+            if (tower.acidDotDps || tower.acidSpreadOnDeath) return "Corrodes enemies over time and spreads debuffs.";
+            if (tower.knockback) return "Knocks enemies backward to buy more time for defenses.";
+            if (tower.echoNearby || tower.splitBeams || tower.burstCount) return "Fires repeated or split attacks for high sustained output.";
+            return "Reliable single-target tower with balanced cost and range.";
+          }
 
           function formatBaseBuffed(baseValue, buffedValue, suffix = "") {
             const baseText = Number(baseValue).toFixed(2).replace(/\.00$/, "");
@@ -652,11 +681,11 @@ export function renderHtml() {
           function renderUpgradePanel() {
             const tower = getPlacedTower();
             upgradePathsEl.innerHTML = "";
-            if (!tower) { upgradeInfoEl.textContent = "Select a placed tower to upgrade."; towerStatsEl.textContent = "-"; return; }
+            if (!tower) { upgradeInfoEl.textContent = "Select a placed tower to upgrade."; towerStatsEl.textContent = "-"; sellTowerButtonEl.disabled = true; sellTowerButtonEl.textContent = "Sell selected tower"; return; }
             const defs = UPGRADES[tower.baseId];
-            if (!defs) { upgradeInfoEl.textContent = tower.baseName + ": no upgrade paths"; towerStatsEl.textContent = "-"; return; }
+            if (!defs) { const sellValue = Math.floor((tower.invested || tower.stats.cost || 0) * 0.5); upgradeInfoEl.textContent = tower.baseName + ": no upgrade paths"; towerStatsEl.textContent = "Description: " + describeTower(tower.stats); sellTowerButtonEl.disabled = false; sellTowerButtonEl.textContent = "Sell selected tower (+" + sellValue + "g)"; return; }
             const lockedPath = tower.upgradePath;
-            upgradeInfoEl.textContent = tower.baseName + " | Path: " + (lockedPath || "none") + " | Tier: " + tower.upgradeTier;
+            upgradeInfoEl.textContent = tower.baseName + " — " + describeTower(tower.stats) + " | Path: " + (lockedPath || "none") + " | Tier: " + tower.upgradeTier;
 
             const s = tower.stats;
             const extras = [];
@@ -685,7 +714,11 @@ export function renderHtml() {
             towerStatsEl.innerHTML = "<strong>Placed Tower Stats</strong><br>DMG: " + formatBaseBuffed(baseDamage, buffedDamage) +
               "<br>ATK SPD: " + formatBaseBuffed(baseAtkSpeed, buffedAtkSpeed, "s") +
               "<br>Range: " + (s.range ?? 0) +
+              "<br>Description: " + describeTower(s) +
               (extras.length ? "<br>" + extras.join(" | ") : "");
+            const sellValue = Math.floor((tower.invested || tower.stats.cost || 0) * 0.5);
+            sellTowerButtonEl.disabled = false;
+            sellTowerButtonEl.textContent = "Sell selected tower (+" + sellValue + "g)";
 
             for (const pathKey of ["A","B","C"]) {
               const tiers = defs[pathKey];
@@ -1305,6 +1338,17 @@ export function renderHtml() {
             updateHud(); buildTowerMenu(); renderUpgradePanel();
           });
 
+          function sellSelectedTower() {
+            const tower = getPlacedTower();
+            if (!tower) return;
+            const sellValue = Math.floor((tower.invested || tower.stats.cost || 0) * 0.5);
+            state.gold += sellValue;
+            state.towers = state.towers.filter((t) => t.id !== tower.id);
+            state.selectedPlacedTowerId = null;
+            renderUpgradePanel();
+            updateHud();
+          }
+
           function buildMapMenu() {
             menuMapsEl.innerHTML = "";
             for (const mapId of Object.keys(MAPS)) {
@@ -1334,7 +1378,7 @@ export function renderHtml() {
             for (const t of TOWERS) {
               const item = document.createElement("div");
               item.className = "menu-sub";
-              item.textContent = t.name + " | DMG " + t.damage + " | ATK SPD " + t.atkSpeed + "s | Range " + t.range;
+              item.textContent = t.name + " — " + describeTower(t) + " | DMG " + t.damage + " | ATK SPD " + t.atkSpeed + "s | Range " + t.range;
               menuTowerListEl.appendChild(item);
             }
           }
@@ -1347,6 +1391,7 @@ export function renderHtml() {
           });
 
           startWaveButton.addEventListener("click", startWave);
+          sellTowerButtonEl.addEventListener("click", sellSelectedTower);
           buildTowerMenu();
           buildMapMenu();
           buildDifficultyMenu();
