@@ -262,6 +262,7 @@ export function renderHtml() {
             { id:"whirlpool", name:"Whirlpool Totem", cost:70, damage:0.5, atkSpeed:0.4, range:4, color:"#4ea8de", shape:"whirlpool", pullStrength:0.35 },
             { id:"frostwave", name:"Frostwave Conduit", cost:80, damage:2, atkSpeed:1, range:7, color:"#2ec4b6", shape:"frostwave", hitSlow:0.2 },
             { id:"tsunami", name:"Tsunami Beacon", cost:150, damage:6, atkSpeed:3, range:12, color:"#1d4ed8", shape:"tsunami", splashRadius:70 },
+            { id:"farm", name:"Farm Tower", cost:120, damage:0, atkSpeed:0, range:4, color:"#000000", shape:"farm", farmIncome:50 },
             { id:"bastion", name:"Bastion Turret", cost:200, damage:8, atkSpeed:2, range:8, color:"#495057", shape:"bastion", defenseAura:0.3 },
           ];
 
@@ -370,6 +371,11 @@ export function renderHtml() {
               A:[{cost:180,set:{echoPower:0.7}},{cost:340,set:{echoPower:1}},{cost:700,set:{echoPower:1.3}},{cost:1300,set:{echoPower:2}}],
               B:[{cost:180,set:{echoCount:2}},{cost:340,set:{echoCount:3}},{cost:700,set:{echoCount:4}},{cost:1300,set:{echoCount:999}}],
               C:[{cost:180,set:{echoStrongest:true}},{cost:340,set:{echoStrongestEnemy:true}},{cost:700,set:{echoSpecials:true}},{cost:1300,set:{echoSpecials:true,echoUltimate:true}}],
+            },
+            farm: {
+              A:[{cost:180,set:{farmIncomeBonus:100}},{cost:320,set:{farmIncomeBonus:150}},{cost:620,set:{farmIncomeBonus:200}},{cost:1200,set:{farmIncomeBonus:300,farmInterest:0.02}}],
+              B:[{cost:170,set:{killBounty:10}},{cost:320,set:{killBounty:20}},{cost:620,set:{killBounty:30}},{cost:1100,set:{killBounty:50}},{cost:1900,set:{killBounty:100}}],
+              C:[{cost:170,set:{supportUpgradeDiscount:0.05}},{cost:320,set:{supportUpgradeDiscount:0.10}},{cost:620,set:{supportUpgradeDiscount:0.15}},{cost:1100,set:{supportUpgradeDiscount:0.20}},{cost:1900,set:{supportUpgradeDiscount:0.40}}],
             },
             tidal: {
               A:[{cost:90,set:{damage:2.5,atkSpeed:0.8,range:6}},{cost:170,set:{damage:2.5,atkSpeed:0.5,range:7}},{cost:320,set:{damage:3.5,atkSpeed:0.45,range:8,pierceTargets:2}},{cost:700,set:{damage:6,atkSpeed:0.4,range:9,pierceTargets:2,ignoreArmorPct:0.2}}],
@@ -497,6 +503,7 @@ export function renderHtml() {
 
           function ensureTierFiveUpgrades() {
             for (const id of Object.keys(UPGRADES)) {
+              if (id === "farm") continue;
               const def = UPGRADES[id];
               for (const pathKey of ["A", "B", "C"]) {
                 const tiers = def[pathKey];
@@ -511,7 +518,7 @@ export function renderHtml() {
 
           ensureTierFiveUpgrades();
 
-          const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", paths: MAPS.beginner.makePaths(), menuStep:"main" };
+          const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0 };
 
           const copyStats = (m) => JSON.parse(JSON.stringify(m));
           const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -535,6 +542,7 @@ export function renderHtml() {
             state.queue = [];
             state.spawnCooldown = 0;
             state.selectedPlacedTowerId = null;
+            state.lastWavePayout = 0;
             state.paths = copyStats(getMap().makePaths());
             renderUpgradePanel();
             updateHud();
@@ -647,14 +655,15 @@ export function renderHtml() {
                 btn.disabled = true;
               } else {
                 const up = tiers[nextTier - 1];
-                btn.textContent = "Path " + pathKey + " T" + nextTier + " - " + up.cost + "g";
-                btn.disabled = state.gold < up.cost;
+                const actualCost = getUpgradeCostForTower(tower, up);
+                btn.textContent = "Path " + pathKey + " T" + nextTier + " - " + actualCost + "g";
+                btn.disabled = state.gold < actualCost;
                 btn.onclick = () => purchaseUpgrade(tower.id, pathKey, nextTier);
               }
               upgradePathsEl.appendChild(btn);
             }
 
-            if (tower.upgradeTier >= 5) {
+            if (tower.upgradeTier >= 5 && tower.baseId !== "farm") {
               const mates = state.towers.filter((t) => t.baseId === tower.baseId && t.upgradeTier >= 5);
               const hasA = mates.some((t) => t.upgradePath === "A");
               const hasB = mates.some((t) => t.upgradePath === "B");
@@ -676,6 +685,31 @@ export function renderHtml() {
             tower.rangePx = tower.stats.range * RANGE_UNIT;
           }
 
+          function getUpgradeCostForTower(tower, up) {
+            let discount = 0;
+            for (const src of state.towers) {
+              if (!src.stats.supportUpgradeDiscount) continue;
+              if (distance(src, tower) <= src.rangePx) discount = Math.max(discount, src.stats.supportUpgradeDiscount);
+            }
+            return Math.max(1, Math.round(up.cost * (1 - discount)));
+          }
+
+          function awardFarmWaveIncome() {
+            if (state.wave <= 0 || state.lastWavePayout === state.wave) return;
+            if (state.spawning || state.enemies.length > 0) return;
+            let flat = 0;
+            let interestRate = 0;
+            for (const t of state.towers) {
+              if (t.baseId !== "farm") continue;
+              flat += (t.stats.farmIncome || 50) + (t.stats.farmIncomeBonus || 0);
+              interestRate += t.stats.farmInterest || 0;
+            }
+            interestRate = Math.min(0.4, interestRate);
+            const interest = Math.floor(state.gold * interestRate);
+            if (flat > 0 || interest > 0) state.gold += flat + interest;
+            state.lastWavePayout = state.wave;
+          }
+
           function purchaseUpgrade(towerId, pathKey, tier) {
             const tower = state.towers.find((t)=>t.id===towerId);
             if (!tower) return;
@@ -685,12 +719,13 @@ export function renderHtml() {
             if (tier !== tower.upgradeTier + 1) return;
             if (tier === 5 && state.towers.some((t) => t.id !== tower.id && t.baseId === tower.baseId && t.upgradePath === pathKey && t.upgradeTier >= 5)) return;
             const up = defs[pathKey][tier - 1];
-            if (!up || state.gold < up.cost) return;
+            const actualCost = up ? getUpgradeCostForTower(tower, up) : 0;
+            if (!up || state.gold < actualCost) return;
 
-            state.gold -= up.cost;
+            state.gold -= actualCost;
             if (!tower.upgradePath) tower.upgradePath = pathKey;
             tower.upgradeTier = tier;
-            tower.invested = (tower.invested || 0) + up.cost;
+            tower.invested = (tower.invested || 0) + actualCost;
             applyTowerStats(tower, up.set);
             updateHud();
             renderUpgradePanel();
@@ -790,6 +825,7 @@ export function renderHtml() {
 
           function killEnemy(i, enemy) {
             state.enemies.splice(i,1); state.gold += enemy.reward * GOLD_MULTIPLIER;
+            for (const t of state.towers) if (t.stats.killBounty) state.gold += t.stats.killBounty;
             if (enemy.type === "stunner") {
               for (const tower of state.towers) {
                 const buffs = computeBuffsForTower(tower);
@@ -1149,6 +1185,7 @@ export function renderHtml() {
             else if(m.shape==="static"){ctx.fillStyle="#f5cb5c";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();}
             else if(m.shape==="snare"){ctx.strokeStyle="#6c757d";ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.stroke();}
             else if(m.shape==="beamsplit"){ctx.fillStyle="#ff0000";ctx.beginPath();ctx.moveTo(x,y-12);ctx.lineTo(x+10,y+8);ctx.lineTo(x-10,y+8);ctx.closePath();ctx.fill();}
+            else if(m.shape==="farm"){ctx.fillStyle="#000";ctx.fillRect(x-12,y-12,24,24);ctx.fillStyle="#ffd60a";ctx.beginPath();for(let i=0;i<10;i++){const r=i%2?4:9;const a=-Math.PI/2+i*Math.PI/5;const px=x+Math.cos(a)*r,py=y+Math.sin(a)*r;if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);}ctx.closePath();ctx.fill();}
             else if(m.shape==="tidal"){ctx.fillStyle="#7bdff2";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();}
             else if(m.shape==="coral"){ctx.fillStyle="#ff70a6";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#ff99c8";ctx.beginPath();ctx.moveTo(x-8,y+2);ctx.lineTo(x+8,y-2);ctx.stroke();}
             else if(m.shape==="whirlpool"){ctx.strokeStyle="#4ea8de";ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*1.7);ctx.stroke();ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*1.7);ctx.stroke();}
@@ -1162,7 +1199,7 @@ export function renderHtml() {
           function drawProjectiles(){ for(const p of state.projectiles){ if(p.mode==="bolt"){ctx.strokeStyle="#f7f45f";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p.x,p.y);if(p.target)ctx.lineTo(p.target.x,p.target.y);ctx.stroke();} else if(p.mode==="beam"){ctx.strokeStyle=p.color||"#d9d9d9";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(p.x,p.y);if(p.target)ctx.lineTo(p.target.x,p.target.y);ctx.stroke();} else {ctx.fillStyle=p.color||"#fff";ctx.beginPath();ctx.arc(p.x,p.y,3.5,0,Math.PI*2);ctx.fill();} } }
           function drawGameOver(){ if(state.lives>0)return; ctx.fillStyle="rgba(0,0,0,0.72)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 52px system-ui";ctx.fillText("Game Over",canvas.width/2,canvas.height/2-20);ctx.font="24px system-ui";ctx.fillText("Refresh to try again",canvas.width/2,canvas.height/2+24); }
 
-          function tick(){ ctx.clearRect(0,0,canvas.width,canvas.height); spawnEnemyTick(); updateEnemies(); updateMines(); updateAlliedTurrets(); updateTowers(); updateProjectiles(); updateHud(); drawPath(); for(const t of state.towers) drawTower(t);
+          function tick(){ ctx.clearRect(0,0,canvas.width,canvas.height); spawnEnemyTick(); updateEnemies(); awardFarmWaveIncome(); updateMines(); updateAlliedTurrets(); updateTowers(); updateProjectiles(); updateHud(); drawPath(); for(const t of state.towers) drawTower(t);
             for (const m of state.mines) { ctx.fillStyle = "#d4af37"; ctx.beginPath(); ctx.arc(m.x, m.y, 5, 0, Math.PI * 2); ctx.fill(); }
             drawAlliedTurrets(); for(const e of state.enemies) drawEnemy(e); drawProjectiles(); drawGameOver(); requestAnimationFrame(tick); }
 
