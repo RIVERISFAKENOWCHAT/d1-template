@@ -65,7 +65,7 @@ export function renderHtml() {
                 <span>💰 Gold: <strong id="gold">220</strong></span>
                 <span>🌊 Wave: <strong id="wave">0</strong></span>
                 <span>👾 Enemies: <strong id="enemies">0</strong></span>
-                <span>🔥 Heat: <strong id="heat">0%</strong></span>
+                <span id="heatStat" class="hidden">🔥 Heat: <strong id="heat">0%</strong></span>
               </div>
               <button id="startWave">Start wave</button>
             </div>
@@ -92,6 +92,7 @@ export function renderHtml() {
           const waveEl = document.getElementById("wave");
           const enemiesEl = document.getElementById("enemies");
           const heatEl = document.getElementById("heat");
+          const heatStatEl = document.getElementById("heatStat");
           const startWaveButton = document.getElementById("startWave");
           const towerListEl = document.getElementById("towerList");
           const upgradeInfoEl = document.getElementById("upgradeInfo");
@@ -613,7 +614,20 @@ export function renderHtml() {
             gameLayoutEl.classList.remove("hidden");
           }
 
-          function updateHud() { livesEl.textContent=Math.max(state.lives,0); goldEl.textContent=Math.floor(state.gold); waveEl.textContent=state.wave; enemiesEl.textContent=state.enemies.length; heatEl.textContent = Math.round(state.heat) + "%"; startWaveButton.disabled=state.spawning||state.enemies.length>0||state.lives<=0; }
+          function updateHud() {
+            livesEl.textContent=Math.max(state.lives,0);
+            goldEl.textContent=Math.floor(state.gold);
+            waveEl.textContent=state.wave;
+            enemiesEl.textContent=state.enemies.length;
+            if (isLavaMap()) {
+              heatStatEl.classList.remove("hidden");
+              heatEl.textContent = Math.round(state.heat) + "%";
+            } else {
+              heatStatEl.classList.add("hidden");
+              heatEl.textContent = "0%";
+            }
+            startWaveButton.disabled=state.spawning||state.enemies.length>0||state.lives<=0;
+          }
 
           function buildTowerMenu() {
             towerListEl.innerHTML="";
