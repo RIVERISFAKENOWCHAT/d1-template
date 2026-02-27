@@ -653,28 +653,89 @@ export function renderHtml() {
 
           function getPlacedTower() { return state.towers.find((t)=>t.id===state.selectedPlacedTowerId) || null; }
 
+          const TOWER_DESCRIPTIONS = {
+            basic: "Balanced starter tower with flexible paths for DPS, speed, or debuff support.",
+            gatling: "High fire-rate bullet storm specializing in armor shred or suppression.",
+            sniper: "Long-range precision tower built for massive single-target damage.",
+            frost: "Crowd-control cannon that freezes enemies and boosts allied towers.",
+            tesla: "Chain-lightning tower that shocks multiple enemies at once.",
+            flame: "Short-range flame stream that applies heavy burn damage.",
+            acid: "Armor-melting artillery that applies corrosive damage over time.",
+            commander: "Powerful support tower that massively buffs nearby (or global) towers.",
+            railgun: "Extremely high-damage piercing cannon for elite and armored enemies.",
+            factory: "Spawns autonomous combat drones to overwhelm enemies.",
+            bomb: "Explosive artillery that deals heavy AoE burst damage.",
+            farm: "Economic tower that generates gold or reduces upgrade costs.",
+            laser: "Continuous beam that ramps damage on a single target.",
+            pulse: "Rapid cannon that unleashes periodic AoE shockwaves.",
+            mine: "Deploys explosive mines along the path.",
+            gravity: "Pulls enemies inward and slows them in a vortex.",
+            wind: "Pushes enemies back with gusting wind.",
+            poison: "Applies stacking poison damage over time.",
+            emp: "Disables shields and disrupts tech enemies.",
+            shard: "Fires crystals that split into fragments.",
+            void: "Weakens enemies to take increased damage.",
+            echo: "Copies nearby tower attacks at reduced power.",
+            arcmortar: "Launches arcing explosive shells into crowds.",
+            cryomines: "Freezes enemies with hidden frost traps.",
+            needle: "Piercing shots that skewer multiple enemies.",
+            fence: "Damages and shocks enemies that pass through.",
+            oil: "Coats enemies to amplify fire damage.",
+            burst: "Fires rapid multi-shot bursts.",
+            plasma: "Melts armor with sustained plasma spray.",
+            static: "Slows enemies within an electric field.",
+            snare: "Roots enemies in place.",
+            beamsplit: "Splits its beam into multiple rays.",
+            flak: "Anti-fast explosive cannon with splash damage.",
+            spore: "Releases poisonous spores in an area.",
+            kinetic: "Slams enemies backward with force.",
+            volt: "Chains lightning between enemies.",
+            obsidian: "High damage spike effective vs armor.",
+            firetotem: "Ignites enemies within its radius.",
+            shocknet: "Roots and shocks trapped enemies.",
+            nanoswarm: "Applies stacking nanite damage over time.",
+            timespire: "Slows time for enemies in its field.",
+            shardmortar: "Explodes into razor crystal fragments.",
+            thermalray: "Beam that ramps burning damage over time.",
+            frostnet: "Roots and chills enemies.",
+            arctrap: "Stuns enemies with a triggered electric burst.",
+            spikewall: "Damages enemies that pass through it.",
+            gravcannon: "Pulls enemies together with gravity shots.",
+            plaguetower: "Spreads disease between enemies.",
+            chainblaster: "Fires shots that hit multiple targets.",
+            cryobeam: "Permanently slows enemies with freezing energy.",
+            pulsemine: "AoE explosive that stuns on detonation.",
+            heatsink: "Buffs nearby fire towers.",
+            magnet: "Pulls armored enemies off course.",
+            bleed: "Inflicts stacking bleed damage.",
+            ion: "Heavy artillery that ignores shields.",
+            frostflare: "Freezes enemies in bursts of cold.",
+            moltenmortar: "Bombards enemies with burning lava shells.",
+            shrapnel: "Splits shots into damaging fragments.",
+            stormpillar: "Strikes enemies with periodic lightning.",
+            decaytotem: "Reduces enemy defenses in an aura.",
+            overwatch: "Flying support turret with wide vision.",
+            shardfan: "Fires a cone of crystal shards.",
+            pulsebarrage: "Rapid burst cannon hitting multiple targets.",
+            cryoturbine: "Chilling fan that slows enemies in range.",
+            arcshotgun: "Wide cone lightning blast.",
+            corrosion: "Sprays acid that melts armor.",
+            shockwavetotem: "Emits damaging radial pulses.",
+            embertrap: "Burns enemies with explosive runes.",
+            sentry: "Mobile turret with adaptive targeting.",
+            rift: "Warps enemies and amplifies damage taken.",
+            scatterlaser: "Splits into multiple spreading beams.",
+            bastion: "Heavy defensive gun with bonus durability.",
+            tidal: "Controls water lanes with surging splash currents.",
+            coral: "Water-zone artillery that lobs resilient coral bursts.",
+            whirlpool: "Creates a whirlpool field that drags and shreds enemies.",
+            frostwave: "Sends chilling waves through water to freeze and slow.",
+            tsunami: "Calls massive tidal impacts for devastating area control."
+          };
+
           function describeTower(tower) {
-            if (tower.placeMine) return "Plants traps on lanes to control and punish passing enemies.";
-            if (tower.summonFactoryTurret) return "Deploys allied units that march and fire along enemy routes.";
-            if (tower.pullStrength) return "Manipulates movement by dragging enemies off their pace.";
-            if (tower.stripDefense) return "Breaks armor to boost follow-up damage from your whole setup.";
-            if (tower.supportVuln) return "Marks targets to take extra damage from all sources.";
-            if (tower.auraDamage || tower.supportDmgAura || tower.auraSpeed || tower.supportAtkAura || tower.auraCrit) return "Provides aura buffs that empower nearby towers.";
-            if (tower.chain) return "Arcs through nearby enemies to spread pressure across packs.";
-            if (tower.linePierce || tower.pierceTargets) return "Piercing shots punish lined-up enemies in one lane.";
-            if (tower.frost || tower.hitSlow || tower.freezeEvery) return "Slows and freezes enemies to control wave tempo.";
-            if (tower.splashRadius || tower.clusterCount) return "Area damage specialist built to clear grouped enemies.";
-            if (tower.burn || tower.fireVuln) return "Applies burning pressure that scales through prolonged fights.";
-            if (tower.acidDotDps || tower.acidSpreadOnDeath) return "Corrodes enemies over time and spreads debuffs.";
-            if (tower.knockback) return "Knocks enemies backward to buy more time for defenses.";
-            if (tower.id === "burst") return "Unloads rapid multi-shot bursts, then pauses before the next volley.";
-            if (tower.id === "arcshotgun") return "Blasts chaining lightning bolts across a short forward cone.";
-            if (tower.id === "shard") return "Launches shards that split into a full-circle secondary spray.";
-            if (tower.id === "shrapnel") return "Shells burst into three follow-up fragments on impact.";
-            if (tower.id === "flak") return "Fires a wide cone of pellets to shred clustered enemies.";
-            if (tower.id === "pulsebarrage") return "Sends multiple light-blue pulses in a forward cone.";
-            if (tower.echoNearby || tower.splitBeams || tower.burstCount) return "Fires repeated or split attacks for high sustained output.";
-            return "Reliable single-target tower with balanced cost and range.";
+            const id = tower.id || tower.baseId;
+            return TOWER_DESCRIPTIONS[id] || "Reliable single-target tower with balanced cost and range.";
           }
 
           function formatBaseBuffed(baseValue, buffedValue, suffix = "") {
