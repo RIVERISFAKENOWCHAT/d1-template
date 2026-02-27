@@ -481,7 +481,7 @@ export function renderHtml() {
 
           ensureMineUpgradeRanges();
 
-          function makeTierFive(baseSet, pathKey) {
+          function makeTierFive(baseSet, pathKey, towerId) {
             const set = JSON.parse(JSON.stringify(baseSet || {}));
             set.range = (set.range || 5) + 1;
             if (pathKey === "A") {
@@ -499,8 +499,9 @@ export function renderHtml() {
               if (set.damage !== undefined) set.damage = +((set.damage || 0) * 1.45 + 0.75).toFixed(2);
               if (set.atkSpeed) set.atkSpeed = +Math.max(0.03, set.atkSpeed * 0.78).toFixed(2);
               set.signatureC5 = true;
-              set.splitBeams = Math.max(set.splitBeams || 0, 2);
-              set.splashRadius = Math.max(set.splashRadius || 0, 48);
+              if (BEAM_TOWERS.has(towerId) || (set.splitBeams || 0) > 0) set.splitBeams = Math.max((set.splitBeams || 0) + 1, 2);
+              if ((set.splashRadius || 0) > 0) set.splashRadius = Math.max(set.splashRadius + 14, 48);
+              if (!set.splitBeams && !set.splashRadius) set.weakenDamage = Math.max(set.weakenDamage || 0, 0.25);
             }
             return set;
           }
@@ -515,7 +516,7 @@ export function renderHtml() {
                 const t4 = tiers[3];
                 const invested = tiers.slice(0, 4).reduce((sum, t) => sum + (t.cost || 0), 0);
                 const t5Cost = Math.max(1, Math.round(invested * 0.75));
-                tiers.push({ cost: t5Cost, set: makeTierFive(t4.set, pathKey) });
+                tiers.push({ cost: t5Cost, set: makeTierFive(t4.set, pathKey, id) });
               }
             }
           }
@@ -633,7 +634,7 @@ export function renderHtml() {
             if (s.fireVuln) extras.push("Fire Vuln: +" + Math.round(s.fireVuln * 100) + "%");
             if (s.pullStrength) extras.push("Pull: " + s.pullStrength);
             if (s.knockback) extras.push("Knockback: " + s.knockback);
-            if (s.splitBeams) extras.push("Split Beams: " + s.splitBeams);
+            if (s.splitBeams && (BEAM_TOWERS.has(s.id) || s.chain || s.echoNearby)) extras.push("Split Beams: " + s.splitBeams);
             if (s.burstCount) extras.push("Burst: " + s.burstCount);
             if (s.splashRadius) extras.push("Splash: " + Math.round(s.splashRadius));
             if (s.placeMine) extras.push("Mine Layer");
@@ -744,8 +745,10 @@ export function renderHtml() {
             if (trio.length !== 3) return;
             if (state.gold < fusionCost) return;
             state.gold -= fusionCost;
-            const x = trio.reduce((sum,t)=>sum+t.x,0) / 3;
-            const y = trio.reduce((sum,t)=>sum+t.y,0) / 3;
+            const selected = getPlacedTower();
+            const anchor = (selected && selected.baseId === baseId) ? selected : trio[0];
+            const x = anchor.x;
+            const y = anchor.y;
             const base = copyStats(trio[0].stats);
             base.damage = +((trio.reduce((sum,t)=>sum+(t.stats.damage||0),0) * 0.85)).toFixed(2);
             base.atkSpeed = Math.max(0.03, Math.min(...trio.map((t)=>t.stats.atkSpeed||99999)) * 0.75);
