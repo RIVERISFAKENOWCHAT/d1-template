@@ -230,7 +230,7 @@ export function renderHtml() {
             { id:"wind", name:"Wind Turbine", cost:100, damage:0, atkSpeed:3, range:5, color:"#c9ced6", shape:"wind", knockback:10 },
             { id:"poison", name:"Poison Tower", cost:120, damage:0, atkSpeed:2, range:5, color:"#39ff14", shape:"poison", acidDotDps:2, poisonDuration:360 },
             { id:"emp", name:"EMP Spire", cost:140, damage:0, atkSpeed:5, range:7, color:"#111111", shape:"emp", stripDefense:999, hitStun:20 },
-            { id:"shard", name:"Shard Launcher", cost:90, damage:3, atkSpeed:1.5, range:9, color:"#4deeea", shape:"shard", pierceTargets:2 },
+            { id:"shard", name:"Shard Launcher", cost:90, damage:3, atkSpeed:1.5, range:9, color:"#4deeea", shape:"shard", pierceTargets:2, coneProjectiles:4, coneHalfAngle:0.45, splitProjectiles:8, split360:true },
             { id:"void", name:"Void Siphon", cost:160, damage:2, atkSpeed:1.5, range:7, color:"#2a003f", shape:"void", supportVuln:0.2, lifesteal:0.06 },
             { id:"echo", name:"Echo Turret", cost:110, damage:2, atkSpeed:1.2, range:6, color:"#7d8597", shape:"echo", echoNearby:true, echoPower:0.5 },
             { id:"arcmortar", name:"Arc Mortar", cost:210, damage:10, atkSpeed:5, range:16, color:"#495057", shape:"arcmortar", splashRadius:82 },
@@ -238,12 +238,12 @@ export function renderHtml() {
             { id:"needle", name:"Needle Gun", cost:70, damage:2, atkSpeed:0.4, range:7, color:"#101010", shape:"needle", pierceTargets:1 },
             { id:"fence", name:"Tesla Fence", cost:100, damage:1, atkSpeed:2, range:4, color:"#ffd60a", shape:"fence", hitSlow:0.2 },
             { id:"oil", name:"Oil Sprayer", cost:90, damage:0, atkSpeed:1, range:5, color:"#111111", shape:"oil", fireVuln:1.0 },
-            { id:"burst", name:"Burst Turret", cost:100, damage:3, atkSpeed:0.5, range:6, color:"#5e503f", shape:"burst", burstCount:3 },
+            { id:"burst", name:"Burst Turret", cost:100, damage:3, atkSpeed:3, range:6, color:"#5e503f", shape:"burst", burstShotsMax:7, coneHalfAngle:0.5 },
             { id:"plasma", name:"Plasma Thrower", cost:160, damage:4, atkSpeed:0.15, range:6, color:"#ff66c4", shape:"plasma", shred:3 },
             { id:"static", name:"Static Totem", cost:110, damage:0, atkSpeed:2, range:6, color:"#f5cb5c", shape:"static", hitSlow:0.3 },
             { id:"snare", name:"Snare Trap", cost:60, damage:0, atkSpeed:1, range:3, color:"#6c757d", shape:"snare", hitStun:35 },
             { id:"beamsplit", name:"Beam Splitter", cost:140, damage:2, atkSpeed:0.1, range:10, color:"#ff0000", shape:"beamsplit", splitBeams:2 },
-            { id:"flak", name:"Flak Cannon", cost:130, damage:6, atkSpeed:3, range:8, color:"#111", shape:"flak", fastBonus:1.0 },
+            { id:"flak", name:"Flak Cannon", cost:130, damage:6, atkSpeed:3, range:8, color:"#111", shape:"flak", fastBonus:1.0, flakPelletsMin:5, flakPelletsMax:20, coneHalfAngle:0.7 },
             { id:"spore", name:"Spore Pod", cost:90, damage:0, atkSpeed:1, range:5, color:"#3a5a40", shape:"spore", acidDotDps:2 },
             { id:"kinetic", name:"Kinetic Ram", cost:120, damage:5, atkSpeed:2, range:3, color:"#6c757d", shape:"kinetic", knockback:14 },
             { id:"volt", name:"Volt Rifle", cost:100, damage:3, atkSpeed:1, range:9, color:"#4361ee", shape:"volt", chain:true, chainCount:2 },
@@ -268,14 +268,14 @@ export function renderHtml() {
             { id:"ion", name:"Ion Cannon", cost:260, damage:10, atkSpeed:4, range:14, color:"#fff", shape:"ion", ignoreDefense:true },
             { id:"frostflare", name:"Frost Flare", cost:140, damage:3, atkSpeed:2, range:7, color:"#4cc9f0", shape:"frostflare", hitStun:24 },
             { id:"moltenmortar", name:"Molten Mortar", cost:220, damage:9, atkSpeed:5, range:15, color:"#e85d04", shape:"moltenmortar", splashRadius:90, burn:true, burnDuration:240, burnDps:4 },
-            { id:"shrapnel", name:"Shrapnel Gun", cost:120, damage:4, atkSpeed:1, range:7, color:"#6c757d", shape:"shrapnel", clusterCount:3 },
+            { id:"shrapnel", name:"Shrapnel Gun", cost:120, damage:4, atkSpeed:1, range:7, color:"#6c757d", shape:"shrapnel", splitProjectiles:3 },
             { id:"stormpillar", name:"Storm Pillar", cost:150, damage:0, atkSpeed:1, range:7, color:"#457b9d", shape:"stormpillar", hitStun:18 },
             { id:"decaytotem", name:"Decay Totem", cost:140, damage:0, atkSpeed:1, range:6, color:"#6a040f", shape:"decaytotem", stripDefense:4 },
             { id:"overwatch", name:"Overwatch Drone", cost:130, damage:2, atkSpeed:0.5, range:10, color:"#adb5bd", shape:"overwatch" },
             { id:"shardfan", name:"Shard Fan", cost:100, damage:3, atkSpeed:1, range:5, color:"#48cae4", shape:"shardfan", splitBeams:2 },
-            { id:"pulsebarrage", name:"Pulse Barrage", cost:120, damage:3, atkSpeed:1, range:7, color:"#f1faee", shape:"pulsebarrage", burstCount:3 },
+            { id:"pulsebarrage", name:"Pulse Barrage", cost:120, damage:3, atkSpeed:1, range:7, color:"#f1faee", projectileColor:"#7bdff2", shape:"pulsebarrage", coneProjectiles:8, coneHalfAngle:0.55 },
             { id:"cryoturbine", name:"Cryo Turbine", cost:130, damage:1, atkSpeed:1.5, range:6, color:"#a8dadc", shape:"cryoturbine", hitSlow:0.25 },
-            { id:"arcshotgun", name:"Arc Shotgun", cost:140, damage:5, atkSpeed:0.6, range:5, color:"#4361ee", shape:"arcshotgun", splitBeams:2 },
+            { id:"arcshotgun", name:"Arc Shotgun", cost:140, damage:5, atkSpeed:0.6, range:5, color:"#4361ee", shape:"arcshotgun", chainBolts:7, chainLinks:3, coneHalfAngle:0.65 },
             { id:"corrosion", name:"Corrosion Spitter", cost:150, damage:4, atkSpeed:1, range:7, color:"#80ed99", shape:"corrosion", shred:3 },
             { id:"shockwavetotem", name:"Shockwave Totem", cost:120, damage:0, atkSpeed:1, range:6, color:"#6c757d", shape:"shockwavetotem", hitSlow:0.2 },
             { id:"embertrap", name:"Ember Trap", cost:90, damage:2, atkSpeed:1, range:3, color:"#ff5400", shape:"embertrap", placeMine:true, mineDamage:2, mineRadius:30, burn:true, burnDuration:240, burnDps:3 },
@@ -770,6 +770,10 @@ export function renderHtml() {
             if (s.knockback) extras.push("Knockback: " + s.knockback);
             if (s.splitBeams && (BEAM_TOWERS.has(s.id) || s.chain || s.echoNearby)) extras.push("Split Beams: " + s.splitBeams);
             if (s.burstCount) extras.push("Burst: " + s.burstCount);
+            if (s.burstShotsMax) extras.push("Burst Shots: " + s.burstShotsMax);
+            if (s.flakPelletsMin || s.flakPelletsMax) extras.push("Pellets: " + (s.flakPelletsMin || 0) + "-" + (s.flakPelletsMax || 0));
+            if (s.coneProjectiles) extras.push("Cone Shots: " + s.coneProjectiles);
+            if (s.splitProjectiles) extras.push("Split: " + s.splitProjectiles);
             if (s.splashRadius) extras.push("Splash: " + Math.round(s.splashRadius));
             if (s.placeMine) extras.push("Mine Layer");
             const buffs = computeBuffsForTower(tower);
@@ -1104,8 +1108,16 @@ export function renderHtml() {
           function spawnConeProjectiles(tower, target, damage, count, halfAngleRad, color, options, extra = {}) {
             const coneTargets = getEnemiesInCone(tower, target, getTowerRangePx(tower), halfAngleRad);
             if (!coneTargets.length) { spawnTargetedProjectile(tower, target, damage, color, options, extra); return; }
+            const aim = Math.atan2(target.y - tower.y, target.x - tower.x);
             for (let i = 0; i < count; i++) {
-              const pick = coneTargets[i % coneTargets.length];
+              const t = count <= 1 ? 0.5 : i / (count - 1);
+              const desired = aim - halfAngleRad + (2 * halfAngleRad * t);
+              let pick = coneTargets[0], best = -Infinity;
+              for (const enemy of coneTargets) {
+                const ea = Math.atan2(enemy.y - tower.y, enemy.x - tower.x);
+                const score = Math.cos(angleDelta(ea, desired)) + enemy.pathIndex * 0.001;
+                if (score > best) { best = score; pick = enemy; }
+              }
               spawnTargetedProjectile(tower, pick, damage, color, options, extra);
             }
           }
@@ -1262,17 +1274,17 @@ export function renderHtml() {
             const baseOptions = { pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, freezeTag: ICE_TOWERS.has(s.id), burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:s.acidDotDps||0, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:(s.lifesteal || 0) + (buffs.lifesteal || 0), weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, knockback:s.knockback||0, fireVuln:s.fireVuln||0, stripDefense:s.stripDefense||0 };
 
             if (s.id === "burst") {
-              spawnConeProjectiles(tower, target, dmg, 7, 0.5, "#ffd6a5", baseOptions, { burstCount:1 });
+              spawnConeProjectiles(tower, target, dmg, s.burstShotsMax || 7, s.coneHalfAngle || 0.5, "#ffd6a5", baseOptions, { burstCount:1 });
               return;
             }
             if (s.id === "arcshotgun") {
-              const coneTargets = getEnemiesInCone(tower, target, getTowerRangePx(tower), 0.65).slice(0, 7);
+              const coneTargets = getEnemiesInCone(tower, target, getTowerRangePx(tower), s.coneHalfAngle || 0.65).slice(0, s.chainBolts || 7);
               const bolts = coneTargets.length ? coneTargets : [target];
               for (const start of bolts) {
                 const impacted = [start];
                 applyDamage(start, dmg, { hitSlow:s.hitSlow||0 });
                 for (const enemy of state.enemies) {
-                  if (impacted.length >= 3) break;
+                  if (impacted.length >= (s.chainLinks || 3)) break;
                   if (enemy === start || impacted.includes(enemy)) continue;
                   if (distance(enemy, impacted[impacted.length - 1]) <= 110) {
                     impacted.push(enemy);
@@ -1284,20 +1296,22 @@ export function renderHtml() {
               return;
             }
             if (s.id === "flak") {
-              const count = 5 + Math.floor(Math.random() * 16);
-              spawnConeProjectiles(tower, target, dmg * 0.45, count, 0.7, "#f8f9fa", baseOptions, { splashRadius:18 });
+              const minPellets = s.flakPelletsMin || 5;
+              const maxPellets = s.flakPelletsMax || 20;
+              const count = minPellets + Math.floor(Math.random() * (maxPellets - minPellets + 1));
+              spawnConeProjectiles(tower, target, dmg * 0.45, count, s.coneHalfAngle || 0.7, "#f8f9fa", baseOptions, { splashRadius:18 });
               return;
             }
             if (s.id === "pulsebarrage") {
-              spawnConeProjectiles(tower, target, dmg * 0.75, 8, 0.55, "#7bdff2", baseOptions, { splashRadius:12 });
+              spawnConeProjectiles(tower, target, dmg * 0.75, s.coneProjectiles || 8, s.coneHalfAngle || 0.55, s.projectileColor || "#7bdff2", baseOptions, { splashRadius:12 });
               return;
             }
             if (s.id === "shard") {
-              spawnConeProjectiles(tower, target, dmg, 4, 0.45, "#4deeea", baseOptions, { spawnOnHitProjectiles:8, spawnOnHitRadius:260, spawnOnHitDamageMult:0.45, spawnOnHitColor:"#80ffdb" });
+              spawnConeProjectiles(tower, target, dmg, s.coneProjectiles || 4, s.coneHalfAngle || 0.45, "#4deeea", baseOptions, { spawnOnHitProjectiles:s.splitProjectiles || 8, spawnOnHitRadius:260, spawnOnHitDamageMult:0.45, spawnOnHitColor:"#80ffdb" });
               return;
             }
             if (s.id === "shrapnel") {
-              spawnTargetedProjectile(tower, target, dmg, s.projectileColor||"#ffffff", baseOptions, { spawnOnHitProjectiles:3, spawnOnHitRadius:210, spawnOnHitDamageMult:0.55, spawnOnHitColor:"#ced4da" });
+              spawnTargetedProjectile(tower, target, dmg, s.projectileColor||"#ffffff", baseOptions, { spawnOnHitProjectiles:s.splitProjectiles || 3, spawnOnHitRadius:210, spawnOnHitDamageMult:0.55, spawnOnHitColor:"#ced4da" });
               return;
             }
 
@@ -1317,7 +1331,6 @@ export function renderHtml() {
               if (NERF_IDS.has(tower.stats.id)) atkSpeed *= 1.08;
               if (BUFF_IDS.has(tower.stats.id)) atkSpeed *= 0.94;
               tower.cooldown = Math.max(1, Math.round(atkSpeed * 60));
-              if (tower.stats.id === "burst") tower.cooldown = 180;
               tower.shotCount = (tower.shotCount || 0) + 1;
               tower.tempFreezeTicks = 0;
               if (tower.stats.freezeEvery && tower.shotCount % tower.stats.freezeEvery === 0) tower.tempFreezeTicks = tower.stats.freezeOnHitTicks || 60;
