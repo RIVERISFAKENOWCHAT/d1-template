@@ -667,6 +667,12 @@ export function renderHtml() {
             if (tower.burn || tower.fireVuln) return "Applies burning pressure that scales through prolonged fights.";
             if (tower.acidDotDps || tower.acidSpreadOnDeath) return "Corrodes enemies over time and spreads debuffs.";
             if (tower.knockback) return "Knocks enemies backward to buy more time for defenses.";
+            if (tower.id === "burst") return "Unloads rapid multi-shot bursts, then pauses before the next volley.";
+            if (tower.id === "arcshotgun") return "Blasts chaining lightning bolts across a short forward cone.";
+            if (tower.id === "shard") return "Launches shards that split into a full-circle secondary spray.";
+            if (tower.id === "shrapnel") return "Shells burst into three follow-up fragments on impact.";
+            if (tower.id === "flak") return "Fires a wide cone of pellets to shred clustered enemies.";
+            if (tower.id === "pulsebarrage") return "Sends multiple light-blue pulses in a forward cone.";
             if (tower.echoNearby || tower.splitBeams || tower.burstCount) return "Fires repeated or split attacks for high sustained output.";
             return "Reliable single-target tower with balanced cost and range.";
           }
@@ -1020,6 +1026,28 @@ export function renderHtml() {
           }
           function findTargetForTower(t){ let target=null,fur=-1; const rangePx=getTowerRangePx(t); for(const e of state.enemies){ if(!isEnemyVisible(e)) continue; if(distance(t,e)<=rangePx && e.pathIndex>fur && !(e.phaseDuration && e.phaseTick>0) && !(e.mirrorCd && e.mirrorTick===0)){target=e;fur=e.pathIndex;} } return target; }
           function pointToSegmentDistance(px,py,x1,y1,x2,y2){ const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy; if(l2===0)return Math.hypot(px-x1,py-y1); let t=((px-x1)*dx+(py-y1)*dy)/l2; t=Math.max(0,Math.min(1,t)); const qx=x1+t*dx,qy=y1+t*dy; return Math.hypot(px-qx,py-qy); }
+          function angleDelta(a, b) { return Math.atan2(Math.sin(a - b), Math.cos(a - b)); }
+          function getEnemiesInCone(origin, aimTarget, rangePx, halfAngleRad) {
+            const aim = Math.atan2(aimTarget.y - origin.y, aimTarget.x - origin.x);
+            return state.enemies.filter((enemy) => {
+              if (!isEnemyVisible(enemy)) return false;
+              const d = distance(origin, enemy);
+              if (d > rangePx) return false;
+              const ang = Math.atan2(enemy.y - origin.y, enemy.x - origin.x);
+              return Math.abs(angleDelta(ang, aim)) <= halfAngleRad;
+            }).sort((a, b) => b.pathIndex - a.pathIndex);
+          }
+          function spawnTargetedProjectile(from, enemy, damage, color, baseOptions = {}, extra = {}) {
+            state.projectiles.push({ x:from.x, y:from.y, target:enemy, speed:6, damage, color, splashRadius:extra.splashRadius||0, clusterCount:extra.clusterCount||0, options:baseOptions, pierceTargets:extra.pierceTargets||0, doubleShockwave:!!extra.doubleShockwave, perPierceProjectileBonus:extra.perPierceProjectileBonus||0, splitBeams:extra.splitBeams||0, burstCount:extra.burstCount||0, echoNearby:!!extra.echoNearby, echoPower:extra.echoPower||0.5, echoCount:extra.echoCount||1, spawnOnHitProjectiles:extra.spawnOnHitProjectiles||0, spawnOnHitRadius:extra.spawnOnHitRadius||0, spawnOnHitDamageMult:extra.spawnOnHitDamageMult||0.5, spawnOnHitColor:extra.spawnOnHitColor||color });
+          }
+          function spawnConeProjectiles(tower, target, damage, count, halfAngleRad, color, options, extra = {}) {
+            const coneTargets = getEnemiesInCone(tower, target, getTowerRangePx(tower), halfAngleRad);
+            if (!coneTargets.length) { spawnTargetedProjectile(tower, target, damage, color, options, extra); return; }
+            for (let i = 0; i < count; i++) {
+              const pick = coneTargets[i % coneTargets.length];
+              spawnTargetedProjectile(tower, pick, damage, color, options, extra);
+            }
+          }
 
           function towerShoot(tower, target, buffs) {
             const s=tower.stats;
@@ -1170,7 +1198,49 @@ export function renderHtml() {
               return;
             }
 
-            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:{ pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, freezeTag: ICE_TOWERS.has(s.id), burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:s.acidDotDps||0, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:(s.lifesteal || 0) + (buffs.lifesteal || 0), weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, knockback:s.knockback||0, fireVuln:s.fireVuln||0, stripDefense:s.stripDefense||0 }, pierceTargets:s.pierceTargets||0, doubleShockwave:!!s.doubleShockwave, perPierceProjectileBonus:s.perPierceProjectileBonus||0, splitBeams:s.splitBeams||0, burstCount:s.burstCount||0, echoNearby:!!s.echoNearby, echoPower:s.echoPower||0.5, echoCount:s.echoCount||1 });
+            const baseOptions = { pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, freezeTag: ICE_TOWERS.has(s.id), burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:s.acidDotDps||0, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:(s.lifesteal || 0) + (buffs.lifesteal || 0), weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, knockback:s.knockback||0, fireVuln:s.fireVuln||0, stripDefense:s.stripDefense||0 };
+
+            if (s.id === "burst") {
+              spawnConeProjectiles(tower, target, dmg, 7, 0.5, "#ffd6a5", baseOptions, { burstCount:1 });
+              return;
+            }
+            if (s.id === "arcshotgun") {
+              const coneTargets = getEnemiesInCone(tower, target, getTowerRangePx(tower), 0.65).slice(0, 7);
+              const bolts = coneTargets.length ? coneTargets : [target];
+              for (const start of bolts) {
+                const impacted = [start];
+                applyDamage(start, dmg, { hitSlow:s.hitSlow||0 });
+                for (const enemy of state.enemies) {
+                  if (impacted.length >= 3) break;
+                  if (enemy === start || impacted.includes(enemy)) continue;
+                  if (distance(enemy, impacted[impacted.length - 1]) <= 110) {
+                    impacted.push(enemy);
+                    applyDamage(enemy, dmg * 0.6, { hitSlow:s.hitSlow||0 });
+                  }
+                }
+                state.projectiles.push({x:tower.x,y:tower.y,target:start,mode:"bolt",ttl:8});
+              }
+              return;
+            }
+            if (s.id === "flak") {
+              const count = 5 + Math.floor(Math.random() * 16);
+              spawnConeProjectiles(tower, target, dmg * 0.45, count, 0.7, "#f8f9fa", baseOptions, { splashRadius:18 });
+              return;
+            }
+            if (s.id === "pulsebarrage") {
+              spawnConeProjectiles(tower, target, dmg * 0.75, 8, 0.55, "#7bdff2", baseOptions, { splashRadius:12 });
+              return;
+            }
+            if (s.id === "shard") {
+              spawnConeProjectiles(tower, target, dmg, 4, 0.45, "#4deeea", baseOptions, { spawnOnHitProjectiles:8, spawnOnHitRadius:260, spawnOnHitDamageMult:0.45, spawnOnHitColor:"#80ffdb" });
+              return;
+            }
+            if (s.id === "shrapnel") {
+              spawnTargetedProjectile(tower, target, dmg, s.projectileColor||"#ffffff", baseOptions, { spawnOnHitProjectiles:3, spawnOnHitRadius:210, spawnOnHitDamageMult:0.55, spawnOnHitColor:"#ced4da" });
+              return;
+            }
+
+            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:baseOptions, pierceTargets:s.pierceTargets||0, doubleShockwave:!!s.doubleShockwave, perPierceProjectileBonus:s.perPierceProjectileBonus||0, splitBeams:s.splitBeams||0, burstCount:s.burstCount||0, echoNearby:!!s.echoNearby, echoPower:s.echoPower||0.5, echoCount:s.echoCount||1 });
           }
 
           function updateTowers() {
@@ -1186,6 +1256,7 @@ export function renderHtml() {
               if (NERF_IDS.has(tower.stats.id)) atkSpeed *= 1.08;
               if (BUFF_IDS.has(tower.stats.id)) atkSpeed *= 0.94;
               tower.cooldown = Math.max(1, Math.round(atkSpeed * 60));
+              if (tower.stats.id === "burst") tower.cooldown = 180;
               tower.shotCount = (tower.shotCount || 0) + 1;
               tower.tempFreezeTicks = 0;
               if (tower.stats.freezeEvery && tower.shotCount % tower.stats.freezeEvery === 0) tower.tempFreezeTicks = tower.stats.freezeOnHitTicks || 60;
@@ -1241,6 +1312,21 @@ export function renderHtml() {
                   for (let c=0;c<p.clusterCount;c++) {
                     const ang=(Math.PI*2*c)/p.clusterCount;
                     explodeAt(p.target.x + Math.cos(ang)*18, p.target.y + Math.sin(ang)*18, 40, p.damage*0.45, !!p.options.igniteOnExplode);
+                  }
+                }
+                if (p.spawnOnHitProjectiles > 0) {
+                  const nearby = state.enemies.filter((e)=>e!==p.target && distance(e,p.target) <= (p.spawnOnHitRadius || 240));
+                  const source = {x:p.target.x, y:p.target.y};
+                  for (let n = 0; n < p.spawnOnHitProjectiles; n++) {
+                    if (!nearby.length) break;
+                    const ang = (Math.PI * 2 * n) / p.spawnOnHitProjectiles;
+                    let best = nearby[0], bestScore = -Infinity;
+                    for (const e of nearby) {
+                      const ea = Math.atan2(e.y - source.y, e.x - source.x);
+                      const score = Math.cos(angleDelta(ea, ang));
+                      if (score > bestScore) { bestScore = score; best = e; }
+                    }
+                    state.projectiles.push({ x:source.x, y:source.y, target:best, speed:7, damage:p.damage * (p.spawnOnHitDamageMult || 0.5), color:p.spawnOnHitColor || p.color || "#ffffff", splashRadius:0, clusterCount:0, options:p.options||{}, pierceTargets:0, doubleShockwave:false, perPierceProjectileBonus:0, splitBeams:0, burstCount:0, echoNearby:false, echoPower:0.5, echoCount:1 });
                   }
                 }
                 if (p.options.chainStun) { for (const e of state.enemies) if (distance(e,p.target)<=60) e.stunTicks=Math.max(e.stunTicks, Math.round((p.options.hitStun||0)*0.7)); }
