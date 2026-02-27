@@ -110,6 +110,7 @@ export function renderHtml() {
           const SPEED_SCALE = 0.08;
           const NON_PROJECTILE_TOWERS = new Set(["mine","gravity","poison","emp","void","cryomines","fence","oil","static","snare","spore","firetotem","shocknet","nanoswarm","timespire","arctrap","spikewall","plaguetower","heatsink","magnet","stormpillar","decaytotem","whirlpool"]);
           const WATER_ONLY_TOWERS = new Set(["tidal","coral","whirlpool","frostwave","tsunami"]);
+          const LIGHT_TOWERS = new Set(["laser","thermalray","frostflare","tesla","beamsplit","scatterlaser","ion","shocknet","static","shockwavetotem"]);
           const BEAM_TOWERS = new Set(["laser","beamsplit","thermalray","cryobeam"]);
           const NERF_IDS = new Set(["railgun","bomb","laser","beamsplit","scatterlaser","ion","voidemperorkiller"]);
           const BUFF_IDS = new Set(["wind","snare","spore","firetotem","decaytotem","shockwavetotem","overwatch","heatsink","pulse"]);
@@ -128,9 +129,11 @@ export function renderHtml() {
             [{ x: 0, y: 250 }, { x: 250, y: 250 }, { x: 250, y: 90 }, { x: 560, y: 90 }, { x: 560, y: 360 }, { x: 770, y: 360 }, { x: 770, y: 200 }, { x: 920, y: 200 }],
           ];
           const MAPS = {
-            beginner: { id:"beginner", name:"Beginner map", description:"Classic lane, rerolled path every run.", tracks:1, makePaths:() => [BEGINNER_VARIANTS[Math.floor(Math.random()*BEGINNER_VARIANTS.length)].map((pt)=>({x:pt.x,y:pt.y}))], water:null },
-            doubletrack: { id:"doubletrack", name:"Double Track", description:"Two enemy lanes at once.", tracks:2, makePaths:() => [[{x:0,y:170},{x:230,y:170},{x:230,y:80},{x:530,y:80},{x:530,y:250},{x:920,y:250}], [{x:0,y:390},{x:260,y:390},{x:260,y:500},{x:560,y:500},{x:560,y:300},{x:920,y:300}]], water:null },
-            lakeside: { id:"lakeside", name:"Lakeside Beach", description:"Watch the water zone: no tower placement there.", tracks:1, makePaths:() => [[{x:0,y:300},{x:220,y:300},{x:220,y:120},{x:520,y:120},{x:520,y:420},{x:640,y:420},{x:640,y:220},{x:780,y:220},{x:920,y:220}]], water:{x:650,y:0,w:270,h:560} },
+            beginner: { id:"beginner", name:"Beginner map", description:"Classic lane, rerolled path every run.", tracks:1, makePaths:() => [BEGINNER_VARIANTS[Math.floor(Math.random()*BEGINNER_VARIANTS.length)].map((pt)=>({x:pt.x,y:pt.y}))], water:null, blockedZones:[], fog:null },
+            doubletrack: { id:"doubletrack", name:"Double Track", description:"Two enemy lanes at once.", tracks:2, makePaths:() => [[{x:0,y:170},{x:230,y:170},{x:230,y:80},{x:530,y:80},{x:530,y:250},{x:920,y:250}], [{x:0,y:390},{x:260,y:390},{x:260,y:500},{x:560,y:500},{x:560,y:300},{x:920,y:300}]], water:null, blockedZones:[], fog:null },
+            lakeside: { id:"lakeside", name:"Lakeside Beach", description:"Watch the water zone: no tower placement there.", tracks:1, makePaths:() => [[{x:0,y:300},{x:220,y:300},{x:220,y:120},{x:520,y:120},{x:520,y:420},{x:640,y:420},{x:640,y:220},{x:780,y:220},{x:920,y:220}]], water:{x:650,y:0,w:270,h:560}, blockedZones:[], fog:null },
+            fogmarsh: { id:"fogmarsh", name:"Fog Marsh", description:"Similar to beginner with nearby water + fog of war.", tracks:1, makePaths:() => [[{x:0,y:280},{x:200,y:280},{x:200,y:130},{x:480,y:130},{x:480,y:390},{x:720,y:390},{x:720,y:230},{x:920,y:230}]], waterZones:[{x:250,y:210,w:120,h:80},{x:560,y:280,w:110,h:80}], blockedZones:[], fog:{x:360,revealRadius:180} },
+            warpzone: { id:"warpzone", name:"Warp Zone", description:"One lane splits into three. Red tiles are blocked.", tracks:3, makePaths:() => [[{x:0,y:280},{x:300,y:280},{x:520,y:280},{x:700,y:130},{x:920,y:130}], [{x:0,y:280},{x:300,y:280},{x:520,y:280},{x:760,y:280},{x:920,y:280}], [{x:0,y:280},{x:300,y:280},{x:520,y:280},{x:700,y:430},{x:920,y:430}]], water:null, blockedZones:[{x:380,y:60,w:70,h:70},{x:610,y:230,w:80,h:80},{x:640,y:470,w:90,h:60}], fog:null },
           };
           const DIFFICULTIES = {
             normal: { id:"normal", name:"Normal", enemyMult:1, hpMult:1, speedMult:1 },
@@ -528,6 +531,9 @@ export function renderHtml() {
           function getDeathDifficultyScale() { if (state.difficultyId !== "death") return 1; if (state.wave <= 10) return 1; return Math.min(5, +(1 + (state.wave - 10) * 0.2).toFixed(2)); }
           function getMap() { return MAPS[state.mapId] || MAPS.beginner; }
           function getPath(trackIndex = 0) { return state.paths[trackIndex] || state.paths[0] || BASE_PATH; }
+          function getWaterZones(map) { if (map.waterZones) return map.waterZones; return map.water ? [map.water] : []; }
+          function inZone(x, y, z) { return x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h; }
+          function isEnemyVisible(enemy) { const map = getMap(); if (!map.fog) return true; if (enemy.x < map.fog.x) return true; for (const t of state.towers) { if (!LIGHT_TOWERS.has(t.baseId)) continue; if (Math.hypot(t.x - enemy.x, t.y - enemy.y) <= (map.fog.revealRadius || 180)) return true; } return false; }
 
           function resetRun(mapId, difficultyId) {
             state.mapId = mapId;
@@ -928,7 +934,7 @@ export function renderHtml() {
             return out;
           }
 
-          function findTargetForTower(t){ let target=null,fur=-1; for(const e of state.enemies){ if(distance(t,e)<=t.rangePx && e.pathIndex>fur && !(e.phaseDuration && e.phaseTick>0) && !(e.mirrorCd && e.mirrorTick===0)){target=e;fur=e.pathIndex;} } return target; }
+          function findTargetForTower(t){ let target=null,fur=-1; for(const e of state.enemies){ if(!isEnemyVisible(e)) continue; if(distance(t,e)<=t.rangePx && e.pathIndex>fur && !(e.phaseDuration && e.phaseTick>0) && !(e.mirrorCd && e.mirrorTick===0)){target=e;fur=e.pathIndex;} } return target; }
           function pointToSegmentDistance(px,py,x1,y1,x2,y2){ const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy; if(l2===0)return Math.hypot(px-x1,py-y1); let t=((px-x1)*dx+(py-y1)*dy)/l2; t=Math.max(0,Math.min(1,t)); const qx=x1+t*dx,qy=y1+t*dy; return Math.hypot(px-qx,py-qy); }
 
           function towerShoot(tower, target, buffs) {
@@ -969,6 +975,7 @@ export function renderHtml() {
 
             if (NON_PROJECTILE_TOWERS.has(s.id) && !s.placeMine) {
               for (const enemy of state.enemies) {
+                if (!isEnemyVisible(enemy)) continue;
                 if (distance(tower, enemy) > tower.rangePx) continue;
                 if (s.pullStrength) {
                   const dx = tower.x - enemy.x;
@@ -1055,6 +1062,7 @@ export function renderHtml() {
             if (s.linePierce) {
               let hits = 0;
               for (const enemy of state.enemies) {
+                if (!isEnemyVisible(enemy)) continue;
                 if (distance(tower, enemy) > tower.rangePx) continue;
                 if (pointToSegmentDistance(enemy.x, enemy.y, tower.x, tower.y, target.x, target.y) <= 14) {
                   const scaledDamage = dmg * (1 + (s.perPierceBeamBonus || 0) * hits);
@@ -1150,7 +1158,7 @@ export function renderHtml() {
 
           function polygon(x,y,r,sides,color,rot=0){ ctx.fillStyle=color; ctx.beginPath(); for(let i=0;i<sides;i++){ const a=rot+(i*Math.PI*2)/sides; const px=x+Math.cos(a)*r, py=y+Math.sin(a)*r; if(i===0)ctx.moveTo(px,py); else ctx.lineTo(px,py);} ctx.closePath(); ctx.fill(); }
 
-          function drawEnemy(enemy){ const s=ENEMY_TYPES[enemy.type]||ENEMY_TYPES.normal; if(s.shape==="circle"){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(enemy.x,enemy.y,12,0,Math.PI*2);ctx.fill();} else if(s.shape==="triangle"||s.shape==="smallTriangle"){polygon(enemy.x,enemy.y,s.shape==="smallTriangle"?8:12,3,s.color,-Math.PI/2);} else if(s.shape==="square"){ctx.fillStyle=s.color;ctx.fillRect(enemy.x-11,enemy.y-11,22,22);} else if(s.shape==="hex"){polygon(enemy.x,enemy.y,12,6,s.color,Math.PI/6);} else if(s.shape==="oct"){polygon(enemy.x,enemy.y,13,8,s.color,Math.PI/8);} else if(s.shape==="pent"){polygon(enemy.x,enemy.y,12,5,s.color,Math.PI/10);} else if(s.shape==="diamond"){polygon(enemy.x,enemy.y,12,4,s.color,Math.PI/4);} else if(s.shape==="monolith"){ctx.fillStyle=s.color;ctx.fillRect(enemy.x-8,enemy.y-14,16,28);} else if(s.shape==="sun"){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(enemy.x,enemy.y,12,0,Math.PI*2);ctx.fill(); for(let k=0;k<8;k++){const a=(k*Math.PI)/4; ctx.beginPath(); ctx.moveTo(enemy.x,enemy.y); ctx.lineTo(enemy.x+Math.cos(a)*18, enemy.y+Math.sin(a)*18); ctx.strokeStyle="#333"; ctx.stroke();}} else if(s.shape==="split"){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(enemy.x,enemy.y,12,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#0a3318";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(enemy.x-5,enemy.y-7);ctx.lineTo(enemy.x+2,enemy.y-1);ctx.lineTo(enemy.x-1,enemy.y+6);ctx.stroke();}
+          function drawEnemy(enemy){ if (!isEnemyVisible(enemy)) return; const s=ENEMY_TYPES[enemy.type]||ENEMY_TYPES.normal; if(s.shape==="circle"){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(enemy.x,enemy.y,12,0,Math.PI*2);ctx.fill();} else if(s.shape==="triangle"||s.shape==="smallTriangle"){polygon(enemy.x,enemy.y,s.shape==="smallTriangle"?8:12,3,s.color,-Math.PI/2);} else if(s.shape==="square"){ctx.fillStyle=s.color;ctx.fillRect(enemy.x-11,enemy.y-11,22,22);} else if(s.shape==="hex"){polygon(enemy.x,enemy.y,12,6,s.color,Math.PI/6);} else if(s.shape==="oct"){polygon(enemy.x,enemy.y,13,8,s.color,Math.PI/8);} else if(s.shape==="pent"){polygon(enemy.x,enemy.y,12,5,s.color,Math.PI/10);} else if(s.shape==="diamond"){polygon(enemy.x,enemy.y,12,4,s.color,Math.PI/4);} else if(s.shape==="monolith"){ctx.fillStyle=s.color;ctx.fillRect(enemy.x-8,enemy.y-14,16,28);} else if(s.shape==="sun"){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(enemy.x,enemy.y,12,0,Math.PI*2);ctx.fill(); for(let k=0;k<8;k++){const a=(k*Math.PI)/4; ctx.beginPath(); ctx.moveTo(enemy.x,enemy.y); ctx.lineTo(enemy.x+Math.cos(a)*18, enemy.y+Math.sin(a)*18); ctx.strokeStyle="#333"; ctx.stroke();}} else if(s.shape==="split"){ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(enemy.x,enemy.y,12,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#0a3318";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(enemy.x-5,enemy.y-7);ctx.lineTo(enemy.x+2,enemy.y-1);ctx.lineTo(enemy.x-1,enemy.y+6);ctx.stroke();}
             ctx.fillStyle="#111";ctx.fillRect(enemy.x-14,enemy.y-20,28,4);ctx.fillStyle="#57cc99";ctx.fillRect(enemy.x-14,enemy.y-20,28*(Math.max(enemy.hp,0)/enemy.maxHp),4);
           }
 
@@ -1197,7 +1205,7 @@ export function renderHtml() {
           }
 
           function drawAlliedTurrets(){ for(const u of state.alliedTurrets){ ctx.fillStyle="#313a46";ctx.fillRect(u.x-8,u.y-8,16,16);ctx.fillStyle="#89fcff";ctx.beginPath();ctx.arc(u.x,u.y,4,0,Math.PI*2);ctx.fill(); ctx.fillStyle="#111";ctx.fillRect(u.x-10,u.y-14,20,3);ctx.fillStyle="#57cc99";ctx.fillRect(u.x-10,u.y-14,20*Math.max(0,u.hp)/(u.unitHp||5),3);} }
-          function drawPath(){ const map = getMap(); if (map.water) { ctx.fillStyle = "#1f5f8b"; ctx.fillRect(map.water.x, map.water.y, map.water.w, map.water.h); } ctx.strokeStyle="#f4a261";ctx.lineWidth=34;ctx.lineJoin="round";ctx.lineCap="round"; for (const lane of state.paths) { if (!lane || !lane.length) continue; ctx.beginPath();ctx.moveTo(lane[0].x,lane[0].y);for(let i=1;i<lane.length;i++)ctx.lineTo(lane[i].x,lane[i].y);ctx.stroke(); } }
+          function drawPath(){ const map = getMap(); for (const wz of getWaterZones(map)) { ctx.fillStyle = "#1f5f8b"; ctx.fillRect(wz.x, wz.y, wz.w, wz.h); } for (const bz of (map.blockedZones || [])) { ctx.fillStyle = "#7f1d1d"; ctx.fillRect(bz.x, bz.y, bz.w, bz.h); } ctx.strokeStyle="#f4a261";ctx.lineWidth=34;ctx.lineJoin="round";ctx.lineCap="round"; for (const lane of state.paths) { if (!lane || !lane.length) continue; ctx.beginPath();ctx.moveTo(lane[0].x,lane[0].y);for(let i=1;i<lane.length;i++)ctx.lineTo(lane[i].x,lane[i].y);ctx.stroke(); } if (map.fog) { ctx.fillStyle = "rgba(10,12,18,0.72)"; ctx.fillRect(map.fog.x, 0, canvas.width - map.fog.x, canvas.height); } }
           function drawProjectiles(){ for(const p of state.projectiles){ if(p.mode==="bolt"){ctx.strokeStyle="#f7f45f";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p.x,p.y);if(p.target)ctx.lineTo(p.target.x,p.target.y);ctx.stroke();} else if(p.mode==="beam"){ctx.strokeStyle=p.color||"#d9d9d9";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(p.x,p.y);if(p.target)ctx.lineTo(p.target.x,p.target.y);ctx.stroke();} else {ctx.fillStyle=p.color||"#fff";ctx.beginPath();ctx.arc(p.x,p.y,3.5,0,Math.PI*2);ctx.fill();} } }
           function drawGameOver(){ if(state.lives>0)return; ctx.fillStyle="rgba(0,0,0,0.72)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 52px system-ui";ctx.fillText("Game Over",canvas.width/2,canvas.height/2-20);ctx.font="24px system-ui";ctx.fillText("Refresh to try again",canvas.width/2,canvas.height/2+24); }
 
@@ -1205,7 +1213,7 @@ export function renderHtml() {
             for (const m of state.mines) { ctx.fillStyle = "#d4af37"; ctx.beginPath(); ctx.arc(m.x, m.y, 5, 0, Math.PI * 2); ctx.fill(); }
             drawAlliedTurrets(); for(const e of state.enemies) drawEnemy(e); drawProjectiles(); drawGameOver(); requestAnimationFrame(tick); }
 
-          function canPlaceTower(x,y){ const map = getMap(); const model=TOWERS.find((t)=>t.id===state.selectedTower); const inWater = !!(map.water && x >= map.water.x && x <= map.water.x + map.water.w && y >= map.water.y && y <= map.water.y + map.water.h); const isWaterOnly = !!(model && WATER_ONLY_TOWERS.has(model.id)); if (isWaterOnly && state.mapId !== "lakeside") return false; if (isWaterOnly && !inWater) return false; if (!isWaterOnly && inWater) return false; const onPath=state.paths.some((lane)=>lane.some((pt,i)=>{ if(i===0)return false; const a=lane[i-1],b=pt; return x>=Math.min(a.x,b.x)-26&&x<=Math.max(a.x,b.x)+26&&y>=Math.min(a.y,b.y)-26&&y<=Math.max(a.y,b.y)+26;})); if(onPath)return false; if(state.towers.some((t)=>distance(t,{x,y})<34)) return false; return true; }
+          function canPlaceTower(x,y){ const map = getMap(); const model=TOWERS.find((t)=>t.id===state.selectedTower); const inWater = getWaterZones(map).some((wz)=>inZone(x,y,wz)); const blocked = (map.blockedZones || []).some((bz)=>inZone(x,y,bz)); const isWaterOnly = !!(model && WATER_ONLY_TOWERS.has(model.id)); if (blocked) return false; if (isWaterOnly && state.mapId !== "lakeside") return false; if (isWaterOnly && !inWater) return false; if (!isWaterOnly && inWater) return false; const onPath=state.paths.some((lane)=>lane.some((pt,i)=>{ if(i===0)return false; const a=lane[i-1],b=pt; return x>=Math.min(a.x,b.x)-26&&x<=Math.max(a.x,b.x)+26&&y>=Math.min(a.y,b.y)-26&&y<=Math.max(a.y,b.y)+26;})); if(onPath)return false; if(state.towers.some((t)=>distance(t,{x,y})<34)) return false; return true; }
 
           canvas.addEventListener("click", (event) => {
             if (state.lives <= 0) return;
