@@ -790,12 +790,25 @@ export function renderHtml() {
 
             if (s.placeMine) {
               const count = s.mineCount || 1;
+              const candidates = [];
+              for (const lane of state.paths) {
+                for (let i = 1; i < lane.length; i++) {
+                  const a = lane[i - 1];
+                  const b = lane[i];
+                  const segLen = Math.max(1, Math.hypot(b.x - a.x, b.y - a.y));
+                  const steps = Math.max(4, Math.ceil(segLen / 16));
+                  for (let step = 0; step <= steps; step++) {
+                    const t = step / steps;
+                    const px = a.x + (b.x - a.x) * t;
+                    const py = a.y + (b.y - a.y) * t;
+                    if (Math.hypot(px - tower.x, py - tower.y) <= tower.rangePx) candidates.push({ x: px, y: py });
+                  }
+                }
+              }
               for (let m = 0; m < count; m++) {
-                const angle = Math.random() * Math.PI * 2;
-                const radius = Math.random() * tower.rangePx;
-                const mx = tower.x + Math.cos(angle) * radius;
-                const my = tower.y + Math.sin(angle) * radius;
-                state.mines.push({ x: mx, y: my, damage: s.mineDamage || s.damage || 0, radius: s.mineRadius || 32, slow: s.mineSlow || 0, root: s.mineRoot || 0, freeze: s.mineFreeze || 0, vuln: s.mineVuln || 0, splash: s.mineSplash || 0, ttl: 900 });
+                if (!candidates.length) break;
+                const pick = candidates[Math.floor(Math.random() * candidates.length)];
+                state.mines.push({ x: pick.x, y: pick.y, damage: s.mineDamage || s.damage || 0, radius: s.mineRadius || 32, slow: s.mineSlow || 0, root: s.mineRoot || 0, freeze: s.mineFreeze || 0, vuln: s.mineVuln || 0, splash: s.mineSplash || 0, ttl: 900 });
               }
               return;
             }
