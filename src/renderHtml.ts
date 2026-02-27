@@ -108,7 +108,8 @@ export function renderHtml() {
 
           const RANGE_UNIT = 22;
           const SPEED_SCALE = 0.08;
-          const NON_PROJECTILE_TOWERS = new Set(["mine","gravity","poison","emp","void","cryomines","fence","oil","static","snare","spore","firetotem","shocknet","nanoswarm","timespire","arctrap","spikewall","plaguetower","heatsink","magnet","stormpillar","decaytotem"]);
+          const NON_PROJECTILE_TOWERS = new Set(["mine","gravity","poison","emp","void","cryomines","fence","oil","static","snare","spore","firetotem","shocknet","nanoswarm","timespire","arctrap","spikewall","plaguetower","heatsink","magnet","stormpillar","decaytotem","whirlpool"]);
+          const WATER_ONLY_TOWERS = new Set(["tidal","coral","whirlpool","frostwave","tsunami"]);
           const BEAM_TOWERS = new Set(["laser","beamsplit","thermalray","cryobeam"]);
           const NERF_IDS = new Set(["railgun","bomb","laser","beamsplit","scatterlaser","ion","voidemperorkiller"]);
           const BUFF_IDS = new Set(["wind","snare","spore","firetotem","decaytotem","shockwavetotem","overwatch","heatsink","pulse"]);
@@ -255,6 +256,12 @@ export function renderHtml() {
             { id:"sentry", name:"Sentry Drone", cost:130, damage:2, atkSpeed:0.5, range:9, color:"#8d99ae", shape:"sentry" },
             { id:"rift", name:"Rift Beacon", cost:160, damage:0, atkSpeed:1, range:7, color:"#7209b7", shape:"rift", pullStrength:0.4, supportVuln:0.1 },
             { id:"scatterlaser", name:"Scatter Laser", cost:150, damage:2, atkSpeed:0.12, range:10, color:"#ef233c", shape:"scatterlaser", splitBeams:3 },
+            
+            { id:"tidal", name:"Tidal Sprayer", cost:55, damage:1.5, atkSpeed:0.8, range:6, color:"#7bdff2", shape:"tidal", hitSlow:0.05 },
+            { id:"coral", name:"Coral Mortar", cost:95, damage:4, atkSpeed:1.8, range:10, color:"#ff70a6", shape:"coral", splashRadius:45 },
+            { id:"whirlpool", name:"Whirlpool Totem", cost:70, damage:0.5, atkSpeed:0.4, range:4, color:"#4ea8de", shape:"whirlpool", pullStrength:0.35 },
+            { id:"frostwave", name:"Frostwave Conduit", cost:80, damage:2, atkSpeed:1, range:7, color:"#2ec4b6", shape:"frostwave", hitSlow:0.2 },
+            { id:"tsunami", name:"Tsunami Beacon", cost:150, damage:6, atkSpeed:3, range:12, color:"#1d4ed8", shape:"tsunami", splashRadius:70 },
             { id:"bastion", name:"Bastion Turret", cost:200, damage:8, atkSpeed:2, range:8, color:"#495057", shape:"bastion", defenseAura:0.3 },
           ];
 
@@ -363,6 +370,31 @@ export function renderHtml() {
               A:[{cost:180,set:{echoPower:0.7}},{cost:340,set:{echoPower:1}},{cost:700,set:{echoPower:1.3}},{cost:1300,set:{echoPower:2}}],
               B:[{cost:180,set:{echoCount:2}},{cost:340,set:{echoCount:3}},{cost:700,set:{echoCount:4}},{cost:1300,set:{echoCount:999}}],
               C:[{cost:180,set:{echoStrongest:true}},{cost:340,set:{echoStrongestEnemy:true}},{cost:700,set:{echoSpecials:true}},{cost:1300,set:{echoSpecials:true,echoUltimate:true}}],
+            },
+            tidal: {
+              A:[{cost:90,set:{damage:2.5,atkSpeed:0.8,range:6}},{cost:170,set:{damage:2.5,atkSpeed:0.5,range:7}},{cost:320,set:{damage:3.5,atkSpeed:0.45,range:8,pierceTargets:2}},{cost:700,set:{damage:6,atkSpeed:0.4,range:9,pierceTargets:2,ignoreArmorPct:0.2}}],
+              B:[{cost:90,set:{supportVuln:0.1}},{cost:170,set:{supportVuln:0.1,poisonDuration:180}},{cost:320,set:{supportVuln:0.15,spreadVuln:1}},{cost:700,set:{supportVuln:0.2,spreadVuln:2,hitSlow:0.2}}],
+              C:[{cost:90,set:{splitBeams:1}},{cost:170,set:{splitBeams:2}},{cost:320,set:{splitBeams:2,splashRadius:38}},{cost:700,set:{splitBeams:4,splashRadius:44,damage:5}}],
+            },
+            coral: {
+              A:[{cost:150,set:{damage:6}},{cost:280,set:{damage:7,splashRadius:65}},{cost:520,set:{damage:9,splashRadius:72,acidDotDps:1}},{cost:980,set:{damage:15,splashRadius:95,acidDotDps:2}}],
+              B:[{cost:150,set:{mineCount:1,mineDamage:2,mineRadius:26,placeMine:true}},{cost:280,set:{mineCount:2,mineDamage:2,mineRadius:28,mineSlow:0.2,placeMine:true}},{cost:520,set:{mineCount:3,mineDamage:4,mineRadius:30,mineSlow:0.25,placeMine:true}},{cost:980,set:{mineCount:4,mineDamage:5,mineRadius:34,mineSlow:0.35,placeMine:true}}],
+              C:[{cost:150,set:{stripDefense:1}},{cost:280,set:{stripDefense:2}},{cost:520,set:{stripDefense:3,antiArmorBonus:0.5}},{cost:980,set:{stripDefense:6,antiArmorBonus:1,supportVuln:0.2}}],
+            },
+            whirlpool: {
+              A:[{cost:120,set:{pullStrength:0.45}},{cost:240,set:{pullStrength:0.55,range:5}},{cost:440,set:{pullStrength:0.55,range:6,hitSlow:0.25}},{cost:900,set:{pullStrength:0.7,range:6,hitSlow:0.35,freezeEvery:5,freezeOnHitTicks:60}}],
+              B:[{cost:120,set:{damage:1.5}},{cost:240,set:{damage:1.5,lowHpBonus:0.2}},{cost:440,set:{damage:2.5,atkSpeed:0.28,lowHpBonus:0.3}},{cost:900,set:{damage:4,atkSpeed:0.24,lowHpBonus:0.5,executeChance:0.15,executeHp:0.1}}],
+              C:[{cost:120,set:{splitBeams:1}},{cost:240,set:{splitBeams:2}},{cost:440,set:{splitBeams:2,burnExplode:4}},{cost:900,set:{splitBeams:3,doubleEvery:2}}],
+            },
+            frostwave: {
+              A:[{cost:130,set:{hitSlow:0.2}},{cost:250,set:{hitSlow:0.35}},{cost:480,set:{hitSlow:0.35,freezeEvery:5,freezeOnHitTicks:50}},{cost:920,set:{hitSlow:0.45,freezeEvery:4,freezeOnHitTicks:90}}],
+              B:[{cost:130,set:{damage:3}},{cost:250,set:{damage:3,splitBeams:1}},{cost:480,set:{damage:4,splitBeams:1,atkSpeed:0.7}},{cost:920,set:{damage:6,splitBeams:2,frozenVuln:0.5}}],
+              C:[{cost:130,set:{range:8}},{cost:250,set:{range:9,supportAtkAura:0.12}},{cost:480,set:{range:10,supportAtkAura:0.2,supportVuln:0.1}},{cost:920,set:{range:11,supportAtkAura:0.25,supportVuln:0.2,permaSlowInRange:0.2}}],
+            },
+            tsunami: {
+              A:[{cost:260,set:{damage:9}},{cost:480,set:{damage:11,splashRadius:90}},{cost:900,set:{damage:14,splashRadius:105,knockback:12}},{cost:1700,set:{damage:30,splashRadius:130,pulseEvery:8,pulseAllInRange:true}}],
+              B:[{cost:260,set:{pullStrength:0.2}},{cost:480,set:{pullStrength:0.35}},{cost:900,set:{pullStrength:0.5,hitStun:24}},{cost:1700,set:{pullStrength:0.6,hitStun:45,knockback:18}}],
+              C:[{cost:260,set:{auraDamage:0.1}},{cost:480,set:{auraDamage:0.15,supportVuln:0.1}},{cost:900,set:{auraDamage:0.2,supportVuln:0.15,chainCount:3}},{cost:1700,set:{auraDamage:0.3,supportVuln:0.25,chainCount:5}}],
             },
           };
 
@@ -1033,6 +1065,11 @@ export function renderHtml() {
             else if(m.shape==="static"){ctx.fillStyle="#f5cb5c";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();}
             else if(m.shape==="snare"){ctx.strokeStyle="#6c757d";ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.stroke();}
             else if(m.shape==="beamsplit"){ctx.fillStyle="#ff0000";ctx.beginPath();ctx.moveTo(x,y-12);ctx.lineTo(x+10,y+8);ctx.lineTo(x-10,y+8);ctx.closePath();ctx.fill();}
+            else if(m.shape==="tidal"){ctx.fillStyle="#7bdff2";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();}
+            else if(m.shape==="coral"){ctx.fillStyle="#ff70a6";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#ff99c8";ctx.beginPath();ctx.moveTo(x-8,y+2);ctx.lineTo(x+8,y-2);ctx.stroke();}
+            else if(m.shape==="whirlpool"){ctx.strokeStyle="#4ea8de";ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*1.7);ctx.stroke();ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*1.7);ctx.stroke();}
+            else if(m.shape==="frostwave"){polygon(x,y,12,6,"#2ec4b6",Math.PI/6);ctx.strokeStyle="#90e0ef";ctx.beginPath();ctx.moveTo(x-6,y+6);ctx.lineTo(x+6,y-6);ctx.stroke();}
+            else if(m.shape==="tsunami"){ctx.fillStyle="#1d4ed8";ctx.fillRect(x-6,y-13,12,26);ctx.fillStyle="#60a5fa";ctx.fillRect(x-3,y-9,6,18);}
             else {ctx.fillStyle=m.color||"#fff";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();}
           }
 
@@ -1045,7 +1082,7 @@ export function renderHtml() {
             for (const m of state.mines) { ctx.fillStyle = "#d4af37"; ctx.beginPath(); ctx.arc(m.x, m.y, 5, 0, Math.PI * 2); ctx.fill(); }
             drawAlliedTurrets(); for(const e of state.enemies) drawEnemy(e); drawProjectiles(); drawGameOver(); requestAnimationFrame(tick); }
 
-          function canPlaceTower(x,y){ const map = getMap(); if (map.water && x >= map.water.x && x <= map.water.x + map.water.w && y >= map.water.y && y <= map.water.y + map.water.h) return false; const onPath=state.paths.some((lane)=>lane.some((pt,i)=>{ if(i===0)return false; const a=lane[i-1],b=pt; return x>=Math.min(a.x,b.x)-26&&x<=Math.max(a.x,b.x)+26&&y>=Math.min(a.y,b.y)-26&&y<=Math.max(a.y,b.y)+26;})); if(onPath)return false; if(state.towers.some((t)=>distance(t,{x,y})<34)) return false; return true; }
+          function canPlaceTower(x,y){ const map = getMap(); const model=TOWERS.find((t)=>t.id===state.selectedTower); const inWater = !!(map.water && x >= map.water.x && x <= map.water.x + map.water.w && y >= map.water.y && y <= map.water.y + map.water.h); const isWaterOnly = !!(model && WATER_ONLY_TOWERS.has(model.id)); if (isWaterOnly && state.mapId !== "lakeside") return false; if (isWaterOnly && !inWater) return false; if (!isWaterOnly && inWater) return false; const onPath=state.paths.some((lane)=>lane.some((pt,i)=>{ if(i===0)return false; const a=lane[i-1],b=pt; return x>=Math.min(a.x,b.x)-26&&x<=Math.max(a.x,b.x)+26&&y>=Math.min(a.y,b.y)-26&&y<=Math.max(a.y,b.y)+26;})); if(onPath)return false; if(state.towers.some((t)=>distance(t,{x,y})<34)) return false; return true; }
 
           canvas.addEventListener("click", (event) => {
             if (state.lives <= 0) return;
