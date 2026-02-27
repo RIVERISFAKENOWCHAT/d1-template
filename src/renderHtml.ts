@@ -421,6 +421,24 @@ export function renderHtml() {
 
           ensureTowerUpgrades();
 
+          function ensureMineUpgradeRanges() {
+            const mineIds = ["mine", "cryomines", "pulsemine"];
+            for (const id of mineIds) {
+              const tower = TOWERS.find((t) => t.id === id);
+              const defs = UPGRADES[id];
+              if (!tower || !defs) continue;
+              for (const pathKey of ["A", "B", "C"]) {
+                const tiers = defs[pathKey] || [];
+                for (let idx = 0; idx < tiers.length; idx++) {
+                  const up = tiers[idx];
+                  up.set.range = tower.range + idx + 1;
+                }
+              }
+            }
+          }
+
+          ensureMineUpgradeRanges();
+
           const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", paths: MAPS.beginner.makePaths(), menuStep:"main" };
 
           const copyStats = (m) => JSON.parse(JSON.stringify(m));
@@ -773,11 +791,11 @@ export function renderHtml() {
             if (s.placeMine) {
               const count = s.mineCount || 1;
               for (let m = 0; m < count; m++) {
-                const minePath = getPath(); const seg = 1 + Math.floor(Math.random() * (minePath.length - 2));
-                const a = minePath[seg - 1];
-                const b = minePath[seg];
-                const t = Math.random();
-                state.mines.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, damage: s.mineDamage || s.damage || 0, radius: s.mineRadius || 32, slow: s.mineSlow || 0, root: s.mineRoot || 0, freeze: s.mineFreeze || 0, vuln: s.mineVuln || 0, splash: s.mineSplash || 0, ttl: 900 });
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * tower.rangePx;
+                const mx = tower.x + Math.cos(angle) * radius;
+                const my = tower.y + Math.sin(angle) * radius;
+                state.mines.push({ x: mx, y: my, damage: s.mineDamage || s.damage || 0, radius: s.mineRadius || 32, slow: s.mineSlow || 0, root: s.mineRoot || 0, freeze: s.mineFreeze || 0, vuln: s.mineVuln || 0, splash: s.mineSplash || 0, ttl: 900 });
               }
               return;
             }
@@ -893,7 +911,7 @@ export function renderHtml() {
               if (tower.stunTicks>0) { if (!buffs.immuneStun) { tower.stunTicks--; continue; } tower.stunTicks = 0; }
               if ((tower.stats.auraDamage || tower.stats.auraSpeed || tower.stats.auraCrit) && !tower.stats.damage && !tower.stats.summonFactoryTurret) continue;
               tower.cooldown--; if(tower.cooldown>0) continue;
-              const target=findTargetForTower(tower); if(!target && !tower.stats.summonFactoryTurret) continue;
+              const target=findTargetForTower(tower); if(!target && !tower.stats.summonFactoryTurret && !tower.stats.placeMine) continue;
               let atkSpeed = tower.stats.atkSpeed > 0 ? tower.stats.atkSpeed / (1 + buffs.spd) : 99999;
               if (NERF_IDS.has(tower.stats.id)) atkSpeed *= 1.08;
               if (BUFF_IDS.has(tower.stats.id)) atkSpeed *= 0.94;
