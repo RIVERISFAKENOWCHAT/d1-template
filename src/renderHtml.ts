@@ -471,6 +471,46 @@ export function renderHtml() {
 
           ensureMineUpgradeRanges();
 
+          function makeTierFive(baseSet, pathKey) {
+            const set = JSON.parse(JSON.stringify(baseSet || {}));
+            set.range = (set.range || 5) + 1;
+            if (pathKey === "A") {
+              if (set.damage !== undefined) set.damage = +((set.damage || 0) * 1.55 + 1).toFixed(2);
+              if (set.atkSpeed) set.atkSpeed = +Math.max(0.03, set.atkSpeed * 0.85).toFixed(2);
+              set.signatureA5 = true;
+              if (set.pierceTargets) set.pierceTargets += 2;
+            } else if (pathKey === "B") {
+              if (set.damage !== undefined) set.damage = +((set.damage || 0) * 1.4 + 0.5).toFixed(2);
+              if (set.atkSpeed) set.atkSpeed = +Math.max(0.03, set.atkSpeed * 0.8).toFixed(2);
+              set.signatureB5 = true;
+              set.supportVuln = Math.max(set.supportVuln || 0, 0.3);
+              if (set.hitSlow) set.hitSlow = Math.min(0.9, +(set.hitSlow * 1.25).toFixed(2));
+            } else {
+              if (set.damage !== undefined) set.damage = +((set.damage || 0) * 1.45 + 0.75).toFixed(2);
+              if (set.atkSpeed) set.atkSpeed = +Math.max(0.03, set.atkSpeed * 0.78).toFixed(2);
+              set.signatureC5 = true;
+              set.splitBeams = Math.max(set.splitBeams || 0, 2);
+              set.splashRadius = Math.max(set.splashRadius || 0, 48);
+            }
+            return set;
+          }
+
+          function ensureTierFiveUpgrades() {
+            for (const id of Object.keys(UPGRADES)) {
+              const def = UPGRADES[id];
+              for (const pathKey of ["A", "B", "C"]) {
+                const tiers = def[pathKey];
+                if (!tiers || tiers.length < 4 || tiers.length >= 5) continue;
+                const t4 = tiers[3];
+                const invested = tiers.slice(0, 4).reduce((sum, t) => sum + (t.cost || 0), 0);
+                const t5Cost = Math.max(1, Math.round(invested * 0.75));
+                tiers.push({ cost: t5Cost, set: makeTierFive(t4.set, pathKey) });
+              }
+            }
+          }
+
+          ensureTierFiveUpgrades();
+
           const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", paths: MAPS.beginner.makePaths(), menuStep:"main" };
 
           const copyStats = (m) => JSON.parse(JSON.stringify(m));
@@ -613,6 +653,22 @@ export function renderHtml() {
               }
               upgradePathsEl.appendChild(btn);
             }
+
+            if (tower.upgradeTier >= 5) {
+              const mates = state.towers.filter((t) => t.baseId === tower.baseId && t.upgradeTier >= 5);
+              const hasA = mates.some((t) => t.upgradePath === "A");
+              const hasB = mates.some((t) => t.upgradePath === "B");
+              const hasC = mates.some((t) => t.upgradePath === "C");
+              if (hasA && hasB && hasC) {
+                const fusionCost = Math.round(mates.reduce((sum, t) => sum + (t.invested || 0), 0) * 0.5);
+                const fbtn = document.createElement("button");
+                fbtn.className = "u-btn";
+                fbtn.textContent = "Ultimate Fusion - " + fusionCost + "g";
+                fbtn.disabled = state.gold < fusionCost;
+                fbtn.onclick = () => purchaseUltimateFusion(tower.baseId, fusionCost);
+                upgradePathsEl.appendChild(fbtn);
+              }
+            }
           }
 
           function applyTowerStats(tower, set) {
@@ -627,13 +683,41 @@ export function renderHtml() {
             if (!defs || !defs[pathKey]) return;
             if (tower.upgradePath && tower.upgradePath !== pathKey) return;
             if (tier !== tower.upgradeTier + 1) return;
+            if (tier === 5 && state.towers.some((t) => t.id !== tower.id && t.baseId === tower.baseId && t.upgradePath === pathKey && t.upgradeTier >= 5)) return;
             const up = defs[pathKey][tier - 1];
             if (!up || state.gold < up.cost) return;
 
             state.gold -= up.cost;
             if (!tower.upgradePath) tower.upgradePath = pathKey;
             tower.upgradeTier = tier;
+            tower.invested = (tower.invested || 0) + up.cost;
             applyTowerStats(tower, up.set);
+            updateHud();
+            renderUpgradePanel();
+          }
+
+          function purchaseUltimateFusion(baseId, fusionCost) {
+            const trio = ["A","B","C"].map((path) => state.towers.find((t) => t.baseId === baseId && t.upgradePath === path && t.upgradeTier >= 5)).filter(Boolean);
+            if (trio.length !== 3) return;
+            if (state.gold < fusionCost) return;
+            state.gold -= fusionCost;
+            const x = trio.reduce((sum,t)=>sum+t.x,0) / 3;
+            const y = trio.reduce((sum,t)=>sum+t.y,0) / 3;
+            const base = copyStats(trio[0].stats);
+            base.damage = +((trio.reduce((sum,t)=>sum+(t.stats.damage||0),0) * 0.85)).toFixed(2);
+            base.atkSpeed = Math.max(0.03, Math.min(...trio.map((t)=>t.stats.atkSpeed||99999)) * 0.75);
+            base.range = Math.max(...trio.map((t)=>t.stats.range||0)) + 1;
+            base.supportVuln = Math.min(1, Math.max(...trio.map((t)=>t.stats.supportVuln||0), 0.3));
+            base.hitSlow = Math.min(0.9, Math.max(...trio.map((t)=>t.stats.hitSlow||0), 0.2));
+            base.pierceTargets = Math.max(...trio.map((t)=>t.stats.pierceTargets||0), 2);
+            base.splitBeams = Math.max(...trio.map((t)=>t.stats.splitBeams||0), 2);
+            base.splashRadius = Math.max(...trio.map((t)=>t.stats.splashRadius||0), 55);
+            base.name = (trio[0].baseName || "Tower") + " Ultimate";
+            base.ultimateFusion = true;
+            for (const t of trio) state.towers = state.towers.filter((x)=>x.id!==t.id);
+            const ult = { id:crypto.randomUUID(), baseId:baseId, baseName:base.name, x, y, stats:base, rangePx:base.range*RANGE_UNIT, cooldown:0, stunTicks:0, upgradePath:"U", upgradeTier:6, shotCount:0, invested: Math.round(trio.reduce((sum,t)=>sum+(t.invested||0),0)*1.5) };
+            state.towers.push(ult);
+            state.selectedPlacedTowerId = ult.id;
             updateHud();
             renderUpgradePanel();
           }
@@ -1105,7 +1189,7 @@ export function renderHtml() {
             const stats = copyStats(model);
             if (NERF_IDS.has(stats.id)) stats.range = +(stats.range * NERF_RANGE_MULT).toFixed(2);
             if (BUFF_IDS.has(stats.id)) stats.range = +(stats.range + BUFF_RANGE_BONUS).toFixed(2);
-            state.towers.push({ id:crypto.randomUUID(), baseId:model.id, baseName:model.name, x, y, stats, rangePx:stats.range*RANGE_UNIT, cooldown:0, stunTicks:0, upgradePath:null, upgradeTier:0, shotCount:0 });
+            state.towers.push({ id:crypto.randomUUID(), baseId:model.id, baseName:model.name, x, y, stats, rangePx:stats.range*RANGE_UNIT, cooldown:0, stunTicks:0, upgradePath:null, upgradeTier:0, shotCount:0, invested:model.cost });
             updateHud(); buildTowerMenu(); renderUpgradePanel();
           });
 
