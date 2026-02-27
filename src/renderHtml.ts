@@ -31,10 +31,32 @@ export function renderHtml() {
           .u-btn.maxed { background:#22543d; }
           .small { font-size:0.82rem; opacity:0.9; }
           .buffed { color:#ffd60a; }
+          .menu-overlay { position:fixed; inset:0; background:rgba(8,12,20,0.88); display:grid; place-items:center; z-index:20; }
+          .menu-card { width:min(92vw,520px); background:#182234; border:1px solid #334a6b; border-radius:14px; padding:18px; display:grid; gap:12px; }
+          .menu-title { font-size:1.4rem; font-weight:800; }
+          .menu-grid { display:grid; gap:8px; }
+          .menu-btn { background:#2e3d58; color:#fff; text-align:left; }
+          .menu-sub { color:#8aa0bf; font-size:0.9rem; }
+          .hidden { display:none !important; }
         </style>
       </head>
       <body>
-        <div class="layout">
+        <div class="menu-overlay" id="menuOverlay">
+          <div class="menu-card">
+            <div class="menu-title">Tiny Tower Defense+</div>
+            <div class="menu-sub" id="menuSub">Choose an option.</div>
+            <div class="menu-grid" id="menuMain">
+              <button class="menu-btn" id="playButton">Play</button>
+              <button class="menu-btn" id="towerListButton">tower list</button>
+            </div>
+            <div class="menu-grid hidden" id="menuMaps"></div>
+            <div class="menu-grid hidden" id="menuDifficulties"></div>
+            <div class="menu-grid hidden" id="menuTowerList"></div>
+            <button class="menu-btn hidden" id="menuBackButton">Back</button>
+          </div>
+        </div>
+
+        <div class="layout hidden" id="gameLayout">
           <section class="game-panel">
             <div class="hud">
               <h1>🛡️ Tiny Tower Defense+</h1>
@@ -73,6 +95,16 @@ export function renderHtml() {
           const upgradeInfoEl = document.getElementById("upgradeInfo");
           const upgradePathsEl = document.getElementById("upgradePaths");
           const towerStatsEl = document.getElementById("towerStats");
+          const menuOverlayEl = document.getElementById("menuOverlay");
+          const gameLayoutEl = document.getElementById("gameLayout");
+          const menuSubEl = document.getElementById("menuSub");
+          const menuMainEl = document.getElementById("menuMain");
+          const menuMapsEl = document.getElementById("menuMaps");
+          const menuDifficultiesEl = document.getElementById("menuDifficulties");
+          const menuTowerListEl = document.getElementById("menuTowerList");
+          const menuBackButtonEl = document.getElementById("menuBackButton");
+          const playButtonEl = document.getElementById("playButton");
+          const towerListButtonEl = document.getElementById("towerListButton");
 
           const RANGE_UNIT = 22;
           const SPEED_SCALE = 0.08;
@@ -85,10 +117,25 @@ export function renderHtml() {
           const BUFF_DMG_MULT = 1.12;
           const BUFF_RANGE_BONUS = 0.4;
 
-          const path = [
+          const BASE_PATH = [
             { x: 0, y: 280 }, { x: 220, y: 280 }, { x: 220, y: 110 }, { x: 500, y: 110 },
             { x: 500, y: 390 }, { x: 740, y: 390 }, { x: 740, y: 220 }, { x: 920, y: 220 },
           ];
+          const BEGINNER_VARIANTS = [
+            BASE_PATH,
+            [{ x: 0, y: 320 }, { x: 180, y: 320 }, { x: 180, y: 150 }, { x: 480, y: 150 }, { x: 480, y: 420 }, { x: 740, y: 420 }, { x: 740, y: 250 }, { x: 920, y: 250 }],
+            [{ x: 0, y: 250 }, { x: 250, y: 250 }, { x: 250, y: 90 }, { x: 560, y: 90 }, { x: 560, y: 360 }, { x: 770, y: 360 }, { x: 770, y: 200 }, { x: 920, y: 200 }],
+          ];
+          const MAPS = {
+            beginner: { id:"beginner", name:"Beginner map", description:"Classic lane, rerolled path every run.", tracks:1, makePaths:() => [BEGINNER_VARIANTS[Math.floor(Math.random()*BEGINNER_VARIANTS.length)].map((pt)=>({x:pt.x,y:pt.y}))], water:null },
+            doubletrack: { id:"doubletrack", name:"Double Track", description:"Two enemy lanes at once.", tracks:2, makePaths:() => [[{x:0,y:170},{x:230,y:170},{x:230,y:80},{x:530,y:80},{x:530,y:250},{x:920,y:250}], [{x:0,y:390},{x:260,y:390},{x:260,y:500},{x:560,y:500},{x:560,y:300},{x:920,y:300}]], water:null },
+            lakeside: { id:"lakeside", name:"Lakeside Beach", description:"Watch the water zone: no tower placement there.", tracks:1, makePaths:() => [[{x:0,y:300},{x:220,y:300},{x:220,y:120},{x:520,y:120},{x:520,y:420},{x:640,y:420},{x:640,y:220},{x:780,y:220},{x:920,y:220}]], water:{x:650,y:0,w:270,h:560} },
+          };
+          const DIFFICULTIES = {
+            normal: { id:"normal", name:"Normal", enemyMult:1, hpMult:1, speedMult:1 },
+            hard: { id:"hard", name:"Hard", enemyMult:1.5, hpMult:1.5, speedMult:1.5 },
+            extreme: { id:"extreme", name:"Extreme", enemyMult:2, hpMult:2, speedMult:2 },
+          };
 
           const ENEMY_TYPES = {
             normal: { label:"Normal", hp:10, speed:10, defense:0, reward:6, color:"#ef476f", shape:"circle", baseDamage:1, budget:1 },
@@ -374,10 +421,66 @@ export function renderHtml() {
 
           ensureTowerUpgrades();
 
-          const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null };
+          const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", paths: MAPS.beginner.makePaths(), menuStep:"main" };
 
           const copyStats = (m) => JSON.parse(JSON.stringify(m));
           const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+          function getDifficulty() { return DIFFICULTIES[state.difficultyId] || DIFFICULTIES.normal; }
+          function getMap() { return MAPS[state.mapId] || MAPS.beginner; }
+          function getPath(trackIndex = 0) { return state.paths[trackIndex] || state.paths[0] || BASE_PATH; }
+
+          function resetRun(mapId, difficultyId) {
+            state.mapId = mapId;
+            state.difficultyId = difficultyId;
+            state.lives = 20;
+            state.gold = 220;
+            state.wave = 0;
+            state.towers = [];
+            state.enemies = [];
+            state.projectiles = [];
+            state.mines = [];
+            state.alliedTurrets = [];
+            state.spawning = false;
+            state.queue = [];
+            state.spawnCooldown = 0;
+            state.selectedPlacedTowerId = null;
+            state.paths = copyStats(getMap().makePaths());
+            renderUpgradePanel();
+            updateHud();
+          }
+
+          function showMenu(step = "main") {
+            state.menuStep = step;
+            menuOverlayEl.classList.remove("hidden");
+            gameLayoutEl.classList.add("hidden");
+            menuMainEl.classList.add("hidden");
+            menuMapsEl.classList.add("hidden");
+            menuDifficultiesEl.classList.add("hidden");
+            menuTowerListEl.classList.add("hidden");
+            menuBackButtonEl.classList.toggle("hidden", step === "main");
+            if (step === "main") {
+              menuSubEl.textContent = "Choose an option.";
+              menuMainEl.classList.remove("hidden");
+            }
+            if (step === "maps") {
+              menuSubEl.textContent = "Pick a map.";
+              menuMapsEl.classList.remove("hidden");
+            }
+            if (step === "difficulty") {
+              menuSubEl.textContent = "Select difficulty.";
+              menuDifficultiesEl.classList.remove("hidden");
+            }
+            if (step === "towerlist") {
+              menuSubEl.textContent = "All available towers:";
+              menuTowerListEl.classList.remove("hidden");
+            }
+          }
+
+          function hideMenu() {
+            menuOverlayEl.classList.add("hidden");
+            gameLayoutEl.classList.remove("hidden");
+          }
 
           function updateHud() { livesEl.textContent=Math.max(state.lives,0); goldEl.textContent=Math.floor(state.gold); waveEl.textContent=state.wave; enemiesEl.textContent=state.enemies.length; startWaveButton.disabled=state.spawning||state.enemies.length>0||state.lives<=0; }
 
@@ -499,12 +602,12 @@ export function renderHtml() {
             while (left>0.8) { const pool=unlocked.filter((t)=>ENEMY_TYPES[t].budget<=left+0.2 && (limits[t]===undefined || c[t]<limits[t])); if(!pool.length) break; const p=pool[Math.floor(Math.random()*pool.length)]; if(p==="swarm"){ const count=5+Math.floor(Math.random()*6); for(let i=0;i<count;i++) plan.push("swarm"); left-=ENEMY_TYPES.swarm.budget*count; } else { plan.push(p); left-=ENEMY_TYPES[p].budget; if(c[p]!==undefined)c[p]++; } }
             if (plan.filter((x)=>x==="normal").length<3) plan.push("normal","normal","normal");
             if (wave % 20 === 0) plan.push("endbringer");
-            return plan.sort(()=>Math.random()-0.5);
+            const mult = getDifficulty().enemyMult || 1; const target = Math.max(plan.length, Math.round(plan.length * mult)); while (plan.length < target) plan.push(plan[Math.floor(Math.random()*plan.length)] || "normal"); return plan.sort(()=>Math.random()-0.5);
           }
 
           function createEnemy(typeKey) {
             const type=ENEMY_TYPES[typeKey];
-            return { id:crypto.randomUUID(), type:typeKey, x:path[0].x, y:path[0].y, hp:type.hp, maxHp:type.hp, speed:type.speed*SPEED_SCALE, defense:type.defense, reward:type.reward, pathIndex:1, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0, weakenedDamage:0, permaSlow:0, frozenVuln:0, debuffImmune:!!type.debuffImmune, dotImmune:!!type.dotImmune, burnImmune:!!type.burnImmune, knockbackImmune:!!type.knockbackImmune, stunImmune:!!type.stunImmune, noPierce:!!type.noPierce, noShred:!!type.noShred, shieldHalf:!!type.shieldHalf, aoeResist:type.aoeResist||0, beamResist:type.beamResist||0, allDamageHalf:type.allDamageHalf||0, minSpeedMult:type.minSpeedMult||0, phaseCycle:type.phaseCycle||0, phaseDuration:type.phaseDuration||0, phaseTick:0, disableTowerOnHit:type.disableTowerOnHit||0, reflect:type.reflect||0, defAura:type.defAura||0, speedAura:type.speedAura||0, globalSpeedAura:type.globalSpeedAura||0, mirrorCd:type.mirrorCd||0, mirrorTick:0, spawnOnDeath:type.spawnOnDeath||null, spawnPeriodic:type.spawnPeriodic||null, spawnTick:0, empAura:!!type.empAura, buffsAll:!!type.buffsAll, poisonAura:!!type.poisonAura, fireTrail:!!type.fireTrail, regenOnBase:type.regenOnBase||0 };
+            const diff = getDifficulty(); const trackIndex = Math.floor(Math.random() * (state.paths.length || 1)); const spawnPath = getPath(trackIndex); const hp = Math.round(type.hp * (diff.hpMult || 1)); return { id:crypto.randomUUID(), type:typeKey, x:spawnPath[0].x, y:spawnPath[0].y, hp:hp, maxHp:hp, speed:type.speed*SPEED_SCALE*(diff.speedMult||1), defense:type.defense, reward:type.reward, pathIndex:1, trackIndex, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0, weakenedDamage:0, permaSlow:0, frozenVuln:0, debuffImmune:!!type.debuffImmune, dotImmune:!!type.dotImmune, burnImmune:!!type.burnImmune, knockbackImmune:!!type.knockbackImmune, stunImmune:!!type.stunImmune, noPierce:!!type.noPierce, noShred:!!type.noShred, shieldHalf:!!type.shieldHalf, aoeResist:type.aoeResist||0, beamResist:type.beamResist||0, allDamageHalf:type.allDamageHalf||0, minSpeedMult:type.minSpeedMult||0, phaseCycle:type.phaseCycle||0, phaseDuration:type.phaseDuration||0, phaseTick:0, disableTowerOnHit:type.disableTowerOnHit||0, reflect:type.reflect||0, defAura:type.defAura||0, speedAura:type.speedAura||0, globalSpeedAura:type.globalSpeedAura||0, mirrorCd:type.mirrorCd||0, mirrorTick:0, spawnOnDeath:type.spawnOnDeath||null, spawnPeriodic:type.spawnPeriodic||null, spawnTick:0, empAura:!!type.empAura, buffsAll:!!type.buffsAll, poisonAura:!!type.poisonAura, fireTrail:!!type.fireTrail, regenOnBase:type.regenOnBase||0 };
           }
 
           function startWave(){ if(state.spawning||state.lives<=0) return; state.wave++; state.queue=fairWavePlan(state.wave); state.spawning=true; state.spawnCooldown=0; updateHud(); }
@@ -589,7 +692,7 @@ export function renderHtml() {
               const minSlowFloor = enemy.minSpeedMult || 0;
               const speedMultiplier = activeSlow>0 ? Math.max(minSlowFloor || 0.05, 1 - activeSlow) : 1;
               if (enemy.slowTicks>0) enemy.slowTicks--;
-              const target=path[enemy.pathIndex];
+              const target=getPath(enemy.trackIndex)[enemy.pathIndex];
               if (!target) { state.enemies.splice(i,1); state.lives -= Math.max(0, enemy.baseDamage * (1 - (enemy.weakenedDamage || 0))); if (enemy.regenOnBase) enemy.hp = Math.min(enemy.maxHp, enemy.hp + enemy.maxHp * enemy.regenOnBase); continue; }
               const dx=target.x-enemy.x, dy=target.y-enemy.y, len=Math.hypot(dx,dy), move=enemy.speed*speedMultiplier;
               if (len<move) { enemy.x=target.x; enemy.y=target.y; enemy.pathIndex++; } else { enemy.x += (dx/len)*move; enemy.y += (dy/len)*move; if (enemy.fireTrail) explodeAt(enemy.x, enemy.y, 22, 0.4, true); if (enemy.type === "warengine") { for (const t of state.towers) if (distance(enemy,t)<=32) t.stunTicks = Math.max(t.stunTicks, 45); } }
@@ -621,7 +724,7 @@ export function renderHtml() {
           function updateAlliedTurrets() {
             for (let i=state.alliedTurrets.length-1;i>=0;i--) {
               const unit=state.alliedTurrets[i];
-              const p=path[unit.pathIndex]; if(!p){ if (unit.deathExplosion) explodeAt(unit.x, unit.y, 58, unit.deathExplosion, !!unit.deathBurn); state.alliedTurrets.splice(i,1); continue; }
+              const unitPath = getPath(unit.trackIndex); const p=unitPath[unit.pathIndex]; if(!p){ if (unit.deathExplosion) explodeAt(unit.x, unit.y, 58, unit.deathExplosion, !!unit.deathBurn); state.alliedTurrets.splice(i,1); continue; }
               const dx=p.x-unit.x, dy=p.y-unit.y, len=Math.hypot(dx,dy), move=1.4;
               if(len<move){ unit.x=p.x; unit.y=p.y; unit.pathIndex--; } else { unit.x += (dx/len)*move; unit.y += (dy/len)*move; }
               for (const e of state.enemies) if(distance(unit,e)<12) unit.hp -= 0.1;
@@ -670,9 +773,9 @@ export function renderHtml() {
             if (s.placeMine) {
               const count = s.mineCount || 1;
               for (let m = 0; m < count; m++) {
-                const seg = 1 + Math.floor(Math.random() * (path.length - 2));
-                const a = path[seg - 1];
-                const b = path[seg];
+                const minePath = getPath(); const seg = 1 + Math.floor(Math.random() * (minePath.length - 2));
+                const a = minePath[seg - 1];
+                const b = minePath[seg];
                 const t = Math.random();
                 state.mines.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, damage: s.mineDamage || s.damage || 0, radius: s.mineRadius || 32, slow: s.mineSlow || 0, root: s.mineRoot || 0, freeze: s.mineFreeze || 0, vuln: s.mineVuln || 0, splash: s.mineSplash || 0, ttl: 900 });
               }
@@ -720,7 +823,7 @@ export function renderHtml() {
             if (s.summonFactoryTurret) {
               const rateMult = s.spawnRateMult || 1;
               const spawnCount = s.doubleSpawn ? 2 : 1;
-              for (let i = 0; i < spawnCount; i++) state.alliedTurrets.push({ x:path[path.length-1].x, y:path[path.length-1].y, pathIndex:path.length-2, hp:s.unitHp||5, unitHp:s.unitHp||5, damage:s.unitDamage||0.6, atkSpeed:s.unitAtkSpeed||0.4, rangePx:(s.unitRange||7)*RANGE_UNIT, cooldown:0, deathExplosion:s.unitDeathExplosion||0, deathBurn:!!s.unitDeathBurn, burningGround:!!s.burningGround });
+              for (let i = 0; i < spawnCount; i++) { const allyPath = getPath(); state.alliedTurrets.push({ x:allyPath[allyPath.length-1].x, y:allyPath[allyPath.length-1].y, pathIndex:allyPath.length-2, trackIndex:0, hp:s.unitHp||5, unitHp:s.unitHp||5, damage:s.unitDamage||0.6, atkSpeed:s.unitAtkSpeed||0.4, rangePx:(s.unitRange||7)*RANGE_UNIT, cooldown:0, deathExplosion:s.unitDeathExplosion||0, deathBurn:!!s.unitDeathBurn, burningGround:!!s.burningGround }); }
               tower.cooldown = Math.max(1, Math.round((s.atkSpeed / rateMult) * 60));
               return;
             }
@@ -903,7 +1006,7 @@ export function renderHtml() {
           }
 
           function drawAlliedTurrets(){ for(const u of state.alliedTurrets){ ctx.fillStyle="#313a46";ctx.fillRect(u.x-8,u.y-8,16,16);ctx.fillStyle="#89fcff";ctx.beginPath();ctx.arc(u.x,u.y,4,0,Math.PI*2);ctx.fill(); ctx.fillStyle="#111";ctx.fillRect(u.x-10,u.y-14,20,3);ctx.fillStyle="#57cc99";ctx.fillRect(u.x-10,u.y-14,20*Math.max(0,u.hp)/(u.unitHp||5),3);} }
-          function drawPath(){ ctx.strokeStyle="#f4a261";ctx.lineWidth=34;ctx.lineJoin="round";ctx.lineCap="round";ctx.beginPath();ctx.moveTo(path[0].x,path[0].y);for(let i=1;i<path.length;i++)ctx.lineTo(path[i].x,path[i].y);ctx.stroke(); }
+          function drawPath(){ const map = getMap(); if (map.water) { ctx.fillStyle = "#1f5f8b"; ctx.fillRect(map.water.x, map.water.y, map.water.w, map.water.h); } ctx.strokeStyle="#f4a261";ctx.lineWidth=34;ctx.lineJoin="round";ctx.lineCap="round"; for (const lane of state.paths) { if (!lane || !lane.length) continue; ctx.beginPath();ctx.moveTo(lane[0].x,lane[0].y);for(let i=1;i<lane.length;i++)ctx.lineTo(lane[i].x,lane[i].y);ctx.stroke(); } }
           function drawProjectiles(){ for(const p of state.projectiles){ if(p.mode==="bolt"){ctx.strokeStyle="#f7f45f";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p.x,p.y);if(p.target)ctx.lineTo(p.target.x,p.target.y);ctx.stroke();} else if(p.mode==="beam"){ctx.strokeStyle=p.color||"#d9d9d9";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(p.x,p.y);if(p.target)ctx.lineTo(p.target.x,p.target.y);ctx.stroke();} else {ctx.fillStyle=p.color||"#fff";ctx.beginPath();ctx.arc(p.x,p.y,3.5,0,Math.PI*2);ctx.fill();} } }
           function drawGameOver(){ if(state.lives>0)return; ctx.fillStyle="rgba(0,0,0,0.72)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 52px system-ui";ctx.fillText("Game Over",canvas.width/2,canvas.height/2-20);ctx.font="24px system-ui";ctx.fillText("Refresh to try again",canvas.width/2,canvas.height/2+24); }
 
@@ -911,7 +1014,7 @@ export function renderHtml() {
             for (const m of state.mines) { ctx.fillStyle = "#d4af37"; ctx.beginPath(); ctx.arc(m.x, m.y, 5, 0, Math.PI * 2); ctx.fill(); }
             drawAlliedTurrets(); for(const e of state.enemies) drawEnemy(e); drawProjectiles(); drawGameOver(); requestAnimationFrame(tick); }
 
-          function canPlaceTower(x,y){ const onPath=path.some((pt,i)=>{ if(i===0)return false; const a=path[i-1],b=pt; return x>=Math.min(a.x,b.x)-26&&x<=Math.max(a.x,b.x)+26&&y>=Math.min(a.y,b.y)-26&&y<=Math.max(a.y,b.y)+26;}); if(onPath)return false; if(state.towers.some((t)=>distance(t,{x,y})<34)) return false; return true; }
+          function canPlaceTower(x,y){ const map = getMap(); if (map.water && x >= map.water.x && x <= map.water.x + map.water.w && y >= map.water.y && y <= map.water.y + map.water.h) return false; const onPath=state.paths.some((lane)=>lane.some((pt,i)=>{ if(i===0)return false; const a=lane[i-1],b=pt; return x>=Math.min(a.x,b.x)-26&&x<=Math.max(a.x,b.x)+26&&y>=Math.min(a.y,b.y)-26&&y<=Math.max(a.y,b.y)+26;})); if(onPath)return false; if(state.towers.some((t)=>distance(t,{x,y})<34)) return false; return true; }
 
           canvas.addEventListener("click", (event) => {
             if (state.lives <= 0) return;
@@ -938,8 +1041,56 @@ export function renderHtml() {
             updateHud(); buildTowerMenu(); renderUpgradePanel();
           });
 
+          function buildMapMenu() {
+            menuMapsEl.innerHTML = "";
+            for (const mapId of Object.keys(MAPS)) {
+              const map = MAPS[mapId];
+              const btn = document.createElement("button");
+              btn.className = "menu-btn";
+              btn.textContent = map.name + " — " + map.description;
+              btn.onclick = () => { state.mapId = mapId; showMenu("difficulty"); };
+              menuMapsEl.appendChild(btn);
+            }
+          }
+
+          function buildDifficultyMenu() {
+            menuDifficultiesEl.innerHTML = "";
+            for (const diffId of Object.keys(DIFFICULTIES)) {
+              const diff = DIFFICULTIES[diffId];
+              const btn = document.createElement("button");
+              btn.className = "menu-btn";
+              btn.textContent = diff.name + " — enemies x" + diff.enemyMult + ", hp x" + diff.hpMult + ", speed x" + diff.speedMult;
+              btn.onclick = () => { resetRun(state.mapId, diffId); hideMenu(); };
+              menuDifficultiesEl.appendChild(btn);
+            }
+          }
+
+          function buildTowerListMenu() {
+            menuTowerListEl.innerHTML = "";
+            for (const t of TOWERS) {
+              const item = document.createElement("div");
+              item.className = "menu-sub";
+              item.textContent = t.name + " | DMG " + t.damage + " | ATK SPD " + t.atkSpeed + "s | Range " + t.range;
+              menuTowerListEl.appendChild(item);
+            }
+          }
+
+          playButtonEl.addEventListener("click", () => showMenu("maps"));
+          towerListButtonEl.addEventListener("click", () => showMenu("towerlist"));
+          menuBackButtonEl.addEventListener("click", () => {
+            if (state.menuStep === "difficulty") showMenu("maps");
+            else showMenu("main");
+          });
+
           startWaveButton.addEventListener("click", startWave);
-          buildTowerMenu(); renderUpgradePanel(); updateHud(); requestAnimationFrame(tick);
+          buildTowerMenu();
+          buildMapMenu();
+          buildDifficultyMenu();
+          buildTowerListMenu();
+          renderUpgradePanel();
+          updateHud();
+          showMenu("main");
+          requestAnimationFrame(tick);
         </script>
       </body>
     </html>
