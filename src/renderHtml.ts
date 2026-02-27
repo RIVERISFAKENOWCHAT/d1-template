@@ -65,6 +65,7 @@ export function renderHtml() {
                 <span>💰 Gold: <strong id="gold">220</strong></span>
                 <span>🌊 Wave: <strong id="wave">0</strong></span>
                 <span>👾 Enemies: <strong id="enemies">0</strong></span>
+                <span>🔥 Heat: <strong id="heat">0%</strong></span>
               </div>
               <button id="startWave">Start wave</button>
             </div>
@@ -90,6 +91,7 @@ export function renderHtml() {
           const goldEl = document.getElementById("gold");
           const waveEl = document.getElementById("wave");
           const enemiesEl = document.getElementById("enemies");
+          const heatEl = document.getElementById("heat");
           const startWaveButton = document.getElementById("startWave");
           const towerListEl = document.getElementById("towerList");
           const upgradeInfoEl = document.getElementById("upgradeInfo");
@@ -134,6 +136,7 @@ export function renderHtml() {
             lakeside: { id:"lakeside", name:"Lakeside Beach", description:"Watch the water zone: no tower placement there.", tracks:1, makePaths:() => [[{x:0,y:300},{x:220,y:300},{x:220,y:120},{x:520,y:120},{x:520,y:420},{x:640,y:420},{x:640,y:220},{x:780,y:220},{x:920,y:220}]], water:{x:650,y:0,w:270,h:560}, blockedZones:[], fog:null },
             fogmarsh: { id:"fogmarsh", name:"Fog Marsh", description:"Similar to beginner with nearby water + fog of war.", tracks:1, makePaths:() => [[{x:0,y:280},{x:200,y:280},{x:200,y:130},{x:480,y:130},{x:480,y:390},{x:720,y:390},{x:720,y:230},{x:920,y:230}]], waterZones:[{x:250,y:210,w:120,h:80},{x:560,y:280,w:110,h:80}], blockedZones:[], fog:{x:360,revealRadius:180} },
             warpzone: { id:"warpzone", name:"Warp Zone", description:"One lane splits into three. Red tiles are blocked.", tracks:3, makePaths:() => [[{x:0,y:280},{x:300,y:280},{x:520,y:280},{x:700,y:130},{x:920,y:130}], [{x:0,y:280},{x:300,y:280},{x:520,y:280},{x:760,y:280},{x:920,y:280}], [{x:0,y:280},{x:300,y:280},{x:520,y:280},{x:700,y:430},{x:920,y:430}]], water:null, blockedZones:[{x:380,y:60,w:70,h:70},{x:610,y:230,w:80,h:80},{x:640,y:470,w:90,h:60}], fog:null },
+            lavacavern: { id:"lavacavern", name:"Lava Cavern", description:"Heat rises with fire/explosions. Manage overheat.", tracks:1, makePaths:() => [[{x:0,y:300},{x:200,y:300},{x:200,y:120},{x:460,y:120},{x:460,y:420},{x:720,y:420},{x:720,y:220},{x:920,y:220}]], water:null, blockedZones:[{x:560,y:80,w:70,h:50},{x:300,y:460,w:90,h:60}], lavaChannels:[{x:170,y:250,w:120,h:90},{x:430,y:260,w:130,h:90},{x:670,y:250,w:120,h:90}], unstableZones:[{x:280,y:180,w:70,h:60},{x:600,y:360,w:70,h:60}], fog:null },
           };
           const DIFFICULTIES = {
             normal: { id:"normal", name:"Normal", enemyMult:1, hpMult:1, speedMult:1 },
@@ -186,6 +189,11 @@ export function renderHtml() {
             blackwall:{label:"Blackwall Sentinel",hp:500,speed:1,defense:40,reward:500,color:"#222",shape:"monolith",baseDamage:12,budget:30,noPierce:true},
             voidemperor:{label:"Void Emperor",hp:800,speed:2,defense:35,reward:800,color:"#6d28d9",shape:"oct",baseDamage:18,budget:45,boss:true},
             endbringer:{label:"Endbringer",hp:1000,speed:1,defense:50,reward:1200,color:"#000",shape:"sun",baseDamage:25,budget:60,boss:true,spawnOnly:true},
+            magmawalker:{label:"Magma Walker",hp:120,speed:6,defense:10,reward:80,color:"#d97706",shape:"circle",baseDamage:2,budget:6,burnImmune:true},
+            ashwraith:{label:"Ash Wraith",hp:90,speed:8,defense:0,reward:85,color:"#9ca3af",shape:"diamond",baseDamage:2,budget:6},
+            coreling:{label:"Coreling",hp:60,speed:10,defense:0,reward:40,color:"#fb923c",shape:"smallTriangle",baseDamage:1,budget:3},
+            obsidiantank:{label:"Obsidian Tank",hp:260,speed:3,defense:35,reward:180,color:"#1f2937",shape:"square",baseDamage:5,budget:12},
+            cavertitan:{label:"Cavern Titan",hp:1600,speed:2,defense:30,reward:1200,color:"#7c2d12",shape:"oct",baseDamage:14,budget:0,boss:true},
           });
 
 
@@ -523,7 +531,7 @@ export function renderHtml() {
 
           ensureTierFiveUpgrades();
 
-          const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0 };
+          const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0, heat:0, heatFlags:{scorch:false,molten:false,overheat:false}, tempLavaTiles:[], permBlockedTiles:[], eruptions:0, enemyHpBuff:1, enemySpeedBuff:1, ventTick:0 };
 
           const copyStats = (m) => JSON.parse(JSON.stringify(m));
           const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -535,6 +543,11 @@ export function renderHtml() {
           function getWaterZones(map) { if (map.waterZones) return map.waterZones; return map.water ? [map.water] : []; }
           function inZone(x, y, z) { return x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h; }
           function isEnemyVisible(enemy) { const map = getMap(); if (!map.fog) return true; if (enemy.x < map.fog.x) return true; for (const t of state.towers) { if (!LIGHT_TOWERS.has(t.baseId)) continue; if (Math.hypot(t.x - enemy.x, t.y - enemy.y) <= (map.fog.revealRadius || 180)) return true; } return false; }
+          function isLavaMap() { return state.mapId === "lavacavern"; }
+          function inAnyZone(x,y,zones){ return (zones||[]).some((z)=>inZone(x,y,z)); }
+          function isOnLava(x,y){ const map=getMap(); return inAnyZone(x,y,map.lavaChannels) || inAnyZone(x,y,state.tempLavaTiles); }
+          function addHeat(v){ if(!isLavaMap()) return; state.heat = Math.max(0, Math.min(100, state.heat + v)); }
+          function processHeatSystem(){ if(!isLavaMap()) return; state.heat = Math.max(0, state.heat - 0.02); if (state.heat >= 30) state.heatFlags.scorch = true; if (state.heat >= 60 && !state.heatFlags.molten){ state.heatFlags.molten=true; const x=120+Math.random()*600, y=80+Math.random()*360; state.tempLavaTiles.push({x,y,w:90,h:70,ttl:600}); for(const t of state.towers) if(inZone(t.x,t.y,{x,y,w:90,h:70})) t.stunTicks=Math.max(t.stunTicks,240); } if (state.heat >= 85) state.heatFlags.overheat = true; if (state.heat >= 100 && !state.heatEruptionLock){ state.heatEruptionLock=true; state.eruptions++; state.enemyHpBuff *= 1.2; const ex=180+Math.random()*520, ey=120+Math.random()*260; state.tempLavaTiles.push({x:ex,y:ey,w:220,h:140,ttl:900}); const candidates=[]; for(let ix=100; ix<820; ix+=60) for(let iy=70; iy<500; iy+=60){ if(!canPlaceTower(ix,iy)) continue; candidates.push({x:ix-20,y:iy-20,w:40,h:40}); } for(let i=0;i<2 && candidates.length;i++){ const idx=Math.floor(Math.random()*candidates.length); state.permBlockedTiles.push(candidates[idx]); candidates.splice(idx,1);} if(state.eruptions>=2) state.enemySpeedBuff += 0.1; state.heat = 80; } if(state.heat < 95) state.heatEruptionLock=false; for(let i=state.tempLavaTiles.length-1;i>=0;i--){ state.tempLavaTiles[i].ttl--; if(state.tempLavaTiles[i].ttl<=0) state.tempLavaTiles.splice(i,1);} }
 
           function resetRun(mapId, difficultyId) {
             state.mapId = mapId;
@@ -552,6 +565,14 @@ export function renderHtml() {
             state.spawnCooldown = 0;
             state.selectedPlacedTowerId = null;
             state.lastWavePayout = 0;
+            state.heat = 0;
+            state.heatFlags = {scorch:false,molten:false,overheat:false};
+            state.tempLavaTiles = [];
+            state.permBlockedTiles = [];
+            state.eruptions = 0;
+            state.enemyHpBuff = 1;
+            state.enemySpeedBuff = 1;
+            state.ventTick = 0;
             state.paths = copyStats(getMap().makePaths());
             renderUpgradePanel();
             updateHud();
@@ -589,7 +610,7 @@ export function renderHtml() {
             gameLayoutEl.classList.remove("hidden");
           }
 
-          function updateHud() { livesEl.textContent=Math.max(state.lives,0); goldEl.textContent=Math.floor(state.gold); waveEl.textContent=state.wave; enemiesEl.textContent=state.enemies.length; startWaveButton.disabled=state.spawning||state.enemies.length>0||state.lives<=0; }
+          function updateHud() { livesEl.textContent=Math.max(state.lives,0); goldEl.textContent=Math.floor(state.gold); waveEl.textContent=state.wave; enemiesEl.textContent=state.enemies.length; heatEl.textContent = Math.round(state.heat) + "%"; startWaveButton.disabled=state.spawning||state.enemies.length>0||state.lives<=0; }
 
           function buildTowerMenu() {
             towerListEl.innerHTML="";
@@ -778,6 +799,7 @@ export function renderHtml() {
             if (wave>=16) unlocked.push("leviathan","sentinelprime","oblivionguard","grimcarrier","dreadhowler");
             if (wave>=18) unlocked.push("voidshield","flametyrant","cryocolossus","blackwall");
             if (wave>=20) unlocked.push("voidemperor");
+            if (isLavaMap()) { unlocked.push("magmawalker","ashwraith","coreling","obsidiantank"); if (wave >= 40) plan.push("cavertitan"); }
             const limits={ fast:Math.max(4,wave*2), stunner:Math.max(1,Math.floor(wave/2)), tank:Math.max(1,Math.floor(wave/3))}; const c={fast:0,stunner:0,tank:0};
             while (left>0.8) { const pool=unlocked.filter((t)=>ENEMY_TYPES[t].budget<=left+0.2 && (limits[t]===undefined || c[t]<limits[t])); if(!pool.length) break; const p=pool[Math.floor(Math.random()*pool.length)]; if(p==="swarm"){ const count=5+Math.floor(Math.random()*6); for(let i=0;i<count;i++) plan.push("swarm"); left-=ENEMY_TYPES.swarm.budget*count; } else { plan.push(p); left-=ENEMY_TYPES[p].budget; if(c[p]!==undefined)c[p]++; } }
             if (plan.filter((x)=>x==="normal").length<3) plan.push("normal","normal","normal");
@@ -787,10 +809,10 @@ export function renderHtml() {
 
           function createEnemy(typeKey) {
             const type=ENEMY_TYPES[typeKey];
-            const diff = getDifficulty(); const deathScale = getDeathDifficultyScale(); const trackIndex = Math.floor(Math.random() * (state.paths.length || 1)); const spawnPath = getPath(trackIndex); const hp = Math.round(type.hp * (diff.hpMult || 1) * deathScale); return { id:crypto.randomUUID(), type:typeKey, x:spawnPath[0].x, y:spawnPath[0].y, hp:hp, maxHp:hp, speed:type.speed*SPEED_SCALE*(diff.speedMult||1)*deathScale, defense:type.defense, reward:type.reward, pathIndex:1, trackIndex, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0, weakenedDamage:0, permaSlow:0, frozenVuln:0, debuffImmune:!!type.debuffImmune, dotImmune:!!type.dotImmune, burnImmune:!!type.burnImmune, knockbackImmune:!!type.knockbackImmune, stunImmune:!!type.stunImmune, noPierce:!!type.noPierce, noShred:!!type.noShred, shieldHalf:!!type.shieldHalf, aoeResist:type.aoeResist||0, beamResist:type.beamResist||0, allDamageHalf:type.allDamageHalf||0, minSpeedMult:type.minSpeedMult||0, phaseCycle:type.phaseCycle||0, phaseDuration:type.phaseDuration||0, phaseTick:0, disableTowerOnHit:type.disableTowerOnHit||0, reflect:type.reflect||0, defAura:type.defAura||0, speedAura:type.speedAura||0, globalSpeedAura:type.globalSpeedAura||0, mirrorCd:type.mirrorCd||0, mirrorTick:0, spawnOnDeath:type.spawnOnDeath||null, spawnPeriodic:type.spawnPeriodic||null, spawnTick:0, empAura:!!type.empAura, buffsAll:!!type.buffsAll, poisonAura:!!type.poisonAura, fireTrail:!!type.fireTrail, regenOnBase:type.regenOnBase||0 };
+            const diff = getDifficulty(); const deathScale = getDeathDifficultyScale(); const trackIndex = Math.floor(Math.random() * (state.paths.length || 1)); const spawnPath = getPath(trackIndex); const hp = Math.round(type.hp * (diff.hpMult || 1) * deathScale * (state.enemyHpBuff || 1)); return { id:crypto.randomUUID(), type:typeKey, x:spawnPath[0].x, y:spawnPath[0].y, hp:hp, maxHp:hp, speed:type.speed*SPEED_SCALE*(diff.speedMult||1)*deathScale*(state.enemySpeedBuff||1), defense:type.defense, reward:type.reward, pathIndex:1, trackIndex, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0, weakenedDamage:0, permaSlow:0, frozenVuln:0, debuffImmune:!!type.debuffImmune, dotImmune:!!type.dotImmune, burnImmune:!!type.burnImmune, knockbackImmune:!!type.knockbackImmune, stunImmune:!!type.stunImmune, noPierce:!!type.noPierce, noShred:!!type.noShred, shieldHalf:!!type.shieldHalf, aoeResist:type.aoeResist||0, beamResist:type.beamResist||0, allDamageHalf:type.allDamageHalf||0, minSpeedMult:type.minSpeedMult||0, phaseCycle:type.phaseCycle||0, phaseDuration:type.phaseDuration||0, phaseTick:0, disableTowerOnHit:type.disableTowerOnHit||0, reflect:type.reflect||0, defAura:type.defAura||0, speedAura:type.speedAura||0, globalSpeedAura:type.globalSpeedAura||0, mirrorCd:type.mirrorCd||0, mirrorTick:0, spawnOnDeath:type.spawnOnDeath||null, spawnPeriodic:type.spawnPeriodic||null, spawnTick:0, empAura:!!type.empAura, buffsAll:!!type.buffsAll, poisonAura:!!type.poisonAura, fireTrail:!!type.fireTrail, regenOnBase:type.regenOnBase||0 };
           }
 
-          function startWave(){ if(state.spawning||state.lives<=0) return; state.wave++; state.queue=fairWavePlan(state.wave); state.spawning=true; state.spawnCooldown=0; updateHud(); }
+          function startWave(){ if(state.spawning||state.lives<=0) return; state.wave++; state.queue=fairWavePlan(state.wave); state.spawning=true; state.spawnCooldown=0; if(isLavaMap() && state.wave % 4 === 0) state.ventTick = 180; updateHud(); }
           function spawnEnemyTick(){ if(!state.spawning) return; state.spawnCooldown--; if(state.spawnCooldown>0) return; if(!state.queue.length){state.spawning=false;return;} state.enemies.push(createEnemy(state.queue.shift())); state.spawnCooldown=10+Math.floor(Math.random()*12); }
 
           function applyDamage(enemy, amount, options={}) {
@@ -847,6 +869,7 @@ export function renderHtml() {
               for (let n=0;n<2;n++) { const c=createEnemy("splitterChild"); c.x=enemy.x+(n===0?-8:8); c.y=enemy.y+(n===0?-4:4); c.pathIndex=enemy.pathIndex; state.enemies.push(c); }
             }
             if (enemy.burnExplode > 0) explodeAt(enemy.x, enemy.y, 55, enemy.burnExplode, false);
+            if (enemy.type === "coreling") addHeat(3);
             if (enemy.spawnOnDeath) {
               for (const t of enemy.spawnOnDeath) {
                 const c = createEnemy(t); c.x = enemy.x + (Math.random()*12-6); c.y = enemy.y + (Math.random()*12-6); c.pathIndex = enemy.pathIndex; state.enemies.push(c);
@@ -861,6 +884,8 @@ export function renderHtml() {
               if (enemy.burnTicks>0 && !enemy.burnImmune && !enemy.dotImmune) { enemy.hp -= enemy.burnDps / 60; enemy.burnTicks--; }
               if (enemy.acidTicks>0 && !enemy.dotImmune) { enemy.hp -= enemy.acidDps / 60; enemy.acidTicks--; }
               if (enemy.hp <= 0) { killEnemy(i, enemy); continue; }
+              if (isLavaMap() && enemy.type === "magmawalker" && state.heat > 70) enemy.shieldHalf = true;
+              if (isLavaMap() && isOnLava(enemy.x, enemy.y) && (enemy.burnImmune || enemy.type === "magmawalker")) enemy.hp = Math.min(enemy.maxHp, enemy.hp + enemy.maxHp * 0.0008);
               if (enemy.phaseCycle) { enemy.phaseTick = (enemy.phaseTick + 1) % enemy.phaseCycle; }
               if (enemy.mirrorCd) enemy.mirrorTick = (enemy.mirrorTick + 1) % enemy.mirrorCd;
               if (enemy.spawnPeriodic) { enemy.spawnTick++; if (enemy.spawnTick % 240 === 0) { const c=createEnemy(enemy.spawnPeriodic); c.x=enemy.x; c.y=enemy.y; c.pathIndex=enemy.pathIndex; state.enemies.push(c); } }
@@ -875,7 +900,7 @@ export function renderHtml() {
               if (enemy.slowTicks>0) enemy.slowTicks--;
               const target=getPath(enemy.trackIndex)[enemy.pathIndex];
               if (!target) { state.enemies.splice(i,1); state.lives -= Math.max(0, enemy.baseDamage * (1 - (enemy.weakenedDamage || 0))); if (enemy.regenOnBase) enemy.hp = Math.min(enemy.maxHp, enemy.hp + enemy.maxHp * enemy.regenOnBase); continue; }
-              const dx=target.x-enemy.x, dy=target.y-enemy.y, len=Math.hypot(dx,dy), move=enemy.speed*speedMultiplier;
+              const dx=target.x-enemy.x, dy=target.y-enemy.y, len=Math.hypot(dx,dy), heatSpeedBoost = (isLavaMap() && state.heat >= 85) ? 1.15 : 1, move=enemy.speed*speedMultiplier*heatSpeedBoost;
               if (len<move) { enemy.x=target.x; enemy.y=target.y; enemy.pathIndex++; } else { enemy.x += (dx/len)*move; enemy.y += (dy/len)*move; if (enemy.fireTrail) explodeAt(enemy.x, enemy.y, 22, 0.4, true); if (enemy.type === "warengine") { for (const t of state.towers) if (distance(enemy,t)<=32) t.stunTicks = Math.max(t.stunTicks, 45); } }
             }
           }
@@ -937,7 +962,8 @@ export function renderHtml() {
             return out;
           }
 
-          function findTargetForTower(t){ let target=null,fur=-1; for(const e of state.enemies){ if(!isEnemyVisible(e)) continue; if(distance(t,e)<=t.rangePx && e.pathIndex>fur && !(e.phaseDuration && e.phaseTick>0) && !(e.mirrorCd && e.mirrorTick===0)){target=e;fur=e.pathIndex;} } return target; }
+          function getTowerRangePx(t){ const penalty = (isLavaMap() && state.heat >= 85) ? 0.8 : 1; return t.rangePx * penalty; }
+          function findTargetForTower(t){ let target=null,fur=-1; const rangePx=getTowerRangePx(t); for(const e of state.enemies){ if(!isEnemyVisible(e)) continue; if(distance(t,e)<=rangePx && e.pathIndex>fur && !(e.phaseDuration && e.phaseTick>0) && !(e.mirrorCd && e.mirrorTick===0)){target=e;fur=e.pathIndex;} } return target; }
           function pointToSegmentDistance(px,py,x1,y1,x2,y2){ const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy; if(l2===0)return Math.hypot(px-x1,py-y1); let t=((px-x1)*dx+(py-y1)*dy)/l2; t=Math.max(0,Math.min(1,t)); const qx=x1+t*dx,qy=y1+t*dy; return Math.hypot(px-qx,py-qy); }
 
           function towerShoot(tower, target, buffs) {
@@ -948,6 +974,7 @@ export function renderHtml() {
             if (s.rampOnTarget && tower.lastTargetId === (target && target.id)) { tower.rampStacks = Math.min((tower.rampStacks || 0) + 1, 20); } else { tower.rampStacks = 0; }
             tower.lastTargetId = target && target.id;
             if (s.rampOnTarget && tower.rampStacks > 0) dmg *= 1 + tower.rampStacks * 0.08;
+            if (isLavaMap()) { if (s.splashRadius) addHeat(0.35); if (s.burn || ["flame","firetotem","thermalray","moltenmortar","embertrap","plasma"].includes(s.id)) addHeat(0.25); }
             const critChance = Math.max(buffs.crit || 0, s.critChance || 0);
             if (critChance > 0 && Math.random() < critChance) dmg *= 2;
 
@@ -971,7 +998,8 @@ export function renderHtml() {
               for (let m = 0; m < count; m++) {
                 if (!candidates.length) break;
                 const pick = candidates[Math.floor(Math.random() * candidates.length)];
-                state.mines.push({ x: pick.x, y: pick.y, damage: s.mineDamage || s.damage || 0, radius: s.mineRadius || 32, slow: s.mineSlow || 0, root: s.mineRoot || 0, freeze: s.mineFreeze || 0, vuln: s.mineVuln || 0, splash: s.mineSplash || 0, ttl: 900 });
+                const nearLava = isLavaMap() && isOnLava(pick.x, pick.y);
+                state.mines.push({ x: pick.x, y: pick.y, damage: s.mineDamage || s.damage || 0, radius: s.mineRadius || 32, slow: s.mineSlow || 0, root: s.mineRoot || 0, freeze: s.mineFreeze || 0, vuln: s.mineVuln || 0, splash: s.mineSplash || 0, ttl: nearLava ? 1 : 900 });
               }
               return;
             }
@@ -979,7 +1007,7 @@ export function renderHtml() {
             if (NON_PROJECTILE_TOWERS.has(s.id) && !s.placeMine) {
               for (const enemy of state.enemies) {
                 if (!isEnemyVisible(enemy)) continue;
-                if (distance(tower, enemy) > tower.rangePx) continue;
+                if (distance(tower, enemy) > getTowerRangePx(tower)) continue;
                 if (s.pullStrength) {
                   const dx = tower.x - enemy.x;
                   const dy = tower.y - enemy.y;
@@ -999,6 +1027,7 @@ export function renderHtml() {
               return;
             }
 
+            if (isLavaMap() && isOnLava(target.x, target.y) && ["frost","cryobeam","frostflare","frostnet","cryoturbine","frostwave","cryomines"].includes(s.id)) dmg *= 2;
             if (BEAM_TOWERS.has(s.id)) {
               const options = { burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, ignoreDefense:!!s.ignoreDefense, antiArmorBonus:s.antiArmorBonus||0 };
               applyDamage(target, dmg, options);
@@ -1052,7 +1081,7 @@ export function renderHtml() {
 
             if (s.pullStrength) {
               for (const enemy of state.enemies) {
-                if (distance(tower, enemy) <= tower.rangePx) {
+                if (distance(tower, enemy) <= getTowerRangePx(tower)) {
                   const dx = tower.x - enemy.x;
                   const dy = tower.y - enemy.y;
                   const len = Math.max(1, Math.hypot(dx, dy));
@@ -1066,7 +1095,7 @@ export function renderHtml() {
               let hits = 0;
               for (const enemy of state.enemies) {
                 if (!isEnemyVisible(enemy)) continue;
-                if (distance(tower, enemy) > tower.rangePx) continue;
+                if (distance(tower, enemy) > getTowerRangePx(tower)) continue;
                 if (pointToSegmentDistance(enemy.x, enemy.y, tower.x, tower.y, target.x, target.y) <= 14) {
                   const scaledDamage = dmg * (1 + (s.perPierceBeamBonus || 0) * hits);
                   const dealt = applyDamage(enemy, scaledDamage, { pierce:true, beam:true, armoredBonus:s.armoredBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0 });
@@ -1091,6 +1120,8 @@ export function renderHtml() {
               tower.cooldown--; if(tower.cooldown>0) continue;
               const target=findTargetForTower(tower); if(!target && !tower.stats.summonFactoryTurret && !tower.stats.placeMine) continue;
               let atkSpeed = tower.stats.atkSpeed > 0 ? tower.stats.atkSpeed / (1 + buffs.spd) : 99999;
+              if (isLavaMap() && state.heat >= 30) atkSpeed *= 1.1;
+              if (isLavaMap()) { const unstable = inAnyZone(tower.x, tower.y, getMap().unstableZones); if (unstable) tower.unstableTicks = (tower.unstableTicks||0)+1; else tower.unstableTicks=0; if ((tower.unstableTicks||0) > 1200 && !tower.unstableChecked) { tower.unstableChecked = true; if (Math.random() < 0.2) { state.towers = state.towers.filter((t)=>t.id!==tower.id); continue; } } }
               if (NERF_IDS.has(tower.stats.id)) atkSpeed *= 1.08;
               if (BUFF_IDS.has(tower.stats.id)) atkSpeed *= 0.94;
               tower.cooldown = Math.max(1, Math.round(atkSpeed * 60));
@@ -1208,15 +1239,18 @@ export function renderHtml() {
           }
 
           function drawAlliedTurrets(){ for(const u of state.alliedTurrets){ ctx.fillStyle="#313a46";ctx.fillRect(u.x-8,u.y-8,16,16);ctx.fillStyle="#89fcff";ctx.beginPath();ctx.arc(u.x,u.y,4,0,Math.PI*2);ctx.fill(); ctx.fillStyle="#111";ctx.fillRect(u.x-10,u.y-14,20,3);ctx.fillStyle="#57cc99";ctx.fillRect(u.x-10,u.y-14,20*Math.max(0,u.hp)/(u.unitHp||5),3);} }
-          function drawPath(){ const map = getMap(); for (const wz of getWaterZones(map)) { ctx.fillStyle = "#1f5f8b"; ctx.fillRect(wz.x, wz.y, wz.w, wz.h); } for (const bz of (map.blockedZones || [])) { ctx.fillStyle = "#7f1d1d"; ctx.fillRect(bz.x, bz.y, bz.w, bz.h); } ctx.strokeStyle="#f4a261";ctx.lineWidth=34;ctx.lineJoin="round";ctx.lineCap="round"; for (const lane of state.paths) { if (!lane || !lane.length) continue; ctx.beginPath();ctx.moveTo(lane[0].x,lane[0].y);for(let i=1;i<lane.length;i++)ctx.lineTo(lane[i].x,lane[i].y);ctx.stroke(); } if (map.fog) { ctx.fillStyle = "rgba(10,12,18,0.72)"; ctx.fillRect(map.fog.x, 0, canvas.width - map.fog.x, canvas.height); } }
+          function drawPath(){ const map = getMap(); for (const wz of getWaterZones(map)) { ctx.fillStyle = "#1f5f8b"; ctx.fillRect(wz.x, wz.y, wz.w, wz.h); } for (const bz of (map.blockedZones || [])) { ctx.fillStyle = "#7f1d1d"; ctx.fillRect(bz.x, bz.y, bz.w, bz.h); }
+          for (const bz of (state.permBlockedTiles || [])) { ctx.fillStyle = "#991b1b"; ctx.fillRect(bz.x, bz.y, bz.w, bz.h); }
+          for (const lz of (map.lavaChannels || [])) { ctx.fillStyle = "#b45309"; ctx.fillRect(lz.x, lz.y, lz.w, lz.h); }
+          for (const lz of state.tempLavaTiles) { ctx.fillStyle = "rgba(239,68,68,0.55)"; ctx.fillRect(lz.x, lz.y, lz.w, lz.h); } ctx.strokeStyle="#f4a261";ctx.lineWidth=34;ctx.lineJoin="round";ctx.lineCap="round"; for (const lane of state.paths) { if (!lane || !lane.length) continue; ctx.beginPath();ctx.moveTo(lane[0].x,lane[0].y);for(let i=1;i<lane.length;i++)ctx.lineTo(lane[i].x,lane[i].y);ctx.stroke(); } if (map.fog) { ctx.fillStyle = "rgba(10,12,18,0.72)"; ctx.fillRect(map.fog.x, 0, canvas.width - map.fog.x, canvas.height); } }
           function drawProjectiles(){ for(const p of state.projectiles){ if(p.mode==="bolt"){ctx.strokeStyle="#f7f45f";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p.x,p.y);if(p.target)ctx.lineTo(p.target.x,p.target.y);ctx.stroke();} else if(p.mode==="beam"){ctx.strokeStyle=p.color||"#d9d9d9";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(p.x,p.y);if(p.target)ctx.lineTo(p.target.x,p.target.y);ctx.stroke();} else {ctx.fillStyle=p.color||"#fff";ctx.beginPath();ctx.arc(p.x,p.y,3.5,0,Math.PI*2);ctx.fill();} } }
           function drawGameOver(){ if(state.lives>0)return; ctx.fillStyle="rgba(0,0,0,0.72)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 52px system-ui";ctx.fillText("Game Over",canvas.width/2,canvas.height/2-20);ctx.font="24px system-ui";ctx.fillText("Refresh to try again",canvas.width/2,canvas.height/2+24); }
 
-          function tick(){ ctx.clearRect(0,0,canvas.width,canvas.height); spawnEnemyTick(); updateEnemies(); awardFarmWaveIncome(); updateMines(); updateAlliedTurrets(); updateTowers(); updateProjectiles(); updateHud(); drawPath(); for(const t of state.towers) drawTower(t);
+          function tick(){ ctx.clearRect(0,0,canvas.width,canvas.height); spawnEnemyTick(); updateEnemies(); processHeatSystem(); if (isLavaMap() && state.ventTick > 0) { state.ventTick--; if (state.ventTick % 120 === 0 && state.towers.length) { const t=state.towers[Math.floor(Math.random()*state.towers.length)]; t.stunTicks=Math.max(t.stunTicks,300); addHeat(6); } } awardFarmWaveIncome(); updateMines(); updateAlliedTurrets(); updateTowers(); updateProjectiles(); updateHud(); drawPath(); for(const t of state.towers) drawTower(t);
             for (const m of state.mines) { ctx.fillStyle = "#d4af37"; ctx.beginPath(); ctx.arc(m.x, m.y, 5, 0, Math.PI * 2); ctx.fill(); }
             drawAlliedTurrets(); for(const e of state.enemies) drawEnemy(e); drawProjectiles(); drawGameOver(); requestAnimationFrame(tick); }
 
-          function canPlaceTower(x,y){ const map = getMap(); const model=TOWERS.find((t)=>t.id===state.selectedTower); const inWater = getWaterZones(map).some((wz)=>inZone(x,y,wz)); const blocked = (map.blockedZones || []).some((bz)=>inZone(x,y,bz)); const isWaterOnly = !!(model && WATER_ONLY_TOWERS.has(model.id)); if (blocked) return false; if (isWaterOnly && state.mapId !== "lakeside") return false; if (isWaterOnly && !inWater) return false; if (!isWaterOnly && inWater) return false; const onPath=state.paths.some((lane)=>lane.some((pt,i)=>{ if(i===0)return false; const a=lane[i-1],b=pt; return x>=Math.min(a.x,b.x)-26&&x<=Math.max(a.x,b.x)+26&&y>=Math.min(a.y,b.y)-26&&y<=Math.max(a.y,b.y)+26;})); if(onPath)return false; if(state.towers.some((t)=>distance(t,{x,y})<34)) return false; return true; }
+          function canPlaceTower(x,y){ const map = getMap(); const model=TOWERS.find((t)=>t.id===state.selectedTower); const inWater = getWaterZones(map).some((wz)=>inZone(x,y,wz)); const blocked = (map.blockedZones || []).some((bz)=>inZone(x,y,bz)) || (state.permBlockedTiles || []).some((bz)=>inZone(x,y,bz)); const isWaterOnly = !!(model && WATER_ONLY_TOWERS.has(model.id)); if (blocked) return false; if (isWaterOnly && state.mapId !== "lakeside") return false; if (isWaterOnly && !inWater) return false; if (!isWaterOnly && inWater) return false; const onPath=state.paths.some((lane)=>lane.some((pt,i)=>{ if(i===0)return false; const a=lane[i-1],b=pt; return x>=Math.min(a.x,b.x)-26&&x<=Math.max(a.x,b.x)+26&&y>=Math.min(a.y,b.y)-26&&y<=Math.max(a.y,b.y)+26;})); if(onPath)return false; if(state.towers.some((t)=>distance(t,{x,y})<34)) return false; return true; }
 
           canvas.addEventListener("click", (event) => {
             if (state.lives <= 0) return;
