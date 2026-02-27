@@ -113,9 +113,10 @@ export function renderHtml() {
           const NON_PROJECTILE_TOWERS = new Set(["mine","gravity","poison","emp","void","cryomines","fence","oil","static","snare","spore","firetotem","shocknet","nanoswarm","timespire","arctrap","spikewall","plaguetower","heatsink","magnet","stormpillar","decaytotem","whirlpool"]);
           const WATER_ONLY_TOWERS = new Set(["tidal","coral","whirlpool","frostwave","tsunami"]);
           const LIGHT_TOWERS = new Set(["laser","thermalray","frostflare","tesla","beamsplit","scatterlaser","ion","shocknet","static","shockwavetotem"]);
+          const ICE_TOWERS = new Set(["frost","cryomines","cryobeam","frostflare","frostnet","cryoturbine","frostwave"]);
           const BEAM_TOWERS = new Set(["laser","beamsplit","thermalray","cryobeam"]);
-          const NERF_IDS = new Set(["railgun","bomb","laser","beamsplit","scatterlaser","ion","voidemperorkiller"]);
-          const BUFF_IDS = new Set(["wind","snare","spore","firetotem","decaytotem","shockwavetotem","overwatch","heatsink","pulse"]);
+          const NERF_IDS = new Set(["railgun","bomb","laser","beamsplit","scatterlaser","ion","voidemperorkiller","tsunami","tidal"]);
+          const BUFF_IDS = new Set(["wind","snare","spore","firetotem","decaytotem","shockwavetotem","overwatch","heatsink","pulse","frost","cryomines","frostwave"]);
           const NERF_DMG_MULT = 0.88;
           const NERF_RANGE_MULT = 0.93;
           const BUFF_DMG_MULT = 1.12;
@@ -135,6 +136,7 @@ export function renderHtml() {
             doubletrack: { id:"doubletrack", name:"Double Track", description:"Two enemy lanes at once.", tracks:2, makePaths:() => [[{x:0,y:170},{x:230,y:170},{x:230,y:80},{x:530,y:80},{x:530,y:250},{x:920,y:250}], [{x:0,y:390},{x:260,y:390},{x:260,y:500},{x:560,y:500},{x:560,y:300},{x:920,y:300}]], water:null, blockedZones:[], fog:null },
             lakeside: { id:"lakeside", name:"Lakeside Beach", description:"Watch the water zone: no tower placement there.", tracks:1, makePaths:() => [[{x:0,y:300},{x:220,y:300},{x:220,y:120},{x:520,y:120},{x:520,y:420},{x:640,y:420},{x:640,y:220},{x:780,y:220},{x:920,y:220}]], water:{x:650,y:0,w:270,h:560}, blockedZones:[], fog:null },
             fogmarsh: { id:"fogmarsh", name:"Fog Marsh", description:"Similar to beginner with nearby water + fog of war.", tracks:1, makePaths:() => [[{x:0,y:280},{x:200,y:280},{x:200,y:130},{x:480,y:130},{x:480,y:390},{x:720,y:390},{x:720,y:230},{x:920,y:230}]], waterZones:[{x:250,y:210,w:120,h:80},{x:560,y:280,w:110,h:80}], blockedZones:[], fog:{x:360,revealRadius:180} },
+            shiftingfault: { id:"shiftingfault", name:"Shifting Fault", description:"Path reroutes every 5 waves.", tracks:1, pathVariants:[[{x:0,y:280},{x:220,y:280},{x:220,y:110},{x:500,y:110},{x:500,y:390},{x:740,y:390},{x:740,y:220},{x:920,y:220}], [{x:0,y:320},{x:210,y:320},{x:210,y:170},{x:520,y:170},{x:520,y:420},{x:760,y:420},{x:760,y:250},{x:920,y:250}], [{x:0,y:240},{x:260,y:240},{x:260,y:90},{x:560,y:90},{x:560,y:360},{x:790,y:360},{x:790,y:200},{x:920,y:200}]], makePaths:() => { const v = MAPS.shiftingfault.pathVariants; const p = v[Math.floor(Math.random()*v.length)].map((pt)=>({x:pt.x,y:pt.y})); return [p]; }, dynamicPathEvery:5, water:null, blockedZones:[], fog:null },
             warpzone: { id:"warpzone", name:"Warp Zone", description:"One lane splits into three. Red tiles are blocked.", tracks:3, makePaths:() => [[{x:0,y:280},{x:300,y:280},{x:520,y:280},{x:700,y:130},{x:920,y:130}], [{x:0,y:280},{x:300,y:280},{x:520,y:280},{x:760,y:280},{x:920,y:280}], [{x:0,y:280},{x:300,y:280},{x:520,y:280},{x:700,y:430},{x:920,y:430}]], water:null, blockedZones:[{x:380,y:60,w:70,h:70},{x:610,y:230,w:80,h:80},{x:640,y:470,w:90,h:60}], fog:null },
             lavacavern: { id:"lavacavern", name:"Lava Cavern", description:"Heat rises with fire/explosions. Manage overheat.", tracks:1, makePaths:() => [[{x:0,y:300},{x:200,y:300},{x:200,y:120},{x:460,y:120},{x:460,y:420},{x:720,y:420},{x:720,y:220},{x:920,y:220}]], water:null, blockedZones:[{x:560,y:80,w:70,h:50},{x:300,y:460,w:90,h:60}], lavaChannels:[{x:170,y:250,w:120,h:90},{x:430,y:260,w:130,h:90},{x:670,y:250,w:120,h:90}], unstableZones:[{x:280,y:180,w:70,h:60},{x:600,y:360,w:70,h:60}], fog:null },
           };
@@ -531,7 +533,7 @@ export function renderHtml() {
 
           ensureTierFiveUpgrades();
 
-          const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0, heat:0, heatFlags:{scorch:false,molten:false,overheat:false}, tempLavaTiles:[], permBlockedTiles:[], eruptions:0, enemyHpBuff:1, enemySpeedBuff:1, ventTick:0 };
+          const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0, heat:0, heatFlags:{scorch:false,molten:false,overheat:false}, tempLavaTiles:[], permBlockedTiles:[], eruptions:0, enemyHpBuff:1, enemySpeedBuff:1, ventTick:0, lastPathShiftWave:0 };
 
           const copyStats = (m) => JSON.parse(JSON.stringify(m));
           const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -573,6 +575,7 @@ export function renderHtml() {
             state.enemyHpBuff = 1;
             state.enemySpeedBuff = 1;
             state.ventTick = 0;
+            state.lastPathShiftWave = 0;
             state.paths = copyStats(getMap().makePaths());
             renderUpgradePanel();
             updateHud();
@@ -809,10 +812,10 @@ export function renderHtml() {
 
           function createEnemy(typeKey) {
             const type=ENEMY_TYPES[typeKey];
-            const diff = getDifficulty(); const deathScale = getDeathDifficultyScale(); const trackIndex = Math.floor(Math.random() * (state.paths.length || 1)); const spawnPath = getPath(trackIndex); const hp = Math.round(type.hp * (diff.hpMult || 1) * deathScale * (state.enemyHpBuff || 1)); return { id:crypto.randomUUID(), type:typeKey, x:spawnPath[0].x, y:spawnPath[0].y, hp:hp, maxHp:hp, speed:type.speed*SPEED_SCALE*(diff.speedMult||1)*deathScale*(state.enemySpeedBuff||1), defense:type.defense, reward:type.reward, pathIndex:1, trackIndex, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0, weakenedDamage:0, permaSlow:0, frozenVuln:0, debuffImmune:!!type.debuffImmune, dotImmune:!!type.dotImmune, burnImmune:!!type.burnImmune, knockbackImmune:!!type.knockbackImmune, stunImmune:!!type.stunImmune, noPierce:!!type.noPierce, noShred:!!type.noShred, shieldHalf:!!type.shieldHalf, aoeResist:type.aoeResist||0, beamResist:type.beamResist||0, allDamageHalf:type.allDamageHalf||0, minSpeedMult:type.minSpeedMult||0, phaseCycle:type.phaseCycle||0, phaseDuration:type.phaseDuration||0, phaseTick:0, disableTowerOnHit:type.disableTowerOnHit||0, reflect:type.reflect||0, defAura:type.defAura||0, speedAura:type.speedAura||0, globalSpeedAura:type.globalSpeedAura||0, mirrorCd:type.mirrorCd||0, mirrorTick:0, spawnOnDeath:type.spawnOnDeath||null, spawnPeriodic:type.spawnPeriodic||null, spawnTick:0, empAura:!!type.empAura, buffsAll:!!type.buffsAll, poisonAura:!!type.poisonAura, fireTrail:!!type.fireTrail, regenOnBase:type.regenOnBase||0 };
+            const diff = getDifficulty(); const deathScale = getDeathDifficultyScale(); const trackIndex = Math.floor(Math.random() * (state.paths.length || 1)); const spawnPath = getPath(trackIndex); const hp = Math.round(type.hp * (diff.hpMult || 1) * deathScale * (state.enemyHpBuff || 1)); return { id:crypto.randomUUID(), type:typeKey, x:spawnPath[0].x, y:spawnPath[0].y, hp:hp, maxHp:hp, speed:type.speed*SPEED_SCALE*(diff.speedMult||1)*deathScale*(state.enemySpeedBuff||1), defense:type.defense, reward:type.reward, pathIndex:1, trackIndex, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0, weakenedDamage:0, permaSlow:0, frozenVuln:0, debuffImmune:!!type.debuffImmune, dotImmune:!!type.dotImmune, burnImmune:!!type.burnImmune, knockbackImmune:!!type.knockbackImmune, stunImmune:!!type.stunImmune, noPierce:!!type.noPierce, noShred:!!type.noShred, shieldHalf:!!type.shieldHalf, aoeResist:type.aoeResist||0, beamResist:type.beamResist||0, allDamageHalf:type.allDamageHalf||0, minSpeedMult:type.minSpeedMult||0, phaseCycle:type.phaseCycle||0, phaseDuration:type.phaseDuration||0, phaseTick:0, disableTowerOnHit:type.disableTowerOnHit||0, reflect:type.reflect||0, defAura:type.defAura||0, speedAura:type.speedAura||0, globalSpeedAura:type.globalSpeedAura||0, mirrorCd:type.mirrorCd||0, mirrorTick:0, spawnOnDeath:type.spawnOnDeath||null, spawnPeriodic:type.spawnPeriodic||null, spawnTick:0, empAura:!!type.empAura, buffsAll:!!type.buffsAll, poisonAura:!!type.poisonAura, fireTrail:!!type.fireTrail, regenOnBase:type.regenOnBase||0, frozenHits:0 };
           }
 
-          function startWave(){ if(state.spawning||state.lives<=0) return; state.wave++; state.queue=fairWavePlan(state.wave); state.spawning=true; state.spawnCooldown=0; if(isLavaMap() && state.wave % 4 === 0) state.ventTick = 180; updateHud(); }
+          function startWave(){ if(state.spawning||state.lives<=0) return; state.wave++; const map=getMap(); if (map.dynamicPathEvery && (state.wave === 1 || state.wave - state.lastPathShiftWave >= map.dynamicPathEvery)) { state.paths = copyStats(map.makePaths()); state.lastPathShiftWave = state.wave; } state.queue=fairWavePlan(state.wave); state.spawning=true; state.spawnCooldown=0; if(isLavaMap() && state.wave % 4 === 0) state.ventTick = 180; updateHud(); }
           function spawnEnemyTick(){ if(!state.spawning) return; state.spawnCooldown--; if(state.spawnCooldown>0) return; if(!state.queue.length){state.spawning=false;return;} state.enemies.push(createEnemy(state.queue.shift())); state.spawnCooldown=10+Math.floor(Math.random()*12); }
 
           function applyDamage(enemy, amount, options={}) {
@@ -843,6 +846,7 @@ export function renderHtml() {
             if (options.acidDotDps) { enemy.acidTicks = Math.max(enemy.acidTicks, 240); enemy.acidDps = Math.max(enemy.acidDps, options.acidDotDps); if (options.acidSpreadOnDeath) enemy.acidSpreadOnDeath = true; }
             if (options.hitStun && !enemy.stunImmune) enemy.stunTicks = Math.max(enemy.stunTicks, options.hitStun);
             if (options.freezeOnHitTicks && !enemy.stunImmune) enemy.stunTicks = Math.max(enemy.stunTicks, options.freezeOnHitTicks);
+            if (options.freezeTag) { enemy.frozenHits = (enemy.frozenHits || 0) + 1; if (enemy.type === "obsidiantank" && enemy.frozenHits >= 2) enemy.defense = Math.max(0, enemy.defense * 0.5); }
             if (options.weakenDamage) enemy.weakenedDamage = Math.max(enemy.weakenedDamage || 0, options.weakenDamage);
             return dmg;
           }
@@ -1022,14 +1026,14 @@ export function renderHtml() {
                 if (s.burn) { enemy.burnTicks = Math.max(enemy.burnTicks, s.burnDuration || 240); enemy.burnDps = Math.max(enemy.burnDps, s.burnDps || 3); }
                 if (s.stripDefense) enemy.defense = Math.max(0, enemy.defense - s.stripDefense);
                 if (s.fireVuln) enemy.vulnMult = Math.max(enemy.vulnMult, s.fireVuln);
-                if (s.damage > 0) applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, hitStun:s.hitStun||0, supportVuln:s.supportVuln||0, stripDefense:s.stripDefense||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, acidDotDps:s.acidDotDps||0 });
+                if (s.damage > 0) applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, hitStun:s.hitStun||0, supportVuln:s.supportVuln||0, stripDefense:s.stripDefense||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, acidDotDps:s.acidDotDps||0, freezeTag: ICE_TOWERS.has(s.id) });
               }
               return;
             }
 
             if (isLavaMap() && isOnLava(target.x, target.y) && ["frost","cryobeam","frostflare","frostnet","cryoturbine","frostwave","cryomines"].includes(s.id)) dmg *= 2;
             if (BEAM_TOWERS.has(s.id)) {
-              const options = { burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, ignoreDefense:!!s.ignoreDefense, antiArmorBonus:s.antiArmorBonus||0 };
+              const options = { burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, ignoreDefense:!!s.ignoreDefense, antiArmorBonus:s.antiArmorBonus||0, freezeTag: ICE_TOWERS.has(s.id) };
               applyDamage(target, dmg, options);
               let beams = s.splitBeams || 0;
               for (const enemy of state.enemies) {
@@ -1109,7 +1113,7 @@ export function renderHtml() {
               return;
             }
 
-            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:{ pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:s.acidDotDps||0, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:buffs.lifesteal||0, weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, lifesteal:s.lifesteal||0, knockback:s.knockback||0, fireVuln:s.fireVuln||0, stripDefense:s.stripDefense||0 }, pierceTargets:s.pierceTargets||0, doubleShockwave:!!s.doubleShockwave, perPierceProjectileBonus:s.perPierceProjectileBonus||0, splitBeams:s.splitBeams||0, burstCount:s.burstCount||0, echoNearby:!!s.echoNearby, echoPower:s.echoPower||0.5, echoCount:s.echoCount||1 });
+            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:{ pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, freezeTag: ICE_TOWERS.has(s.id), burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:s.acidDotDps||0, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:buffs.lifesteal||0, weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, lifesteal:s.lifesteal||0, knockback:s.knockback||0, fireVuln:s.fireVuln||0, stripDefense:s.stripDefense||0 }, pierceTargets:s.pierceTargets||0, doubleShockwave:!!s.doubleShockwave, perPierceProjectileBonus:s.perPierceProjectileBonus||0, splitBeams:s.splitBeams||0, burstCount:s.burstCount||0, echoNearby:!!s.echoNearby, echoPower:s.echoPower||0.5, echoCount:s.echoCount||1 });
           }
 
           function updateTowers() {
