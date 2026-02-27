@@ -960,7 +960,7 @@ export function renderHtml() {
           function computeBuffsForTower(tower) {
             const out = { dmg:0, spd:0, crit:0, immuneStun:false, trueDamage:false, lifesteal:0 };
             for (const src of state.towers) {
-              if (!src.stats.auraDamage && !src.stats.auraSpeed && !src.stats.auraCrit && !src.stats.supportAtkAura) continue;
+              if (!src.stats.auraDamage && !src.stats.auraSpeed && !src.stats.auraCrit && !src.stats.supportAtkAura && !src.stats.supportDmgAura && !src.stats.fireAura && !src.stats.auraImmuneStun && !src.stats.trueDamageWindow && !src.stats.lifesteal) continue;
               if (src === tower) continue;
               if (!src.stats.globalAuraHalf && distance(src,tower) > src.rangePx) continue;
               const auraScale = src.stats.globalAuraHalf ? 0.5 : 1;
@@ -981,6 +981,10 @@ export function renderHtml() {
           }
 
           function getTowerRangePx(t){ const penalty = (isLavaMap() && state.heat >= 85) ? 0.8 : 1; return t.rangePx * penalty; }
+          function applyLifestealRelief(enemy, dealt, lifesteal) {
+            if (!lifesteal || dealt <= 0) return;
+            for (const t of state.towers) if (distance(t, enemy) <= 120) t.stunTicks = Math.max(0, t.stunTicks - dealt * lifesteal);
+          }
           function findTargetForTower(t){ let target=null,fur=-1; const rangePx=getTowerRangePx(t); for(const e of state.enemies){ if(!isEnemyVisible(e)) continue; if(distance(t,e)<=rangePx && e.pathIndex>fur && !(e.phaseDuration && e.phaseTick>0) && !(e.mirrorCd && e.mirrorTick===0)){target=e;fur=e.pathIndex;} } return target; }
           function pointToSegmentDistance(px,py,x1,y1,x2,y2){ const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy; if(l2===0)return Math.hypot(px-x1,py-y1); let t=((px-x1)*dx+(py-y1)*dy)/l2; t=Math.max(0,Math.min(1,t)); const qx=x1+t*dx,qy=y1+t*dy; return Math.hypot(px-qx,py-qy); }
 
@@ -1040,21 +1044,26 @@ export function renderHtml() {
                 if (s.burn) { enemy.burnTicks = Math.max(enemy.burnTicks, s.burnDuration || 240); enemy.burnDps = Math.max(enemy.burnDps, s.burnDps || 3); }
                 if (s.stripDefense) enemy.defense = Math.max(0, enemy.defense - s.stripDefense);
                 if (s.fireVuln) enemy.vulnMult = Math.max(enemy.vulnMult, s.fireVuln);
-                if (s.damage > 0) applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, hitStun:s.hitStun||0, supportVuln:s.supportVuln||0, stripDefense:s.stripDefense||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, acidDotDps:s.acidDotDps||0, freezeTag: ICE_TOWERS.has(s.id) });
+                if (s.damage > 0) {
+                  const dealt = applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, hitStun:s.hitStun||0, supportVuln:s.supportVuln||0, stripDefense:s.stripDefense||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, acidDotDps:s.acidDotDps||0, freezeTag: ICE_TOWERS.has(s.id) });
+                  applyLifestealRelief(enemy, dealt, (s.lifesteal || 0) + (buffs.lifesteal || 0));
+                }
               }
               return;
             }
 
             if (isLavaMap() && isOnLava(target.x, target.y) && ["frost","cryobeam","frostflare","frostnet","cryoturbine","frostwave","cryomines"].includes(s.id)) dmg *= 2;
             if (BEAM_TOWERS.has(s.id)) {
-              const options = { burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, ignoreDefense:!!s.ignoreDefense, antiArmorBonus:s.antiArmorBonus||0, freezeTag: ICE_TOWERS.has(s.id) };
-              applyDamage(target, dmg, options);
+              const options = { burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, ignoreDefense:!!s.ignoreDefense, antiArmorBonus:s.antiArmorBonus||0, freezeTag: ICE_TOWERS.has(s.id), lifesteal:(s.lifesteal || 0) + (buffs.lifesteal || 0) };
+              const dealtMain = applyDamage(target, dmg, options);
+              applyLifestealRelief(target, dealtMain, options.lifesteal || 0);
               let beams = s.splitBeams || 0;
               for (const enemy of state.enemies) {
                 if (beams <= 0) break;
                 if (enemy === target) continue;
                 if (distance(target, enemy) <= 130) {
-                  applyDamage(enemy, dmg * 0.8, options);
+                  const dealtSplit = applyDamage(enemy, dmg * 0.8, options);
+                  applyLifestealRelief(enemy, dealtSplit, options.lifesteal || 0);
                   beams--;
                 }
               }
@@ -1117,6 +1126,7 @@ export function renderHtml() {
                 if (pointToSegmentDistance(enemy.x, enemy.y, tower.x, tower.y, target.x, target.y) <= 14) {
                   const scaledDamage = dmg * (1 + (s.perPierceBeamBonus || 0) * hits);
                   const dealt = applyDamage(enemy, scaledDamage, { pierce:true, beam:true, armoredBonus:s.armoredBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0 });
+                  applyLifestealRelief(enemy, dealt, (s.lifesteal || 0) + (buffs.lifesteal || 0));
                   if (enemy.reflect && dealt>0) tower.stunTicks = Math.max(tower.stunTicks, Math.round(dealt * enemy.reflect));
                   hits++;
                   if (hits >= (s.linePierceCount || 999)) break;
@@ -1127,14 +1137,14 @@ export function renderHtml() {
               return;
             }
 
-            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:{ pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, freezeTag: ICE_TOWERS.has(s.id), burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:s.acidDotDps||0, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:buffs.lifesteal||0, weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, lifesteal:s.lifesteal||0, knockback:s.knockback||0, fireVuln:s.fireVuln||0, stripDefense:s.stripDefense||0 }, pierceTargets:s.pierceTargets||0, doubleShockwave:!!s.doubleShockwave, perPierceProjectileBonus:s.perPierceProjectileBonus||0, splitBeams:s.splitBeams||0, burstCount:s.burstCount||0, echoNearby:!!s.echoNearby, echoPower:s.echoPower||0.5, echoCount:s.echoCount||1 });
+            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:{ pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, freezeTag: ICE_TOWERS.has(s.id), burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:s.acidDotDps||0, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:(s.lifesteal || 0) + (buffs.lifesteal || 0), weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, knockback:s.knockback||0, fireVuln:s.fireVuln||0, stripDefense:s.stripDefense||0 }, pierceTargets:s.pierceTargets||0, doubleShockwave:!!s.doubleShockwave, perPierceProjectileBonus:s.perPierceProjectileBonus||0, splitBeams:s.splitBeams||0, burstCount:s.burstCount||0, echoNearby:!!s.echoNearby, echoPower:s.echoPower||0.5, echoCount:s.echoCount||1 });
           }
 
           function updateTowers() {
             for (const tower of state.towers) {
               const buffs = computeBuffsForTower(tower);
               if (tower.stunTicks>0) { if (!buffs.immuneStun) { tower.stunTicks--; continue; } tower.stunTicks = 0; }
-              if ((tower.stats.auraDamage || tower.stats.auraSpeed || tower.stats.auraCrit) && !tower.stats.damage && !tower.stats.summonFactoryTurret) continue;
+              if ((tower.stats.auraDamage || tower.stats.auraSpeed || tower.stats.auraCrit || tower.stats.supportAtkAura || tower.stats.supportDmgAura || tower.stats.fireAura || tower.stats.auraImmuneStun || tower.stats.trueDamageWindow || tower.stats.lifesteal) && !tower.stats.damage && !tower.stats.summonFactoryTurret) continue;
               tower.cooldown--; if(tower.cooldown>0) continue;
               const target=findTargetForTower(tower); if(!target && !tower.stats.summonFactoryTurret && !tower.stats.placeMine) continue;
               let atkSpeed = tower.stats.atkSpeed > 0 ? tower.stats.atkSpeed / (1 + buffs.spd) : 99999;
@@ -1164,7 +1174,7 @@ export function renderHtml() {
                   if (enemy.reflect && dealt>0) { const src = state.towers.find((t)=>distance(t,{x:p.x,y:p.y})<22); if (src) src.stunTicks = Math.max(src.stunTicks, Math.round(dealt * enemy.reflect)); }
                   if (enemy.disableTowerOnHit) { const nearTower = state.towers.sort((a,b)=>distance(a,enemy)-distance(b,enemy))[0]; if (nearTower) nearTower.stunTicks = Math.max(nearTower.stunTicks, enemy.disableTowerOnHit); }
                   if (dealt>0 && p.options.burn) { enemy.burnTicks=Math.max(enemy.burnTicks,p.options.burnDuration); enemy.burnDps=Math.max(enemy.burnDps,p.options.burnDps); enemy.burnExplode=Math.max(enemy.burnExplode||0,p.options.burnExplode||0); }
-                  if (p.options.lifesteal) { for (const t of state.towers) if (distance(t, enemy) <= 120) t.stunTicks = Math.max(0, t.stunTicks - dealt * p.options.lifesteal); }
+                  applyLifestealRelief(enemy, dealt, p.options.lifesteal || 0);
                   if (p.options.knockback) { enemy.pathIndex = Math.max(1, enemy.pathIndex - 1); enemy.x = Math.max(0, enemy.x - p.options.knockback); }
                   if (p.options.supportVuln && p.options.spreadVuln) { for (const near of state.enemies) { if (near !== enemy && distance(near, enemy) <= 48) { near.vulnMult = Math.max(near.vulnMult, p.options.supportVuln); break; } } }
                 };
