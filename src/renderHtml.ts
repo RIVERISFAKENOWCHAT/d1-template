@@ -660,6 +660,8 @@ export function renderHtml() {
           }
 
           function getDifficulty() { return DIFFICULTIES[state.difficultyId] || DIFFICULTIES.normal; }
+          function getCashEarnMultiplier() { return state.difficultyId === "death" ? 0.5 : 1; }
+          function awardGold(amount) { state.gold += amount * getCashEarnMultiplier(); }
           function getDeathDifficultyScale() { if (state.difficultyId !== "death") return 1; if (state.wave <= 10) return 1; return Math.min(5, +(1 + (state.wave - 10) * 0.2).toFixed(2)); }
           function getMap() { return MAPS[state.mapId] || MAPS.beginner; }
           function getPath(trackIndex = 0) { return state.paths[trackIndex] || state.paths[0] || BASE_PATH; }
@@ -878,7 +880,7 @@ export function renderHtml() {
             }
             interestRate = Math.min(0.4, interestRate);
             const interest = Math.floor(state.gold * interestRate);
-            if (flat > 0 || interest > 0) state.gold += flat + interest;
+            if (flat > 0 || interest > 0) awardGold(flat + interest);
             state.lastWavePayout = state.wave;
           }
 
@@ -1008,8 +1010,8 @@ export function renderHtml() {
           }
 
           function killEnemy(i, enemy) {
-            state.enemies.splice(i,1); state.gold += enemy.reward * GOLD_MULTIPLIER; if (!state.endlessMode) state.exp += randomInt(5, 25);
-            for (const t of state.towers) if (t.stats.killBounty) state.gold += t.stats.killBounty;
+            state.enemies.splice(i,1); awardGold(enemy.reward * GOLD_MULTIPLIER); if (!state.endlessMode) state.exp += randomInt(5, 25);
+            for (const t of state.towers) if (t.stats.killBounty) awardGold(t.stats.killBounty);
             if (enemy.type === "stunner") {
               for (const tower of state.towers) {
                 const buffs = computeBuffsForTower(tower);
@@ -1480,7 +1482,7 @@ export function renderHtml() {
               const diff = DIFFICULTIES[diffId];
               const btn = document.createElement("button");
               btn.className = "menu-btn";
-              btn.textContent = diff.name + " — cap " + diff.maxWave + (diff.deathRamp ? ", ramps after wave 10" : "") + ", enemies x" + diff.enemyMult + ", hp x" + diff.hpMult + ", speed x" + diff.speedMult;
+              btn.textContent = diff.name + " — cap " + diff.maxWave + (diff.deathRamp ? ", ramps after wave 10" : "") + ", enemies x" + diff.enemyMult + ", hp x" + diff.hpMult + ", speed x" + diff.speedMult + (diff.id === "death" ? ", cash x0.5" : "");
               btn.onclick = () => { resetRun(state.mapId, diffId); hideMenu(); };
               menuDifficultiesEl.appendChild(btn);
             }
