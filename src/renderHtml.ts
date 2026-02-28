@@ -146,7 +146,7 @@ export function renderHtml() {
           };
 
           const ENEMY_TYPES = {
-            normal: { label:"Normal", hp:10, speed:10, defense:0, reward:6, color:"#ef476f", shape:"circle", baseDamage:1, budget:1 },
+            normal: { label:"Normal", hp:8, speed:10, defense:0, reward:6, color:"#ef476f", shape:"circle", baseDamage:1, budget:1 },
             fast: { label:"Fast", hp:5, speed:20, defense:0, reward:6, color:"#00d4ff", shape:"triangle", baseDamage:1, budget:1 },
             strong: { label:"Strong", hp:25, speed:5, defense:5, reward:13, color:"#9aa0a6", shape:"square", baseDamage:2, budget:3 },
             swarm: { label:"Swarm", hp:3, speed:15, defense:0, reward:2, color:"#ff9f1c", shape:"smallTriangle", baseDamage:1, budget:0.45 },
