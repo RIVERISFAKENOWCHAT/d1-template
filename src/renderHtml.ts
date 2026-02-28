@@ -71,6 +71,7 @@ export function renderHtml() {
               <div class="top-actions">
                 <button id="unlockTower">Unlock random tower</button>
                 <button id="saveRun">Save run</button>
+                <button id="loadRun">Load run</button>
                 <button id="toggleEndless">Mode: Limited</button>
               </div>
               <div class="stats">
@@ -124,6 +125,7 @@ export function renderHtml() {
           const towerListButtonEl = document.getElementById("towerListButton");
           const unlockTowerButton = document.getElementById("unlockTower");
           const saveRunButton = document.getElementById("saveRun");
+          const loadRunButton = document.getElementById("loadRun");
           const toggleEndlessButton = document.getElementById("toggleEndless");
 
           const RANGE_UNIT = 22;
@@ -549,7 +551,7 @@ export function renderHtml() {
 
           ensureTierFiveUpgrades();
 
-          const state = { lives:20, gold:220, wave:0, exp:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", endlessMode:false, paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0, lastWaveExpPayout:0, heat:0, heatFlags:{scorch:false,molten:false,overheat:false}, tempLavaTiles:[], permBlockedTiles:[], eruptions:0, enemyHpBuff:1, enemySpeedBuff:1, ventTick:0, unlockedTowerIds:["basic"], towerUnlockCosts:{}, nextUnlockCost:200 };
+          const state = { lives:20, gold:220, wave:0, exp:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", endlessMode:false, paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0, lastWaveExpPayout:0, heat:0, heatFlags:{scorch:false,molten:false,overheat:false}, tempLavaTiles:[], permBlockedTiles:[], eruptions:0, enemyHpBuff:1, enemySpeedBuff:1, ventTick:0, unlockedTowerIds:["basic"], towerUnlockCosts:{} };
 
           const copyStats = (m) => JSON.parse(JSON.stringify(m));
           const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -638,7 +640,7 @@ export function renderHtml() {
           function saveRun() {
             const save = {
               lives:state.lives,gold:state.gold,wave:state.wave,exp:state.exp,mapId:state.mapId,difficultyId:state.difficultyId,endlessMode:state.endlessMode,
-              unlockedTowerIds:state.unlockedTowerIds,towerUnlockCosts:state.towerUnlockCosts,nextUnlockCost:state.nextUnlockCost,
+              unlockedTowerIds:state.unlockedTowerIds,towerUnlockCosts:state.towerUnlockCosts,
               towers:state.towers,enemies:state.enemies,queue:state.queue,spawning:state.spawning,spawnCooldown:state.spawnCooldown,
               heat:state.heat,heatFlags:state.heatFlags,tempLavaTiles:state.tempLavaTiles,permBlockedTiles:state.permBlockedTiles,eruptions:state.eruptions,enemyHpBuff:state.enemyHpBuff,enemySpeedBuff:state.enemySpeedBuff,ventTick:state.ventTick,
               lastWavePayout:state.lastWavePayout,lastWaveExpPayout:state.lastWaveExpPayout,selectedTower:state.selectedTower
@@ -653,6 +655,7 @@ export function renderHtml() {
               Object.assign(state, d);
               state.paths = copyStats(getMap().makePaths());
               for (const t of state.towers || []) t.rangePx = (t.stats.range||0) * RANGE_UNIT;
+              ensureTowerUnlockCosts();
             } catch (_) {}
           }
 
@@ -698,8 +701,7 @@ export function renderHtml() {
             state.endlessMode = false;
             state.unlockedTowerIds = ["basic"];
             state.towerUnlockCosts = {};
-            state.nextUnlockCost = generateUnlockCost();
-            ensureTowerUnlockCosts();
+                        ensureTowerUnlockCosts();
             state.paths = copyStats(getMap().makePaths());
             renderUpgradePanel();
             updateHud();
@@ -737,7 +739,11 @@ export function renderHtml() {
             gameLayoutEl.classList.remove("hidden");
           }
 
-          function updateHud() { livesEl.textContent=Math.max(state.lives,0); goldEl.textContent=Math.floor(state.gold); waveEl.textContent=state.wave + (state.endlessMode ? "∞" : "/" + getWaveCap()); enemiesEl.textContent=state.enemies.length; heatEl.textContent = Math.round(state.heat) + "%"; expEl.textContent=Math.floor(state.exp); startWaveButton.disabled=state.spawning||state.enemies.length>0||state.lives<=0||(!state.endlessMode && state.wave>=getWaveCap()); toggleEndlessButton.textContent = "Mode: " + (state.endlessMode ? "Endless" : "Limited"); unlockTowerButton.textContent = "Unlock random tower (" + (state.nextUnlockCost||0) + " XP)"; }
+          function updateHud() { livesEl.textContent=Math.max(state.lives,0); goldEl.textContent=Math.floor(state.gold); waveEl.textContent=state.wave + (state.endlessMode ? "∞" : "/" + getWaveCap()); enemiesEl.textContent=state.enemies.length; heatEl.textContent = Math.round(state.heat) + "%"; expEl.textContent=Math.floor(state.exp); startWaveButton.disabled=state.spawning||state.enemies.length>0||state.lives<=0||(!state.endlessMode && state.wave>=getWaveCap()); toggleEndlessButton.textContent = "Mode: " + (state.endlessMode ? "Endless" : "Limited"); const locked = availableLockedTowers();
+            const affordable = locked.filter((t)=>state.exp >= (state.towerUnlockCosts[t.id]||0));
+            const minCost = locked.length ? Math.min(...locked.map((t)=>state.towerUnlockCosts[t.id]||0)) : 0;
+            unlockTowerButton.textContent = locked.length ? ("Unlock random tower (" + minCost + "+ XP)") : "All towers unlocked";
+            unlockTowerButton.disabled = !affordable.length; }
 
           function buildTowerMenu() {
             towerListEl.innerHTML="";
@@ -1499,8 +1505,22 @@ export function renderHtml() {
             else showMenu("main");
           });
 
-          unlockTowerButton.addEventListener("click", () => { ensureTowerUnlockCosts(); if (state.exp < (state.nextUnlockCost||0)) return; const locked = availableLockedTowers(); if (!locked.length) return; state.exp -= state.nextUnlockCost; const pick = locked[Math.floor(Math.random()*locked.length)]; state.unlockedTowerIds.push(pick.id); state.nextUnlockCost = generateUnlockCost(); buildTowerMenu(); updateHud(); saveRun(); });
-          saveRunButton.addEventListener("click", () => { saveRun(); });
+          unlockTowerButton.addEventListener("click", () => {
+            ensureTowerUnlockCosts();
+            const locked = availableLockedTowers();
+            const affordable = locked.filter((t)=>state.exp >= (state.towerUnlockCosts[t.id]||0));
+            if (!affordable.length) return;
+            const pick = affordable[Math.floor(Math.random()*affordable.length)];
+            const cost = state.towerUnlockCosts[pick.id] || 0;
+            state.exp -= cost;
+            state.unlockedTowerIds.push(pick.id);
+            if (!state.unlockedTowerIds.includes(state.selectedTower)) state.selectedTower = pick.id;
+            buildTowerMenu();
+            updateHud();
+            saveRun();
+          });
+          saveRunButton.addEventListener("click", () => { saveRun(); saveRunButton.textContent = "Saved!"; setTimeout(() => saveRunButton.textContent = "Save run", 800); });
+          loadRunButton.addEventListener("click", () => { loadRun(); buildTowerMenu(); renderUpgradePanel(); updateHud(); loadRunButton.textContent = "Loaded!"; setTimeout(() => loadRunButton.textContent = "Load run", 800); });
           toggleEndlessButton.addEventListener("click", () => { state.endlessMode = !state.endlessMode; updateHud(); saveRun(); });
           window.addEventListener("beforeunload", saveRun);
           setInterval(saveRun, 3000);
