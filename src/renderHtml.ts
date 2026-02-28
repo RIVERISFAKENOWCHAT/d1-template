@@ -677,7 +677,6 @@ export function renderHtml() {
             state.difficultyId = difficultyId;
             state.lives = 20;
             state.gold = 220;
-            state.exp = 0;
             state.wave = 0;
             state.towers = [];
             state.enemies = [];
@@ -699,9 +698,8 @@ export function renderHtml() {
             state.enemySpeedBuff = 1;
             state.ventTick = 0;
             state.endlessMode = false;
-            state.unlockedTowerIds = ["basic"];
-            state.towerUnlockCosts = {};
-                        ensureTowerUnlockCosts();
+            ensureTowerUnlockCosts();
+            if (!state.unlockedTowerIds.includes(state.selectedTower)) state.selectedTower = state.unlockedTowerIds[0] || "basic";
             state.paths = copyStats(getMap().makePaths());
             renderUpgradePanel();
             updateHud();
