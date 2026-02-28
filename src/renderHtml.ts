@@ -270,7 +270,7 @@ export function renderHtml() {
             { id:"chainblaster", name:"Chain Blaster", cost:140, damage:4, atkSpeed:1, range:8, color:"#4895ef", shape:"chainblaster", splitBeams:1 },
             { id:"cryobeam", name:"Cryo Beam", cost:130, damage:1, atkSpeed:0.1, range:8, color:"#a8dadc", shape:"cryobeam", permaSlowInRange:0.35 },
             { id:"pulsemine", name:"Pulse Mine", cost:100, damage:6, atkSpeed:1, range:3, color:"#e0fbfc", shape:"pulsemine", placeMine:true, mineDamage:6, mineRadius:45, mineFreeze:35 },
-            { id:"heatsink", name:"Heat Sink", cost:90, damage:0, atkSpeed:0, range:6, color:"#212529", shape:"heatsink", fireAura:0.3 },
+            { id:"heatsink", name:"Heat Sink", cost:90, damage:0, atkSpeed:0, range:6, color:"#212529", shape:"heatsink", fireAuraDamage:0, fireAuraSpeed:0, fireAuraRange:0 },
             { id:"magnet", name:"Magnet Tower", cost:120, damage:0, atkSpeed:1, range:6, color:"#d00000", shape:"magnet", pullStrength:0.45, antiArmorBonus:0.4 },
             { id:"bleed", name:"Bleed Turret", cost:110, damage:2, atkSpeed:1, range:6, color:"#9d0208", shape:"bleed", acidDotDps:2 },
             { id:"ion", name:"Ion Cannon", cost:260, damage:10, atkSpeed:4, range:14, color:"#fff", shape:"ion", ignoreDefense:true },
@@ -409,6 +409,12 @@ export function renderHtml() {
               A:[{cost:180,set:{echoPower:0.7}},{cost:340,set:{echoPower:1}},{cost:700,set:{echoPower:1.3}},{cost:1300,set:{echoPower:2}}],
               B:[{cost:180,set:{echoCount:2}},{cost:340,set:{echoCount:3}},{cost:700,set:{echoCount:4}},{cost:1300,set:{echoCount:999}}],
               C:[{cost:180,set:{echoStrongest:true}},{cost:340,set:{echoStrongestEnemy:true}},{cost:700,set:{echoSpecials:true}},{cost:1300,set:{echoSpecials:true,echoUltimate:true}}],
+            },
+
+            heatsink: {
+              A:[{cost:120,set:{fireAuraDamage:0.05}},{cost:260,set:{fireAuraDamage:0.10}},{cost:520,set:{fireAuraDamage:0.20}},{cost:980,set:{fireAuraDamage:0.30}},{cost:1800,set:{fireAuraDamage:0.50}}],
+              B:[{cost:120,set:{fireAuraSpeed:0.05}},{cost:260,set:{fireAuraSpeed:0.10}},{cost:520,set:{fireAuraSpeed:0.20}},{cost:980,set:{fireAuraSpeed:0.30}},{cost:1800,set:{fireAuraSpeed:0.50}}],
+              C:[{cost:120,set:{fireAuraRange:1}},{cost:260,set:{fireAuraRange:3}},{cost:520,set:{fireAuraRange:5}},{cost:980,set:{fireAuraRange:7}},{cost:1800,set:{fireAuraRange:10}}],
             },
             farm: {
               A:[{cost:180,set:{farmIncomeBonus:100}},{cost:320,set:{farmIncomeBonus:150}},{cost:620,set:{farmIncomeBonus:200}},{cost:1200,set:{farmIncomeBonus:300,farmInterest:0.02}}],
@@ -859,7 +865,7 @@ export function renderHtml() {
 
             towerStatsEl.innerHTML = "<strong>Placed Tower Stats</strong><br>DMG: " + formatBaseBuffed(baseDamage, buffedDamage) +
               "<br>ATK SPD: " + formatBaseBuffed(baseAtkSpeed, buffedAtkSpeed, "s") +
-              "<br>Range: " + (s.range ?? 0) +
+              "<br>Range: " + formatBaseBuffed((s.range ?? 0), (s.range ?? 0) * (1 + (buffs.range || 0))) +
               (extras.length ? "<br>" + extras.join(" | ") : "");
 
             const sellBtn = document.createElement("button");
@@ -1185,17 +1191,22 @@ export function renderHtml() {
           }
 
           function computeBuffsForTower(tower) {
-            const out = { dmg:0, spd:0, crit:0, immuneStun:false, trueDamage:false, lifesteal:0 };
+            const out = { dmg:0, spd:0, crit:0, range:0, immuneStun:false, trueDamage:false, lifesteal:0 };
             for (const src of state.towers) {
-              if (!src.stats.auraDamage && !src.stats.auraSpeed && !src.stats.auraCrit && !src.stats.supportAtkAura) continue;
+              if (!src.stats.auraDamage && !src.stats.auraSpeed && !src.stats.auraCrit && !src.stats.supportAtkAura && !src.stats.fireAuraDamage && !src.stats.fireAuraSpeed && !src.stats.fireAuraRange) continue;
               if (src === tower) continue;
               if (!src.stats.globalAuraHalf && distance(src,tower) > src.rangePx) continue;
               const auraScale = src.stats.globalAuraHalf ? 0.5 : 1;
-              let extraFireAura = 0;
+              let extraFireAuraDamage = 0, extraFireAuraSpeed = 0, extraFireAuraRange = 0;
               const fireTowerIds = new Set(["beamsplit","scatterlaser","laser","firetotem","thermalray","moltenmortar","embertrap","flame","heatsink"]);
-              if (src.stats.fireAura && fireTowerIds.has(tower.stats.id)) extraFireAura = src.stats.fireAura;
-              out.dmg = Math.max(out.dmg, (src.stats.auraDamage || 0) * auraScale, (src.stats.supportDmgAura || 0) * auraScale, extraFireAura * auraScale);
-              out.spd = Math.max(out.spd, (src.stats.auraSpeed || 0) * auraScale, (src.stats.supportAtkAura || 0) * auraScale);
+              if (fireTowerIds.has(tower.stats.id)) {
+                extraFireAuraDamage = (src.stats.fireAuraDamage || src.stats.fireAura || 0);
+                extraFireAuraSpeed = src.stats.fireAuraSpeed || 0;
+                extraFireAuraRange = src.stats.fireAuraRange || 0;
+              }
+              out.dmg = Math.max(out.dmg, (src.stats.auraDamage || 0) * auraScale, (src.stats.supportDmgAura || 0) * auraScale, extraFireAuraDamage * auraScale);
+              out.spd = Math.max(out.spd, (src.stats.auraSpeed || 0) * auraScale, (src.stats.supportAtkAura || 0) * auraScale, extraFireAuraSpeed * auraScale);
+              out.range = Math.max(out.range, extraFireAuraRange * auraScale);
               out.crit = Math.max(out.crit, (src.stats.auraCrit || 0) * auraScale);
               if (src.stats.trueDamageWindow) {
                 const phase = Math.floor(performance.now() / 1000) % 10;
@@ -1207,7 +1218,7 @@ export function renderHtml() {
             return out;
           }
 
-          function getTowerRangePx(t){ const penalty = (isLavaMap() && state.heat >= 85) ? 0.8 : 1; return t.rangePx * penalty; }
+          function getTowerRangePx(t){ const penalty = (isLavaMap() && state.heat >= 85) ? 0.8 : 1; const buffs = computeBuffsForTower(t); return t.rangePx * (1 + (buffs.range || 0)) * penalty; }
           function findTargetForTower(t){ let target=null,fur=-1; const rangePx=getTowerRangePx(t); for(const e of state.enemies){ if(!isEnemyVisible(e)) continue; if(distance(t,e)<=rangePx && e.pathIndex>fur && !(e.phaseDuration && e.phaseTick>0) && !(e.mirrorCd && e.mirrorTick===0)){target=e;fur=e.pathIndex;} } return target; }
           function pointToSegmentDistance(px,py,x1,y1,x2,y2){ const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy; if(l2===0)return Math.hypot(px-x1,py-y1); let t=((px-x1)*dx+(py-y1)*dy)/l2; t=Math.max(0,Math.min(1,t)); const qx=x1+t*dx,qy=y1+t*dy; return Math.hypot(px-qx,py-qy); }
 
