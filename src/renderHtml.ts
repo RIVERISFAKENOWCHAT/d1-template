@@ -31,6 +31,8 @@ export function renderHtml() {
           .u-btn.maxed { background:#22543d; }
           .small { font-size:0.82rem; opacity:0.9; }
           .buffed { color:#ffd60a; }
+          .top-actions { display:flex; gap:8px; flex-wrap:wrap; }
+          .top-actions button { flex:1; min-width:140px; }
           .menu-overlay { position:fixed; inset:0; background:rgba(8,12,20,0.88); display:grid; place-items:center; z-index:20; }
           .menu-card { width:min(92vw,520px); background:#182234; border:1px solid #334a6b; border-radius:14px; padding:18px; display:grid; gap:12px; }
           .menu-title { font-size:1.4rem; font-weight:800; }
@@ -38,6 +40,12 @@ export function renderHtml() {
           .menu-btn { background:#2e3d58; color:#fff; text-align:left; }
           .menu-sub { color:#8aa0bf; font-size:0.9rem; }
           .hidden { display:none !important; }
+          @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+            .side { max-height:none; }
+            canvas { width:100%; height:auto; }
+            .stats { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+          }
         </style>
       </head>
       <body>
@@ -60,6 +68,11 @@ export function renderHtml() {
           <section class="game-panel">
             <div class="hud">
               <h1>🛡️ Tiny Tower Defense+</h1>
+              <div class="top-actions">
+                <button id="unlockTower">Unlock random tower</button>
+                <button id="saveRun">Save run</button>
+                <button id="toggleEndless">Mode: Limited</button>
+              </div>
               <div class="stats">
                 <span>❤️ Lives: <strong id="lives">20</strong></span>
                 <span>💰 Gold: <strong id="gold">220</strong></span>
@@ -109,6 +122,9 @@ export function renderHtml() {
           const menuBackButtonEl = document.getElementById("menuBackButton");
           const playButtonEl = document.getElementById("playButton");
           const towerListButtonEl = document.getElementById("towerListButton");
+          const unlockTowerButton = document.getElementById("unlockTower");
+          const saveRunButton = document.getElementById("saveRun");
+          const toggleEndlessButton = document.getElementById("toggleEndless");
 
           const RANGE_UNIT = 22;
           const SPEED_SCALE = 0.08;
@@ -141,10 +157,10 @@ export function renderHtml() {
             lavacavern: { id:"lavacavern", name:"Lava Cavern", description:"Heat rises with fire/explosions. Manage overheat.", tracks:1, makePaths:() => [[{x:0,y:300},{x:200,y:300},{x:200,y:120},{x:460,y:120},{x:460,y:420},{x:720,y:420},{x:720,y:220},{x:920,y:220}]], water:null, blockedZones:[{x:560,y:80,w:70,h:50},{x:300,y:460,w:90,h:60}], lavaChannels:[{x:170,y:250,w:120,h:90},{x:430,y:260,w:130,h:90},{x:670,y:250,w:120,h:90}], unstableZones:[{x:280,y:180,w:70,h:60},{x:600,y:360,w:70,h:60}], fog:null },
           };
           const DIFFICULTIES = {
-            normal: { id:"normal", name:"Normal", enemyMult:1, hpMult:1, speedMult:1 },
-            hard: { id:"hard", name:"Hard", enemyMult:1.5, hpMult:1.5, speedMult:1.5 },
-            extreme: { id:"extreme", name:"Extreme", enemyMult:2, hpMult:2, speedMult:2 },
-            death: { id:"death", name:"Death", enemyMult:1, hpMult:1, speedMult:1, deathRamp:true },
+            normal: { id:"normal", name:"Normal", enemyMult:1, hpMult:1, speedMult:1, maxWave:40 },
+            hard: { id:"hard", name:"Hard", enemyMult:1.5, hpMult:1.5, speedMult:1.5, maxWave:60 },
+            extreme: { id:"extreme", name:"Extreme", enemyMult:2, hpMult:2, speedMult:2, maxWave:80 },
+            death: { id:"death", name:"Death", enemyMult:1, hpMult:1, speedMult:1, deathRamp:true, maxWave:100 },
           };
 
           const ENEMY_TYPES = {
@@ -218,7 +234,7 @@ export function renderHtml() {
             { id:"wind", name:"Wind Turbine", cost:100, damage:0, atkSpeed:3, range:5, color:"#c9ced6", shape:"wind", knockback:10 },
             { id:"poison", name:"Poison Tower", cost:120, damage:0, atkSpeed:2, range:5, color:"#39ff14", shape:"poison", acidDotDps:2, poisonDuration:360 },
             { id:"emp", name:"EMP Spire", cost:140, damage:0, atkSpeed:5, range:7, color:"#111111", shape:"emp", stripDefense:999, hitStun:20 },
-            { id:"shard", name:"Shard Launcher", cost:90, damage:3, atkSpeed:1.5, range:9, color:"#4deeea", shape:"shard", pierceTargets:2 },
+            { id:"shard", name:"Shard Launcher", cost:90, damage:3, atkSpeed:2.2, range:9, color:"#4deeea", shape:"shard", pierceTargets:2, clusterCount:8 },
             { id:"void", name:"Void Siphon", cost:160, damage:2, atkSpeed:1.5, range:7, color:"#2a003f", shape:"void", supportVuln:0.2, lifesteal:0.06 },
             { id:"echo", name:"Echo Turret", cost:110, damage:2, atkSpeed:1.2, range:6, color:"#7d8597", shape:"echo", echoNearby:true, echoPower:0.5 },
             { id:"arcmortar", name:"Arc Mortar", cost:210, damage:10, atkSpeed:5, range:16, color:"#495057", shape:"arcmortar", splashRadius:82 },
@@ -226,12 +242,12 @@ export function renderHtml() {
             { id:"needle", name:"Needle Gun", cost:70, damage:2, atkSpeed:0.4, range:7, color:"#101010", shape:"needle", pierceTargets:1 },
             { id:"fence", name:"Tesla Fence", cost:100, damage:1, atkSpeed:2, range:4, color:"#ffd60a", shape:"fence", hitSlow:0.2 },
             { id:"oil", name:"Oil Sprayer", cost:90, damage:0, atkSpeed:1, range:5, color:"#111111", shape:"oil", fireVuln:1.0 },
-            { id:"burst", name:"Burst Turret", cost:100, damage:3, atkSpeed:0.5, range:6, color:"#5e503f", shape:"burst", burstCount:3 },
+            { id:"burst", name:"Burst Turret", cost:100, damage:2.2, atkSpeed:3, range:6, color:"#5e503f", shape:"burst", burstCount:7 },
             { id:"plasma", name:"Plasma Thrower", cost:160, damage:4, atkSpeed:0.15, range:6, color:"#ff66c4", shape:"plasma", shred:3 },
             { id:"static", name:"Static Totem", cost:110, damage:0, atkSpeed:2, range:6, color:"#f5cb5c", shape:"static", hitSlow:0.3 },
             { id:"snare", name:"Snare Trap", cost:60, damage:0, atkSpeed:1, range:3, color:"#6c757d", shape:"snare", hitStun:35 },
             { id:"beamsplit", name:"Beam Splitter", cost:140, damage:2, atkSpeed:0.1, range:10, color:"#ff0000", shape:"beamsplit", splitBeams:2 },
-            { id:"flak", name:"Flak Cannon", cost:130, damage:6, atkSpeed:3, range:8, color:"#111", shape:"flak", fastBonus:1.0 },
+            { id:"flak", name:"Flak Cannon", cost:130, damage:2.2, atkSpeed:2.5, range:8, color:"#111", shape:"flak", fastBonus:1.0, coneShotMin:5, coneShotMax:20, coneAngle:0.95 },
             { id:"spore", name:"Spore Pod", cost:90, damage:0, atkSpeed:1, range:5, color:"#3a5a40", shape:"spore", acidDotDps:2 },
             { id:"kinetic", name:"Kinetic Ram", cost:120, damage:5, atkSpeed:2, range:3, color:"#6c757d", shape:"kinetic", knockback:14 },
             { id:"volt", name:"Volt Rifle", cost:100, damage:3, atkSpeed:1, range:9, color:"#4361ee", shape:"volt", chain:true, chainCount:2 },
@@ -261,9 +277,9 @@ export function renderHtml() {
             { id:"decaytotem", name:"Decay Totem", cost:140, damage:0, atkSpeed:1, range:6, color:"#6a040f", shape:"decaytotem", stripDefense:4 },
             { id:"overwatch", name:"Overwatch Drone", cost:130, damage:2, atkSpeed:0.5, range:10, color:"#adb5bd", shape:"overwatch" },
             { id:"shardfan", name:"Shard Fan", cost:100, damage:3, atkSpeed:1, range:5, color:"#48cae4", shape:"shardfan", splitBeams:2 },
-            { id:"pulsebarrage", name:"Pulse Barrage", cost:120, damage:3, atkSpeed:1, range:7, color:"#f1faee", shape:"pulsebarrage", burstCount:3 },
+            { id:"pulsebarrage", name:"Pulse Barrage", cost:120, damage:2.2, atkSpeed:1.2, range:7, color:"#f1faee", shape:"pulsebarrage", burstCount:2, coneShots:8, coneAngle:0.8, projectileColor:"#89fcff" },
             { id:"cryoturbine", name:"Cryo Turbine", cost:130, damage:1, atkSpeed:1.5, range:6, color:"#a8dadc", shape:"cryoturbine", hitSlow:0.25 },
-            { id:"arcshotgun", name:"Arc Shotgun", cost:140, damage:5, atkSpeed:0.6, range:5, color:"#4361ee", shape:"arcshotgun", splitBeams:2 },
+            { id:"arcshotgun", name:"Arc Shotgun", cost:140, damage:3, atkSpeed:3, range:6, color:"#4361ee", shape:"arcshotgun", coneShots:7, coneAngle:1.0, chain:true, chainCount:2, chainNoFalloff:true },
             { id:"corrosion", name:"Corrosion Spitter", cost:150, damage:4, atkSpeed:1, range:7, color:"#80ed99", shape:"corrosion", shred:3 },
             { id:"shockwavetotem", name:"Shockwave Totem", cost:120, damage:0, atkSpeed:1, range:6, color:"#6c757d", shape:"shockwavetotem", hitSlow:0.2 },
             { id:"embertrap", name:"Ember Trap", cost:90, damage:2, atkSpeed:1, range:3, color:"#ff5400", shape:"embertrap", placeMine:true, mineDamage:2, mineRadius:30, burn:true, burnDuration:240, burnDps:3 },
@@ -533,11 +549,112 @@ export function renderHtml() {
 
           ensureTierFiveUpgrades();
 
-          const state = { lives:20, gold:220, wave:0, exp:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0, lastWaveExpPayout:0, heat:0, heatFlags:{scorch:false,molten:false,overheat:false}, tempLavaTiles:[], permBlockedTiles:[], eruptions:0, enemyHpBuff:1, enemySpeedBuff:1, ventTick:0 };
+          const state = { lives:20, gold:220, wave:0, exp:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", endlessMode:false, paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0, lastWaveExpPayout:0, heat:0, heatFlags:{scorch:false,molten:false,overheat:false}, tempLavaTiles:[], permBlockedTiles:[], eruptions:0, enemyHpBuff:1, enemySpeedBuff:1, ventTick:0, unlockedTowerIds:["basic"], towerUnlockCosts:{}, nextUnlockCost:200 };
 
           const copyStats = (m) => JSON.parse(JSON.stringify(m));
           const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
           const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+          const SAVE_KEY = "ttd_plus_save_v2";
+          const TOWER_DESCRIPTIONS = {
+            "Laser Pointer":"Continuous beam that ramps damage on a single target.",
+            "Pulse Cannon":"Rapid cannon that unleashes periodic AoE shockwaves.",
+            "Mine Layer":"Deploys explosive mines along the path.",
+            "Gravity Well":"Pulls enemies inward and slows them in a vortex.",
+            "Wind Turbine":"Pushes enemies back with gusting wind.",
+            "Poison Tower":"Applies stacking poison damage over time.",
+            "EMP Spire":"Disables shields and disrupts tech enemies.",
+            "Shard Launcher":"Fires crystals that split into fragments.",
+            "Void Siphon":"Weakens enemies to take increased damage.",
+            "Echo Turret":"Copies nearby tower attacks at reduced power.",
+            "Arc Mortar":"Launches arcing explosive shells into crowds.",
+            "Cryo Mines":"Freezes enemies with hidden frost traps.",
+            "Needle Gun":"Piercing shots that skewer multiple enemies.",
+            "Tesla Fence":"Damages and shocks enemies that pass through.",
+            "Oil Sprayer":"Coats enemies to amplify fire damage.",
+            "Burst Turret":"Fires rapid multi-shot bursts.",
+            "Plasma Thrower":"Melts armor with sustained plasma spray.",
+            "Static Totem":"Slows enemies within an electric field.",
+            "Snare Trap":"Roots enemies in place.",
+            "Beam Splitter":"Splits its beam into multiple rays.",
+            "Flak Cannon":"Anti-fast explosive cannon with splash damage.",
+            "Spore Pod":"Releases poisonous spores in an area.",
+            "Kinetic Ram":"Slams enemies backward with force.",
+            "Volt Rifle":"Chains lightning between enemies.",
+            "Obsidian Spike":"High damage spike effective vs armor.",
+            "Fire Totem":"Ignites enemies within its radius.",
+            "Shock Net":"Roots and shocks trapped enemies.",
+            "Nano Swarm":"Applies stacking nanite damage over time.",
+            "Time Spire":"Slows time for enemies in its field.",
+            "Shard Mortar":"Explodes into razor crystal fragments.",
+            "Thermal Ray":"Beam that ramps burning damage over time.",
+            "Frost Net":"Roots and chills enemies.",
+            "Arc Trap":"Stuns enemies with a triggered electric burst.",
+            "Spike Wall":"Damages enemies that pass through it.",
+            "Grav Cannon":"Pulls enemies together with gravity shots.",
+            "Plague Tower":"Spreads disease between enemies.",
+            "Chain Blaster":"Fires shots that hit multiple targets.",
+            "Cryo Beam":"Permanently slows enemies with freezing energy.",
+            "Pulse Mine":"AoE explosive that stuns on detonation.",
+            "Heat Sink":"Buffs nearby fire towers.",
+            "Magnet Tower":"Pulls armored enemies off course.",
+            "Bleed Turret":"Inflicts stacking bleed damage.",
+            "Ion Cannon":"Heavy artillery that ignores shields.",
+            "Frost Flare":"Freezes enemies in bursts of cold.",
+            "Molten Mortar":"Bombards enemies with burning lava shells.",
+            "Shrapnel Gun":"Splits shots into damaging fragments.",
+            "Storm Pillar":"Strikes enemies with periodic lightning.",
+            "Decay Totem":"Reduces enemy defenses in an aura.",
+            "Overwatch Drone":"Flying support turret with wide vision.",
+            "Shard Fan":"Fires a cone of crystal shards.",
+            "Pulse Barrage":"Rapid burst cannon hitting multiple targets.",
+            "Cryo Turbine":"Chilling fan that slows enemies in range.",
+            "Arc Shotgun":"Wide cone lightning blast.",
+            "Corrosion Spitter":"Sprays acid that melts armor.",
+            "Shockwave Totem":"Emits damaging radial pulses.",
+            "Ember Trap":"Burns enemies with explosive runes.",
+            "Sentry Drone":"Mobile turret with adaptive targeting.",
+            "Rift Beacon":"Warps enemies and amplifies damage taken.",
+            "Scatter Laser":"Splits into multiple spreading beams.",
+            "Bastion Turret":"Heavy defensive gun with bonus durability.",
+            "Basic Tower":"Balanced starter tower with flexible paths for DPS, speed, or debuff support.",
+            "Gatling Turret":"High fire-rate bullet storm specializing in armor shred or suppression.",
+            "Sniper Tower":"Long-range precision tower built for massive single-target damage.",
+            "Frost Cannon":"Crowd-control cannon that freezes enemies and boosts allied towers.",
+            "Tesla Coil":"Chain-lightning tower that shocks multiple enemies at once.",
+            "Flamethrower":"Short-range flame stream that applies heavy burn damage.",
+            "Acid Launcher":"Armor-melting artillery that applies corrosive damage over time.",
+            "Commander":"Powerful support tower that massively buffs nearby (or global) towers.",
+            "Railgun":"Extremely high-damage piercing cannon for elite and armored enemies.",
+            "Turret Factory":"Spawns autonomous combat drones to overwhelm enemies.",
+            "Bomb Tower":"Explosive artillery that deals heavy AoE burst damage.",
+            "Farm Tower":"Economic tower that generates gold or reduces upgrade costs."
+          };
+
+          function getWaveCap() { return (getDifficulty().maxWave || 40); }
+          function generateUnlockCost() { return randomInt(200, 2000); }
+          function ensureTowerUnlockCosts() { for (const t of TOWERS) if (!state.towerUnlockCosts[t.id]) state.towerUnlockCosts[t.id] = generateUnlockCost(); state.towerUnlockCosts.basic = 0; }
+          function availableLockedTowers() { return TOWERS.filter((t)=>!state.unlockedTowerIds.includes(t.id) && t.id !== "basic"); }
+          function saveRun() {
+            const save = {
+              lives:state.lives,gold:state.gold,wave:state.wave,exp:state.exp,mapId:state.mapId,difficultyId:state.difficultyId,endlessMode:state.endlessMode,
+              unlockedTowerIds:state.unlockedTowerIds,towerUnlockCosts:state.towerUnlockCosts,nextUnlockCost:state.nextUnlockCost,
+              towers:state.towers,enemies:state.enemies,queue:state.queue,spawning:state.spawning,spawnCooldown:state.spawnCooldown,
+              heat:state.heat,heatFlags:state.heatFlags,tempLavaTiles:state.tempLavaTiles,permBlockedTiles:state.permBlockedTiles,eruptions:state.eruptions,enemyHpBuff:state.enemyHpBuff,enemySpeedBuff:state.enemySpeedBuff,ventTick:state.ventTick,
+              lastWavePayout:state.lastWavePayout,lastWaveExpPayout:state.lastWaveExpPayout,selectedTower:state.selectedTower
+            };
+            localStorage.setItem(SAVE_KEY, JSON.stringify(save));
+          }
+          function loadRun() {
+            try {
+              const raw = localStorage.getItem(SAVE_KEY);
+              if (!raw) return;
+              const d = JSON.parse(raw);
+              Object.assign(state, d);
+              state.paths = copyStats(getMap().makePaths());
+              for (const t of state.towers || []) t.rangePx = (t.stats.range||0) * RANGE_UNIT;
+            } catch (_) {}
+          }
 
           function getDifficulty() { return DIFFICULTIES[state.difficultyId] || DIFFICULTIES.normal; }
           function getDeathDifficultyScale() { if (state.difficultyId !== "death") return 1; if (state.wave <= 10) return 1; return Math.min(5, +(1 + (state.wave - 10) * 0.2).toFixed(2)); }
@@ -578,6 +695,11 @@ export function renderHtml() {
             state.enemyHpBuff = 1;
             state.enemySpeedBuff = 1;
             state.ventTick = 0;
+            state.endlessMode = false;
+            state.unlockedTowerIds = ["basic"];
+            state.towerUnlockCosts = {};
+            state.nextUnlockCost = generateUnlockCost();
+            ensureTowerUnlockCosts();
             state.paths = copyStats(getMap().makePaths());
             renderUpgradePanel();
             updateHud();
@@ -615,15 +737,19 @@ export function renderHtml() {
             gameLayoutEl.classList.remove("hidden");
           }
 
-          function updateHud() { livesEl.textContent=Math.max(state.lives,0); goldEl.textContent=Math.floor(state.gold); waveEl.textContent=state.wave; enemiesEl.textContent=state.enemies.length; heatEl.textContent = Math.round(state.heat) + "%"; expEl.textContent=Math.floor(state.exp); startWaveButton.disabled=state.spawning||state.enemies.length>0||state.lives<=0; }
+          function updateHud() { livesEl.textContent=Math.max(state.lives,0); goldEl.textContent=Math.floor(state.gold); waveEl.textContent=state.wave + (state.endlessMode ? "∞" : "/" + getWaveCap()); enemiesEl.textContent=state.enemies.length; heatEl.textContent = Math.round(state.heat) + "%"; expEl.textContent=Math.floor(state.exp); startWaveButton.disabled=state.spawning||state.enemies.length>0||state.lives<=0||(!state.endlessMode && state.wave>=getWaveCap()); toggleEndlessButton.textContent = "Mode: " + (state.endlessMode ? "Endless" : "Limited"); unlockTowerButton.textContent = "Unlock random tower (" + (state.nextUnlockCost||0) + " XP)"; }
 
           function buildTowerMenu() {
             towerListEl.innerHTML="";
             for (const tower of TOWERS) {
               const card=document.createElement("div");
               card.className="tower-card" + (state.selectedTower===tower.id ? " active" : "");
-              card.innerHTML='<div class="tower-title">'+tower.name+' ('+tower.cost+'g)</div><div class="tower-meta">DMG: '+tower.damage+'<br>ATK SPD: '+tower.atkSpeed+'s<br>Range: '+tower.range+'</div>';
-              card.onclick=()=>{ state.selectedTower=tower.id; buildTowerMenu(); };
+              const unlocked = state.unlockedTowerIds.includes(tower.id);
+              const desc = TOWER_DESCRIPTIONS[tower.name] || "No description yet.";
+              const lockLine = unlocked ? '' : '<br>🔒 Locked (' + (state.towerUnlockCosts[tower.id]||0) + ' XP value)';
+              card.innerHTML='<div class="tower-title">'+tower.name+' ('+tower.cost+'g)</div><div class="tower-meta">'+desc+'<br>DMG: '+tower.damage+'<br>ATK SPD: '+tower.atkSpeed+'s<br>Range: '+tower.range+lockLine+'</div>';
+              card.onclick=()=>{ if (!unlocked) return; state.selectedTower=tower.id; buildTowerMenu(); };
+              if (!unlocked) card.style.opacity = '0.55';
               towerListEl.appendChild(card);
             }
           }
@@ -674,6 +800,13 @@ export function renderHtml() {
               "<br>ATK SPD: " + formatBaseBuffed(baseAtkSpeed, buffedAtkSpeed, "s") +
               "<br>Range: " + (s.range ?? 0) +
               (extras.length ? "<br>" + extras.join(" | ") : "");
+
+            const sellBtn = document.createElement("button");
+            sellBtn.className = "u-btn";
+            const sellValue = Math.floor((tower.invested || 0) * 0.5);
+            sellBtn.textContent = "Sell Tower - " + sellValue + "g";
+            sellBtn.onclick = () => { state.gold += sellValue; state.towers = state.towers.filter((t)=>t.id!==tower.id); state.selectedPlacedTowerId = null; updateHud(); buildTowerMenu(); renderUpgradePanel(); saveRun(); };
+            upgradePathsEl.appendChild(sellBtn);
 
             for (const pathKey of ["A","B","C"]) {
               const tiers = defs[pathKey];
@@ -750,7 +883,7 @@ export function renderHtml() {
           function awardWaveExp() {
             if (state.wave <= 0 || state.lastWaveExpPayout === state.wave) return;
             if (state.spawning || state.enemies.length > 0) return;
-            state.exp += randomInt(20, 50);
+            if (!state.endlessMode) state.exp += randomInt(20, 50);
             state.lastWaveExpPayout = state.wave;
           }
 
@@ -804,21 +937,21 @@ export function renderHtml() {
           }
 
           function fairWavePlan(wave) {
-            const budget=14 + wave*5; const plan=[]; let left=budget;
-            const unlocked=["normal"]; if (wave>=2) unlocked.push("fast","swarm"); if (wave>=3) unlocked.push("strong","splitter"); if (wave>=4) unlocked.push("stunner"); if (wave>=5) unlocked.push("tank");
-            if (wave>=7) unlocked.push("juggernaut","bulwark","phalanx");
-            if (wave>=10) unlocked.push("warden","fortifier","chronotitan","nullwalker");
-            if (wave>=12) unlocked.push("titan","ironback","phasejuggernaut","disruptor");
-            if (wave>=14) unlocked.push("colossus","warengine","voidbrute","plaguehulk","mirrorknight");
-            if (wave>=16) unlocked.push("leviathan","sentinelprime","oblivionguard","grimcarrier","dreadhowler");
-            if (wave>=18) unlocked.push("voidshield","flametyrant","cryocolossus","blackwall");
-            if (wave>=20) unlocked.push("voidemperor");
-            if (isLavaMap()) { unlocked.push("magmawalker","ashwraith","coreling","obsidiantank"); if (wave >= 40) plan.push("cavertitan"); }
-            const limits={ fast:Math.max(4,wave*2), stunner:Math.max(1,Math.floor(wave/2)), tank:Math.max(1,Math.floor(wave/3))}; const c={fast:0,stunner:0,tank:0};
-            while (left>0.8) { const pool=unlocked.filter((t)=>ENEMY_TYPES[t].budget<=left+0.2 && (limits[t]===undefined || c[t]<limits[t])); if(!pool.length) break; const p=pool[Math.floor(Math.random()*pool.length)]; if(p==="swarm"){ const count=5+Math.floor(Math.random()*6); for(let i=0;i<count;i++) plan.push("swarm"); left-=ENEMY_TYPES.swarm.budget*count; } else { plan.push(p); left-=ENEMY_TYPES[p].budget; if(c[p]!==undefined)c[p]++; } }
-            if (plan.filter((x)=>x==="normal").length<3) plan.push("normal","normal","normal");
-            if (wave % 20 === 0) plan.push("endbringer");
-            const mult = getDifficulty().enemyMult || 1; const target = Math.max(plan.length, Math.round(plan.length * mult)); while (plan.length < target) plan.push(plan[Math.floor(Math.random()*plan.length)] || "normal"); return plan.sort(()=>Math.random()-0.5);
+            const plan = [];
+            const sequence = ["normal","fast","strong","swarm","splitter","stunner","tank","juggernaut","bulwark","warden","fortifier","titan","ironback","colossus","blackwall","voidemperor"];
+            const unlockedCount = Math.min(sequence.length, 1 + Math.floor((wave - 1) / 2));
+            const odd = wave % 2 === 1;
+            for (let i = 0; i < unlockedCount; i++) {
+              const type = sequence[i];
+              const count = i === 0 ? (odd ? 10 : 15) : (odd ? 5 : 10);
+              for (let c = 0; c < count; c++) plan.push(type);
+            }
+            const mult = getDifficulty().enemyMult || 1;
+            const target = Math.max(plan.length, Math.round(plan.length * mult));
+            while (plan.length < target) plan.push(plan[Math.floor(Math.random() * plan.length)] || "normal");
+            const bossEvery = getWaveCap();
+            if (wave % bossEvery === 0) plan.push("endbringer");
+            return plan.sort(() => Math.random() - 0.5);
           }
 
           function createEnemy(typeKey) {
@@ -826,7 +959,7 @@ export function renderHtml() {
             const diff = getDifficulty(); const deathScale = getDeathDifficultyScale(); const trackIndex = Math.floor(Math.random() * (state.paths.length || 1)); const spawnPath = getPath(trackIndex); const hp = Math.round(type.hp * (diff.hpMult || 1) * deathScale * (state.enemyHpBuff || 1)); return { id:crypto.randomUUID(), type:typeKey, x:spawnPath[0].x, y:spawnPath[0].y, hp:hp, maxHp:hp, speed:type.speed*SPEED_SCALE*(diff.speedMult||1)*deathScale*(state.enemySpeedBuff||1), defense:type.defense, reward:type.reward, pathIndex:1, trackIndex, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0, weakenedDamage:0, permaSlow:0, frozenVuln:0, debuffImmune:!!type.debuffImmune, dotImmune:!!type.dotImmune, burnImmune:!!type.burnImmune, knockbackImmune:!!type.knockbackImmune, stunImmune:!!type.stunImmune, noPierce:!!type.noPierce, noShred:!!type.noShred, shieldHalf:!!type.shieldHalf, aoeResist:type.aoeResist||0, beamResist:type.beamResist||0, allDamageHalf:type.allDamageHalf||0, minSpeedMult:type.minSpeedMult||0, phaseCycle:type.phaseCycle||0, phaseDuration:type.phaseDuration||0, phaseTick:0, disableTowerOnHit:type.disableTowerOnHit||0, reflect:type.reflect||0, defAura:type.defAura||0, speedAura:type.speedAura||0, globalSpeedAura:type.globalSpeedAura||0, mirrorCd:type.mirrorCd||0, mirrorTick:0, spawnOnDeath:type.spawnOnDeath||null, spawnPeriodic:type.spawnPeriodic||null, spawnTick:0, empAura:!!type.empAura, buffsAll:!!type.buffsAll, poisonAura:!!type.poisonAura, fireTrail:!!type.fireTrail, regenOnBase:type.regenOnBase||0 };
           }
 
-          function startWave(){ if(state.spawning||state.lives<=0) return; state.wave++; state.queue=fairWavePlan(state.wave); state.spawning=true; state.spawnCooldown=0; if(isLavaMap() && state.wave % 4 === 0) state.ventTick = 180; updateHud(); }
+          function startWave(){ if(state.spawning||state.lives<=0) return; if(!state.endlessMode && state.wave >= getWaveCap()) return; state.wave++; state.queue=fairWavePlan(state.wave); state.spawning=true; state.spawnCooldown=0; if(isLavaMap() && state.wave % 4 === 0) state.ventTick = 180; updateHud(); saveRun(); }
           function spawnEnemyTick(){ if(!state.spawning) return; state.spawnCooldown--; if(state.spawnCooldown>0) return; if(!state.queue.length){state.spawning=false;return;} state.enemies.push(createEnemy(state.queue.shift())); state.spawnCooldown=10+Math.floor(Math.random()*12); }
 
           function applyDamage(enemy, amount, options={}) {
@@ -871,7 +1004,7 @@ export function renderHtml() {
           }
 
           function killEnemy(i, enemy) {
-            state.enemies.splice(i,1); state.gold += enemy.reward * GOLD_MULTIPLIER; state.exp += randomInt(5, 25);
+            state.enemies.splice(i,1); state.gold += enemy.reward * GOLD_MULTIPLIER; if (!state.endlessMode) state.exp += randomInt(5, 25);
             for (const t of state.towers) if (t.stats.killBounty) state.gold += t.stats.killBounty;
             if (enemy.type === "stunner") {
               for (const tower of state.towers) {
@@ -979,6 +1112,18 @@ export function renderHtml() {
           function getTowerRangePx(t){ const penalty = (isLavaMap() && state.heat >= 85) ? 0.8 : 1; return t.rangePx * penalty; }
           function findTargetForTower(t){ let target=null,fur=-1; const rangePx=getTowerRangePx(t); for(const e of state.enemies){ if(!isEnemyVisible(e)) continue; if(distance(t,e)<=rangePx && e.pathIndex>fur && !(e.phaseDuration && e.phaseTick>0) && !(e.mirrorCd && e.mirrorTick===0)){target=e;fur=e.pathIndex;} } return target; }
           function pointToSegmentDistance(px,py,x1,y1,x2,y2){ const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy; if(l2===0)return Math.hypot(px-x1,py-y1); let t=((px-x1)*dx+(py-y1)*dy)/l2; t=Math.max(0,Math.min(1,t)); const qx=x1+t*dx,qy=y1+t*dy; return Math.hypot(px-qx,py-qy); }
+
+          function enemiesInCone(origin, target, range, coneAngle) {
+            const base = Math.atan2(target.y - origin.y, target.x - origin.x);
+            return state.enemies.filter((e) => {
+              const d = distance(origin, e);
+              if (d > range) return false;
+              let a = Math.atan2(e.y - origin.y, e.x - origin.x) - base;
+              while (a > Math.PI) a -= Math.PI * 2;
+              while (a < -Math.PI) a += Math.PI * 2;
+              return Math.abs(a) <= coneAngle / 2;
+            });
+          }
 
           function towerShoot(tower, target, buffs) {
             const s=tower.stats;
@@ -1120,6 +1265,28 @@ export function renderHtml() {
               }
               state.projectiles.push({x:tower.x,y:tower.y,target,mode:"beam",ttl:6,color:"#d9d9d9"});
               if (s.railShockwave) explodeAt(target.x - 25, target.y, 48, dmg * 0.5, false);
+              return;
+            }
+
+            if (s.coneShots || s.coneShotMin || s.coneShotMax) {
+              const range = getTowerRangePx(tower);
+              const coneTargets = enemiesInCone(tower, target, range, s.coneAngle || 0.9).sort((a,b)=>distance(tower,a)-distance(tower,b));
+              const shots = s.coneShots || randomInt(s.coneShotMin || 1, s.coneShotMax || 1);
+              for (let k=0; k<Math.min(shots, coneTargets.length); k++) {
+                const enemy = coneTargets[k];
+                const dealt = applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, armoredBonus:s.armoredBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, hitStun:s.hitStun||0, shred:s.shred||0 });
+                if (s.chain && dealt > 0) {
+                  const cap = s.chainCount || 2;
+                  let prev = enemy;
+                  for (let c=0;c<cap;c++) {
+                    const next = state.enemies.find((e)=>e!==prev && distance(e,prev)<=110);
+                    if (!next) break;
+                    applyDamage(next, dmg * 0.7, { hitSlow:s.hitSlow||0 });
+                    prev = next;
+                  }
+                }
+              }
+              state.projectiles.push({x:tower.x,y:tower.y,target,mode:"bolt",ttl:6,color:s.projectileColor||"#89fcff"});
               return;
             }
 
@@ -1280,7 +1447,7 @@ export function renderHtml() {
             }
 
             const model=TOWERS.find((t)=>t.id===state.selectedTower);
-            if(!model || state.gold<model.cost) return;
+            if(!model || !state.unlockedTowerIds.includes(model.id) || state.gold<model.cost) return;
             if(!canPlaceTower(x,y)) return;
 
             state.gold -= model.cost;
@@ -1309,7 +1476,7 @@ export function renderHtml() {
               const diff = DIFFICULTIES[diffId];
               const btn = document.createElement("button");
               btn.className = "menu-btn";
-              btn.textContent = diff.name + (diff.deathRamp ? " — starts normal, after wave 10 ramps HP/speed up to x5" : " — enemies x" + diff.enemyMult + ", hp x" + diff.hpMult + ", speed x" + diff.speedMult);
+              btn.textContent = diff.name + " — cap " + diff.maxWave + (diff.deathRamp ? ", ramps after wave 10" : "") + ", enemies x" + diff.enemyMult + ", hp x" + diff.hpMult + ", speed x" + diff.speedMult;
               btn.onclick = () => { resetRun(state.mapId, diffId); hideMenu(); };
               menuDifficultiesEl.appendChild(btn);
             }
@@ -1332,7 +1499,15 @@ export function renderHtml() {
             else showMenu("main");
           });
 
+          unlockTowerButton.addEventListener("click", () => { ensureTowerUnlockCosts(); if (state.exp < (state.nextUnlockCost||0)) return; const locked = availableLockedTowers(); if (!locked.length) return; state.exp -= state.nextUnlockCost; const pick = locked[Math.floor(Math.random()*locked.length)]; state.unlockedTowerIds.push(pick.id); state.nextUnlockCost = generateUnlockCost(); buildTowerMenu(); updateHud(); saveRun(); });
+          saveRunButton.addEventListener("click", () => { saveRun(); });
+          toggleEndlessButton.addEventListener("click", () => { state.endlessMode = !state.endlessMode; updateHud(); saveRun(); });
+          window.addEventListener("beforeunload", saveRun);
+          setInterval(saveRun, 3000);
+
           startWaveButton.addEventListener("click", startWave);
+          ensureTowerUnlockCosts();
+          loadRun();
           buildTowerMenu();
           buildMapMenu();
           buildDifficultyMenu();
