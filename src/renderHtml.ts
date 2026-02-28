@@ -209,6 +209,7 @@ export function renderHtml() {
             blackwall:{label:"Blackwall Sentinel",hp:500,speed:1,defense:40,reward:500,color:"#222",shape:"monolith",baseDamage:12,budget:30,noPierce:true},
             voidemperor:{label:"Void Emperor",hp:800,speed:2,defense:35,reward:800,color:"#6d28d9",shape:"oct",baseDamage:18,budget:45,boss:true},
             endbringer:{label:"Endbringer",hp:1000,speed:1,defense:50,reward:1200,color:"#000",shape:"sun",baseDamage:25,budget:60,boss:true,spawnOnly:true},
+            milestoneboss:{label:"Milestone Boss",hp:4000,speed:1.4,defense:35,reward:1800,color:"#5f0f40",shape:"sun",baseDamage:20,budget:0,boss:true,spawnOnly:true},
             magmawalker:{label:"Magma Walker",hp:120,speed:6,defense:10,reward:80,color:"#d97706",shape:"circle",baseDamage:2,budget:6,burnImmune:true},
             ashwraith:{label:"Ash Wraith",hp:90,speed:8,defense:0,reward:85,color:"#9ca3af",shape:"diamond",baseDamage:2,budget:6},
             coreling:{label:"Coreling",hp:60,speed:10,defense:0,reward:40,color:"#fb923c",shape:"smallTriangle",baseDamage:1,budget:3},
@@ -955,14 +956,19 @@ export function renderHtml() {
             const mult = getDifficulty().enemyMult || 1;
             const target = Math.max(plan.length, Math.round(plan.length * mult));
             while (plan.length < target) plan.push(plan[Math.floor(Math.random() * plan.length)] || "normal");
-            const bossEvery = getWaveCap();
-            if (wave % bossEvery === 0) plan.push("endbringer");
+            const milestoneBossWaves = new Set([40, 60, 80, 100]);
+            if (milestoneBossWaves.has(wave)) plan.push("milestoneboss");
             return plan.sort(() => Math.random() - 0.5);
           }
 
           function createEnemy(typeKey) {
             const type=ENEMY_TYPES[typeKey];
-            const diff = getDifficulty(); const deathScale = getDeathDifficultyScale(); const trackIndex = Math.floor(Math.random() * (state.paths.length || 1)); const spawnPath = getPath(trackIndex); const hp = Math.round(type.hp * (diff.hpMult || 1) * deathScale * (state.enemyHpBuff || 1)); return { id:crypto.randomUUID(), type:typeKey, x:spawnPath[0].x, y:spawnPath[0].y, hp:hp, maxHp:hp, speed:type.speed*SPEED_SCALE*(diff.speedMult||1)*deathScale*(state.enemySpeedBuff||1), defense:type.defense, reward:type.reward, pathIndex:1, trackIndex, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0, weakenedDamage:0, permaSlow:0, frozenVuln:0, debuffImmune:!!type.debuffImmune, dotImmune:!!type.dotImmune, burnImmune:!!type.burnImmune, knockbackImmune:!!type.knockbackImmune, stunImmune:!!type.stunImmune, noPierce:!!type.noPierce, noShred:!!type.noShred, shieldHalf:!!type.shieldHalf, aoeResist:type.aoeResist||0, beamResist:type.beamResist||0, allDamageHalf:type.allDamageHalf||0, minSpeedMult:type.minSpeedMult||0, phaseCycle:type.phaseCycle||0, phaseDuration:type.phaseDuration||0, phaseTick:0, disableTowerOnHit:type.disableTowerOnHit||0, reflect:type.reflect||0, defAura:type.defAura||0, speedAura:type.speedAura||0, globalSpeedAura:type.globalSpeedAura||0, mirrorCd:type.mirrorCd||0, mirrorTick:0, spawnOnDeath:type.spawnOnDeath||null, spawnPeriodic:type.spawnPeriodic||null, spawnTick:0, empAura:!!type.empAura, buffsAll:!!type.buffsAll, poisonAura:!!type.poisonAura, fireTrail:!!type.fireTrail, regenOnBase:type.regenOnBase||0 };
+            const diff = getDifficulty(); const deathScale = getDeathDifficultyScale(); const trackIndex = Math.floor(Math.random() * (state.paths.length || 1)); const spawnPath = getPath(trackIndex);
+            const milestoneHpByWave = {40:4000,60:8000,80:12000,100:24000};
+            const isMilestoneBoss = typeKey === "milestoneboss" && !!milestoneHpByWave[state.wave];
+            const hp = isMilestoneBoss ? milestoneHpByWave[state.wave] : Math.round(type.hp * (diff.hpMult || 1) * deathScale * (state.enemyHpBuff || 1));
+            const speed = isMilestoneBoss ? type.speed * SPEED_SCALE : type.speed*SPEED_SCALE*(diff.speedMult||1)*deathScale*(state.enemySpeedBuff||1);
+            return { id:crypto.randomUUID(), type:typeKey, x:spawnPath[0].x, y:spawnPath[0].y, hp:hp, maxHp:hp, speed:speed, defense:type.defense, reward:type.reward, pathIndex:1, trackIndex, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0, weakenedDamage:0, permaSlow:0, frozenVuln:0, debuffImmune:!!type.debuffImmune, dotImmune:!!type.dotImmune, burnImmune:!!type.burnImmune, knockbackImmune:!!type.knockbackImmune, stunImmune:!!type.stunImmune, noPierce:!!type.noPierce, noShred:!!type.noShred, shieldHalf:!!type.shieldHalf, aoeResist:type.aoeResist||0, beamResist:type.beamResist||0, allDamageHalf:type.allDamageHalf||0, minSpeedMult:type.minSpeedMult||0, phaseCycle:type.phaseCycle||0, phaseDuration:type.phaseDuration||0, phaseTick:0, disableTowerOnHit:type.disableTowerOnHit||0, reflect:type.reflect||0, defAura:type.defAura||0, speedAura:type.speedAura||0, globalSpeedAura:type.globalSpeedAura||0, mirrorCd:type.mirrorCd||0, mirrorTick:0, spawnOnDeath:type.spawnOnDeath||null, spawnPeriodic:type.spawnPeriodic||null, spawnTick:0, empAura:!!type.empAura, buffsAll:!!type.buffsAll, poisonAura:!!type.poisonAura, fireTrail:!!type.fireTrail, regenOnBase:type.regenOnBase||0 };
           }
 
           function startWave(){ if(state.spawning||state.lives<=0) return; if(!state.endlessMode && state.wave >= getWaveCap()) return; state.wave++; state.queue=fairWavePlan(state.wave); state.spawning=true; state.spawnCooldown=0; if(isLavaMap() && state.wave % 4 === 0) state.ventTick = 180; updateHud(); saveRun(); }
