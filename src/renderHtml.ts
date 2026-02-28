@@ -295,6 +295,10 @@ export function renderHtml() {
             { id:"whirlpool", name:"Whirlpool Totem", cost:70, damage:0.5, atkSpeed:0.4, range:4, color:"#4ea8de", shape:"whirlpool", pullStrength:0.35 },
             { id:"frostwave", name:"Frostwave Conduit", cost:80, damage:2, atkSpeed:1, range:7, color:"#2ec4b6", shape:"frostwave", hitSlow:0.2 },
             { id:"tsunami", name:"Tsunami Beacon", cost:150, damage:6, atkSpeed:3, range:12, color:"#1d4ed8", shape:"tsunami", splashRadius:70 },
+
+            { id:"soulharvester", name:"Soul Harvester", cost:120, unlockXp:1600, damage:2, atkSpeed:1, range:6, color:"#9d4edd", shape:"void", splashRadius:45, soulKillGain:0.05, supportVuln:0.05 },
+            { id:"ricochet", name:"Ricochet Cannon", cost:150, unlockXp:1450, damage:4, atkSpeed:1.2, range:8, color:"#4ea8de", shape:"railgun", pierceTargets:1, perPierceProjectileBonus:0.1 },
+            { id:"growthspire", name:"Growth Spire", cost:200, unlockXp:1900, damage:0, atkSpeed:0, range:5, color:"#52b788", shape:"timespire", growthRangeWaveBonus:1 },
             { id:"farm", name:"Farm Tower", cost:120, damage:0, atkSpeed:0, range:4, color:"#000000", shape:"farm", farmIncome:50 },
             { id:"bastion", name:"Bastion Turret", cost:200, damage:8, atkSpeed:2, range:8, color:"#495057", shape:"bastion", defenseAura:0.3 },
           ];
@@ -430,6 +434,22 @@ export function renderHtml() {
               B:[{cost:130,set:{damage:3}},{cost:250,set:{damage:3,splitBeams:1}},{cost:480,set:{damage:4,splitBeams:1,atkSpeed:0.7}},{cost:920,set:{damage:6,splitBeams:2,frozenVuln:0.5}}],
               C:[{cost:130,set:{range:8}},{cost:250,set:{range:9,supportAtkAura:0.12}},{cost:480,set:{range:10,supportAtkAura:0.2,supportVuln:0.1}},{cost:920,set:{range:11,supportAtkAura:0.25,supportVuln:0.2,permaSlowInRange:0.2}}],
             },
+
+            soulharvester: {
+              A:[{cost:90,set:{damage:3,soulKillGain:0.07}},{cost:160,set:{damage:4,soulKillGain:0.07,soulEchoEvery:20,soulEchoBonus:1}},{cost:350,set:{damage:6,soulKillGain:0.1,lowHpBonus:0.15}},{cost:900,set:{damage:10,soulKillGain:0.15,splashRadius:52}},{cost:3200,set:{damage:18,soulKillGain:0.25,soulSpeedEvery:50,soulSpeedGain:0.05,executeChance:1,executeHp:0.08}}],
+              B:[{cost:100,set:{damage:2,soulHealNearby:0.01}},{cost:200,set:{damage:3,soulLeechPct:0.05}},{cost:450,set:{damage:4,soulTowerResist:0.1}},{cost:1000,set:{damage:6,soulNearbyDmgEvery:30,soulNearbyDmgGain:1}},{cost:3000,set:{damage:10,soulGlobalDmgEvery:25,soulGlobalDmgGain:0.02,burnExplode:20}}],
+              C:[{cost:120,set:{damage:2,supportVuln:0.05}},{cost:240,set:{damage:3,supportVuln:0.08}},{cost:500,set:{damage:5,supportVuln:0.1,hitSlow:0.1}},{cost:1100,set:{damage:8,supportVuln:0.12,splitBeams:3,soulChainEvery:5}},{cost:3300,set:{damage:14,supportVuln:0.2,spreadVuln:5,permaSlowInRange:0.2}}],
+            },
+            ricochet: {
+              A:[{cost:100,set:{damage:5}},{cost:200,set:{pierceTargets:2}},{cost:500,set:{damage:7,perPierceProjectileBonus:0.2}},{cost:1200,set:{pierceTargets:4,range:10}},{cost:3500,set:{damage:12,pierceTargets:8,perPierceProjectileBonus:0.4,ignoreDefense:true}}],
+              B:[{cost:120,set:{damage:6}},{cost:300,set:{splashRadius:45}},{cost:600,set:{damage:8,hitStun:18}},{cost:1300,set:{splashRadius:66,burnExplode:8}},{cost:3400,set:{damage:16,splashRadius:90,hitStun:24,weakenDamage:0.2}}],
+              C:[{cost:100,set:{atkSpeed:1.0}},{cost:250,set:{atkSpeed:0.8}},{cost:550,set:{atkSpeed:0.6}},{cost:1200,set:{atkSpeed:0.5,splitBeams:3,doubleEvery:3}},{cost:3600,set:{atkSpeed:0.3,splitBeams:5,pierceTargets:999}}],
+            },
+            growthspire: {
+              A:[{cost:120,set:{range:6,growthRangeWaveBonus:1}},{cost:300,set:{range:7,growthRangeWaveBonus:1.5}},{cost:600,set:{range:8,growthRangeWaveBonus:2}},{cost:1300,set:{range:10,growthRangeWaveBonus:3}},{cost:3800,set:{range:14,growthRangeWaveBonus:5,growthGlobalRangeWaveBonus:1}}],
+              B:[{cost:150,set:{growthDamageWaveBonus:0.5}},{cost:350,set:{growthDamageWaveBonus:1}},{cost:700,set:{growthDamageWaveBonus:2}},{cost:1400,set:{growthDamageWaveBonus:3}},{cost:4000,set:{growthDamageWaveBonus:5,growthGlobalDamage:true}}],
+              C:[{cost:120,set:{supportAtkAura:0.05}},{cost:300,set:{supportAtkAura:0.1}},{cost:650,set:{supportAtkAura:0.12,supportVuln:0.05}},{cost:1500,set:{supportAtkAura:0.2,supportVuln:0.1}},{cost:4200,set:{supportAtkAura:0.3,supportVuln:0.2,growthUpgradeDiscountWave:0.03}}],
+            },
             tsunami: {
               A:[{cost:260,set:{damage:9}},{cost:480,set:{damage:11,splashRadius:90}},{cost:900,set:{damage:14,splashRadius:105,knockback:12}},{cost:1700,set:{damage:30,splashRadius:130,pulseEvery:8,pulseAllInRange:true}}],
               B:[{cost:260,set:{pullStrength:0.2}},{cost:480,set:{pullStrength:0.35}},{cost:900,set:{pullStrength:0.5,hitStun:24}},{cost:1700,set:{pullStrength:0.6,hitStun:45,knockback:18}}],
@@ -552,7 +572,7 @@ export function renderHtml() {
 
           ensureTierFiveUpgrades();
 
-          const state = { lives:20, gold:220, wave:0, exp:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", endlessMode:false, paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0, lastWaveExpPayout:0, heat:0, heatFlags:{scorch:false,molten:false,overheat:false}, tempLavaTiles:[], permBlockedTiles:[], eruptions:0, enemyHpBuff:1, enemySpeedBuff:1, ventTick:0, unlockedTowerIds:["basic"], towerUnlockCosts:{} };
+          const state = { lives:20, gold:220, wave:0, exp:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", endlessMode:false, paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0, lastWaveExpPayout:0, heat:0, heatFlags:{scorch:false,molten:false,overheat:false}, tempLavaTiles:[], permBlockedTiles:[], eruptions:0, enemyHpBuff:1, enemySpeedBuff:1, ventTick:0, globalUpgradeDiscount:0, unlockedTowerIds:["basic"], towerUnlockCosts:{} };
 
           const copyStats = (m) => JSON.parse(JSON.stringify(m));
           const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -631,12 +651,15 @@ export function renderHtml() {
             "Railgun":"Extremely high-damage piercing cannon for elite and armored enemies.",
             "Turret Factory":"Spawns autonomous combat drones to overwhelm enemies.",
             "Bomb Tower":"Explosive artillery that deals heavy AoE burst damage.",
-            "Farm Tower":"Economic tower that generates gold or reduces upgrade costs."
+            "Farm Tower":"Economic tower that generates gold or reduces upgrade costs.",
+            "Soul Harvester":"Scaling reaper that permanently gains damage from nearby kills.",
+            "Ricochet Cannon":"Bouncing artillery that scales damage through rebounds and splits.",
+            "Growth Spire":"Wave-based support spire that permanently grows nearby towers."
           };
 
           function getWaveCap() { return (getDifficulty().maxWave || 40); }
           function generateUnlockCost() { return randomInt(200, 2000); }
-          function ensureTowerUnlockCosts() { for (const t of TOWERS) if (!state.towerUnlockCosts[t.id]) state.towerUnlockCosts[t.id] = generateUnlockCost(); state.towerUnlockCosts.basic = 0; }
+          function ensureTowerUnlockCosts() { for (const t of TOWERS) if (!state.towerUnlockCosts[t.id]) state.towerUnlockCosts[t.id] = t.unlockXp || generateUnlockCost(); state.towerUnlockCosts.basic = 0; }
           function availableLockedTowers() { return TOWERS.filter((t)=>!state.unlockedTowerIds.includes(t.id) && t.id !== "basic"); }
           function saveRun() {
             const save = {
@@ -700,6 +723,7 @@ export function renderHtml() {
             state.enemyHpBuff = 1;
             state.enemySpeedBuff = 1;
             state.ventTick = 0;
+            state.globalUpgradeDiscount = 0;
             state.endlessMode = false;
             ensureTowerUnlockCosts();
             if (!state.unlockedTowerIds.includes(state.selectedTower)) state.selectedTower = state.unlockedTowerIds[0] || "basic";
@@ -866,7 +890,7 @@ export function renderHtml() {
               if (!src.stats.supportUpgradeDiscount) continue;
               if (distance(src, tower) <= src.rangePx) discount = Math.max(discount, src.stats.supportUpgradeDiscount);
             }
-            return Math.max(1, Math.round(up.cost * (1 - discount)));
+            return Math.max(1, Math.round(up.cost * (1 - Math.min(0.8, discount + (state.globalUpgradeDiscount || 0)))));
           }
 
           function awardFarmWaveIncome() {
@@ -882,6 +906,7 @@ export function renderHtml() {
             interestRate = Math.min(0.4, interestRate);
             const interest = Math.floor(state.gold * interestRate);
             if (flat > 0 || interest > 0) awardGold(flat + interest);
+            applyGrowthSpireWaveBuffs();
             state.lastWavePayout = state.wave;
           }
 
@@ -892,6 +917,26 @@ export function renderHtml() {
             if (state.spawning || state.enemies.length > 0) return;
             if (!state.endlessMode) state.exp += randomInt(20, 50);
             state.lastWaveExpPayout = state.wave;
+          }
+
+
+
+          function applyGrowthSpireWaveBuffs() {
+            const spires = state.towers.filter((t)=>t.baseId === "growthspire");
+            if (!spires.length) return;
+            for (const spire of spires) {
+              const s = spire.stats;
+              const inAura = (tower) => tower.id !== spire.id && distance(tower, spire) <= (spire.rangePx || 0);
+              for (const tower of state.towers) {
+                if (tower.id === spire.id) continue;
+                const target = (s.growthGlobalRangeWaveBonus || s.growthGlobalDamage) ? tower : (inAura(tower) ? tower : null);
+                if (!target) continue;
+                if (s.growthRangeWaveBonus) { target.stats.range = (target.stats.range || 0) + s.growthRangeWaveBonus; target.rangePx = (target.stats.range || 0) * RANGE_UNIT; }
+                if (s.growthGlobalRangeWaveBonus) { target.stats.range = (target.stats.range || 0) + s.growthGlobalRangeWaveBonus; target.rangePx = (target.stats.range || 0) * RANGE_UNIT; }
+                if (s.growthDamageWaveBonus) target.stats.damage = (target.stats.damage || 0) + s.growthDamageWaveBonus;
+              }
+              if (s.growthUpgradeDiscountWave) state.globalUpgradeDiscount = Math.min(0.5, (state.globalUpgradeDiscount || 0) + s.growthUpgradeDiscountWave);
+            }
           }
 
           function purchaseUpgrade(towerId, pathKey, tier) {
@@ -1018,6 +1063,17 @@ export function renderHtml() {
           function killEnemy(i, enemy) {
             state.enemies.splice(i,1); awardGold(enemy.reward * GOLD_MULTIPLIER); if (!state.endlessMode) state.exp += randomInt(5, 25);
             for (const t of state.towers) if (t.stats.killBounty) awardGold(t.stats.killBounty);
+            for (const tower of state.towers) {
+              if (tower.baseId !== "soulharvester") continue;
+              if (distance(tower, enemy) > (tower.rangePx || 0)) continue;
+              tower.soulKills = (tower.soulKills || 0) + 1;
+              const gain = tower.stats.soulKillGain || 0.05;
+              tower.stats.damage = (tower.stats.damage || 0) + gain;
+              if (tower.stats.soulEchoEvery && tower.soulKills % tower.stats.soulEchoEvery === 0) tower.stats.damage += (tower.stats.soulEchoBonus || 0);
+              if (tower.stats.soulSpeedEvery && tower.soulKills % tower.stats.soulSpeedEvery === 0) tower.stats.atkSpeed = Math.max(0.03, (tower.stats.atkSpeed || 1) * (1 - (tower.stats.soulSpeedGain || 0)));
+              if (tower.stats.soulNearbyDmgEvery && tower.soulKills % tower.stats.soulNearbyDmgEvery === 0) for (const near of state.towers) if (near.id !== tower.id && distance(near, tower) <= (tower.rangePx || 0)) near.stats.damage = (near.stats.damage || 0) + (tower.stats.soulNearbyDmgGain || 0);
+              if (tower.stats.soulGlobalDmgEvery && tower.soulKills % tower.stats.soulGlobalDmgEvery === 0) for (const any of state.towers) any.stats.damage = (any.stats.damage || 0) * (1 + (tower.stats.soulGlobalDmgGain || 0));
+            }
             if (enemy.type === "stunner") {
               for (const tower of state.towers) {
                 const buffs = computeBuffsForTower(tower);
