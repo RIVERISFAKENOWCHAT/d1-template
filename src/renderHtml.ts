@@ -70,8 +70,8 @@ export function renderHtml() {
               <h1>🛡️ Tiny Tower Defense+</h1>
               <div class="top-actions">
                 <button id="unlockTower">Unlock random tower</button>
-                <button id="saveRun">Save run</button>
-                <button id="loadRun">Load run</button>
+                <button id="saveRun">Save progress</button>
+                <button id="loadRun">Load progress</button>
                 <button id="toggleEndless">Mode: Limited</button>
               </div>
               <div class="stats">
@@ -639,11 +639,10 @@ export function renderHtml() {
           function availableLockedTowers() { return TOWERS.filter((t)=>!state.unlockedTowerIds.includes(t.id) && t.id !== "basic"); }
           function saveRun() {
             const save = {
-              lives:state.lives,gold:state.gold,wave:state.wave,exp:state.exp,mapId:state.mapId,difficultyId:state.difficultyId,endlessMode:state.endlessMode,
-              unlockedTowerIds:state.unlockedTowerIds,towerUnlockCosts:state.towerUnlockCosts,
-              towers:state.towers,enemies:state.enemies,queue:state.queue,spawning:state.spawning,spawnCooldown:state.spawnCooldown,
-              heat:state.heat,heatFlags:state.heatFlags,tempLavaTiles:state.tempLavaTiles,permBlockedTiles:state.permBlockedTiles,eruptions:state.eruptions,enemyHpBuff:state.enemyHpBuff,enemySpeedBuff:state.enemySpeedBuff,ventTick:state.ventTick,
-              lastWavePayout:state.lastWavePayout,lastWaveExpPayout:state.lastWaveExpPayout,selectedTower:state.selectedTower
+              exp:state.exp,
+              unlockedTowerIds:state.unlockedTowerIds,
+              towerUnlockCosts:state.towerUnlockCosts,
+              selectedTower:state.selectedTower,
             };
             localStorage.setItem(SAVE_KEY, JSON.stringify(save));
           }
@@ -652,9 +651,10 @@ export function renderHtml() {
               const raw = localStorage.getItem(SAVE_KEY);
               if (!raw) return;
               const d = JSON.parse(raw);
-              Object.assign(state, d);
-              state.paths = copyStats(getMap().makePaths());
-              for (const t of state.towers || []) t.rangePx = (t.stats.range||0) * RANGE_UNIT;
+              if (typeof d.exp === "number") state.exp = Math.max(0, d.exp);
+              if (Array.isArray(d.unlockedTowerIds)) state.unlockedTowerIds = Array.from(new Set(["basic", ...d.unlockedTowerIds]));
+              if (d.towerUnlockCosts && typeof d.towerUnlockCosts === "object") state.towerUnlockCosts = d.towerUnlockCosts;
+              if (typeof d.selectedTower === "string") state.selectedTower = d.selectedTower;
               ensureTowerUnlockCosts();
             } catch (_) {}
           }
@@ -1519,8 +1519,8 @@ export function renderHtml() {
             updateHud();
             saveRun();
           });
-          saveRunButton.addEventListener("click", () => { saveRun(); saveRunButton.textContent = "Saved!"; setTimeout(() => saveRunButton.textContent = "Save run", 800); });
-          loadRunButton.addEventListener("click", () => { loadRun(); buildTowerMenu(); renderUpgradePanel(); updateHud(); loadRunButton.textContent = "Loaded!"; setTimeout(() => loadRunButton.textContent = "Load run", 800); });
+          saveRunButton.addEventListener("click", () => { saveRun(); saveRunButton.textContent = "Saved!"; setTimeout(() => saveRunButton.textContent = "Save progress", 800); });
+          loadRunButton.addEventListener("click", () => { loadRun(); buildTowerMenu(); renderUpgradePanel(); updateHud(); loadRunButton.textContent = "Loaded!"; setTimeout(() => loadRunButton.textContent = "Load progress", 800); });
           toggleEndlessButton.addEventListener("click", () => { state.endlessMode = !state.endlessMode; updateHud(); saveRun(); });
           window.addEventListener("beforeunload", saveRun);
           setInterval(saveRun, 3000);
