@@ -74,6 +74,7 @@ export function renderHtml() {
                 <span>💰 Gold: <strong id="gold">220</strong></span>
                 <span>🌊 Wave: <strong id="wave">0</strong></span>
                 <span>👾 Enemies: <strong id="enemies">0</strong></span>
+                <span>⭐ XP: <strong id="xp">0</strong></span>
                 <span id="heatStat" class="hidden">🔥 Heat: <strong id="heat">0%</strong></span>
               </div>
               <button id="startWave">Start wave</button>
@@ -83,6 +84,7 @@ export function renderHtml() {
           </section>
           <aside class="side">
             <strong>Towers</strong>
+            <button class="u-btn" id="unlockTowerButton">Unlock Random Tower</button>
             <div class="tower-list" id="towerList"></div>
             <div class="upgrade" id="upgradePanel">
               <strong>Upgrades</strong>
@@ -101,10 +103,12 @@ export function renderHtml() {
           const goldEl = document.getElementById("gold");
           const waveEl = document.getElementById("wave");
           const enemiesEl = document.getElementById("enemies");
+          const xpEl = document.getElementById("xp");
           const heatEl = document.getElementById("heat");
           const heatStatEl = document.getElementById("heatStat");
           const startWaveButton = document.getElementById("startWave");
           const towerListEl = document.getElementById("towerList");
+          const unlockTowerButtonEl = document.getElementById("unlockTowerButton");
           const upgradeInfoEl = document.getElementById("upgradeInfo");
           const upgradePathsEl = document.getElementById("upgradePaths");
           const towerStatsEl = document.getElementById("towerStats");
@@ -153,10 +157,10 @@ export function renderHtml() {
             lavacavern: { id:"lavacavern", name:"Lava Cavern", description:"Heat rises with fire/explosions. Manage overheat.", tracks:1, makePaths:() => [[{x:0,y:300},{x:200,y:300},{x:200,y:120},{x:460,y:120},{x:460,y:420},{x:720,y:420},{x:720,y:220},{x:920,y:220}]], water:null, blockedZones:[{x:560,y:80,w:70,h:50},{x:300,y:460,w:90,h:60}], lavaChannels:[{x:170,y:250,w:120,h:90},{x:430,y:260,w:130,h:90},{x:670,y:250,w:120,h:90}], unstableZones:[{x:280,y:180,w:70,h:60},{x:600,y:360,w:70,h:60}], fog:null },
           };
           const DIFFICULTIES = {
-            normal: { id:"normal", name:"Normal", enemyMult:1, hpMult:1, speedMult:1 },
-            hard: { id:"hard", name:"Hard", enemyMult:1.5, hpMult:1.5, speedMult:1.5 },
-            extreme: { id:"extreme", name:"Extreme", enemyMult:2, hpMult:2, speedMult:2 },
-            death: { id:"death", name:"Death", enemyMult:1, hpMult:1, speedMult:1, deathRamp:true },
+            normal: { id:"normal", name:"Normal", enemyMult:1, hpMult:1, speedMult:1, maxWave:40 },
+            hard: { id:"hard", name:"Hard", enemyMult:1.5, hpMult:1.5, speedMult:1.5, maxWave:60 },
+            extreme: { id:"extreme", name:"Extreme", enemyMult:2, hpMult:2, speedMult:2, maxWave:80 },
+            death: { id:"death", name:"Death", enemyMult:1, hpMult:1, speedMult:1, deathRamp:true, maxWave:100 },
           };
 
           const ENEMY_TYPES = {
@@ -545,7 +549,7 @@ export function renderHtml() {
 
           ensureTierFiveUpgrades();
 
-          const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0, heat:0, heatFlags:{scorch:false,molten:false,overheat:false}, tempLavaTiles:[], permBlockedTiles:[], eruptions:0, enemyHpBuff:1, enemySpeedBuff:1, ventTick:0, lastPathShiftWave:0 };
+          const state = { lives:20, gold:220, wave:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0, heat:0, heatFlags:{scorch:false,molten:false,overheat:false}, tempLavaTiles:[], permBlockedTiles:[], eruptions:0, enemyHpBuff:1, enemySpeedBuff:1, ventTick:0, lastPathShiftWave:0, xp:0, endlessMode:false, towerUnlocked:{}, towerUnlockCosts:{}, lastXpWave:0 };
 
           const copyStats = (m) => JSON.parse(JSON.stringify(m));
           const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -553,6 +557,61 @@ export function renderHtml() {
           function getDifficulty() { return DIFFICULTIES[state.difficultyId] || DIFFICULTIES.normal; }
           function getDeathDifficultyScale() { if (state.difficultyId !== "death") return 1; if (state.wave <= 10) return 1; return Math.min(5, +(1 + (state.wave - 10) * 0.2).toFixed(2)); }
           function getMap() { return MAPS[state.mapId] || MAPS.beginner; }
+          function getWaveCap() { const diff = getDifficulty(); return state.endlessMode ? Infinity : (diff.maxWave || 40); }
+          function initTowerProgression() {
+            for (const t of TOWERS) {
+              if (t.id === "basic") { state.towerUnlocked[t.id] = true; state.towerUnlockCosts[t.id] = 0; continue; }
+              if (state.towerUnlockCosts[t.id] == null) state.towerUnlockCosts[t.id] = 200 + Math.floor(Math.random() * 1801);
+              if (state.towerUnlocked[t.id] == null) state.towerUnlocked[t.id] = false;
+            }
+            if (!state.towerUnlocked[state.selectedTower]) state.selectedTower = "basic";
+          }
+          function saveProgress() {
+            try {
+              const save = { xp:state.xp, endlessMode:state.endlessMode, towerUnlocked:state.towerUnlocked, towerUnlockCosts:state.towerUnlockCosts, selectedTower:state.selectedTower, mapId:state.mapId, difficultyId:state.difficultyId, wave:state.wave, gold:state.gold, lives:state.lives, towers:state.towers, lastXpWave:state.lastXpWave };
+              localStorage.setItem("ttdplus-save-v2", JSON.stringify(save));
+            } catch (_) {}
+          }
+          function loadProgress() {
+            try {
+              const raw = localStorage.getItem("ttdplus-save-v2");
+              if (!raw) return;
+              const save = JSON.parse(raw);
+              state.xp = save.xp || 0;
+              state.endlessMode = !!save.endlessMode;
+              state.towerUnlocked = save.towerUnlocked || {};
+              state.towerUnlockCosts = save.towerUnlockCosts || {};
+              state.selectedTower = save.selectedTower || state.selectedTower;
+              state.mapId = save.mapId || state.mapId;
+              state.difficultyId = save.difficultyId || state.difficultyId;
+              state.wave = save.wave || 0;
+              state.gold = save.gold || state.gold;
+              state.lives = save.lives || state.lives;
+              state.lastXpWave = save.lastXpWave || 0;
+              state.lastWavePayout = state.wave;
+              if (Array.isArray(save.towers)) {
+                state.towers = save.towers.map((t) => ({ ...t, rangePx:(t.stats.range || 0) * RANGE_UNIT }));
+              }
+              state.paths = copyStats(getMap().makePaths());
+            } catch (_) {}
+          }
+          function grantWaveXp() {
+            if (state.endlessMode) return;
+            if (state.wave <= 0 || state.lastXpWave === state.wave) return;
+            state.lastXpWave = state.wave;
+            state.xp += 10 + Math.floor(Math.random() * 21);
+          }
+          function unlockRandomTower() {
+            const locked = TOWERS.filter((t) => !state.towerUnlocked[t.id] && state.towerUnlockCosts[t.id] <= state.xp);
+            if (!locked.length) return;
+            const pick = locked[Math.floor(Math.random() * locked.length)];
+            state.xp -= state.towerUnlockCosts[pick.id];
+            state.towerUnlocked[pick.id] = true;
+            state.selectedTower = pick.id;
+            buildTowerMenu();
+            updateHud();
+            saveProgress();
+          }
           function getPath(trackIndex = 0) { return state.paths[trackIndex] || state.paths[0] || BASE_PATH; }
           function getWaterZones(map) { if (map.waterZones) return map.waterZones; return map.water ? [map.water] : []; }
           function inZone(x, y, z) { return x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h; }
@@ -588,9 +647,12 @@ export function renderHtml() {
             state.enemySpeedBuff = 1;
             state.ventTick = 0;
             state.lastPathShiftWave = 0;
+            state.lastXpWave = 0;
+            if (!state.towerUnlocked[state.selectedTower]) state.selectedTower = "basic";
             state.paths = copyStats(getMap().makePaths());
             renderUpgradePanel();
             updateHud();
+            saveProgress();
           }
 
           function showMenu(step = "main") {
@@ -630,6 +692,7 @@ export function renderHtml() {
             goldEl.textContent=Math.floor(state.gold);
             waveEl.textContent=state.wave;
             enemiesEl.textContent=state.enemies.length;
+            xpEl.textContent = Math.floor(state.xp);
             if (isLavaMap()) {
               heatStatEl.classList.remove("hidden");
               heatEl.textContent = Math.round(state.heat) + "%";
@@ -637,16 +700,22 @@ export function renderHtml() {
               heatStatEl.classList.add("hidden");
               heatEl.textContent = "0%";
             }
-            startWaveButton.disabled=state.spawning||state.enemies.length>0||state.lives<=0;
+            const minCost = Math.min(...TOWERS.filter((t)=>!state.towerUnlocked[t.id]).map((t)=>state.towerUnlockCosts[t.id]||Infinity), Infinity);
+            unlockTowerButtonEl.disabled = !Number.isFinite(minCost) || state.xp < minCost;
+            unlockTowerButtonEl.textContent = Number.isFinite(minCost) ? ("Unlock Random Tower (" + minCost + "+ XP)") : "All towers unlocked";
+            const reachedCap = state.wave >= getWaveCap();
+            startWaveButton.disabled=state.spawning||state.enemies.length>0||state.lives<=0||reachedCap;
           }
 
           function buildTowerMenu() {
             towerListEl.innerHTML="";
             for (const tower of TOWERS) {
               const card=document.createElement("div");
-              card.className="tower-card" + (state.selectedTower===tower.id ? " active" : "");
-              card.innerHTML='<div class="tower-title">'+tower.name+' ('+tower.cost+'g)</div><div class="tower-meta">'+describeTower(tower)+'<br>DMG: '+tower.damage+'<br>ATK SPD: '+tower.atkSpeed+'s<br>Range: '+tower.range+'</div>';
-              card.onclick=()=>{ state.selectedTower=tower.id; buildTowerMenu(); };
+              const unlocked = !!state.towerUnlocked[tower.id];
+              card.className="tower-card" + (state.selectedTower===tower.id ? " active" : "") + (unlocked ? "" : " locked");
+              const lockText = unlocked ? "" : ('<br>🔒 Unlock Cost: ' + state.towerUnlockCosts[tower.id] + ' XP');
+              card.innerHTML='<div class="tower-title">'+tower.name+' ('+tower.cost+'g)</div><div class="tower-meta">'+describeTower(tower)+lockText+'<br>DMG: '+tower.damage+'<br>ATK SPD: '+tower.atkSpeed+'s<br>Range: '+tower.range+'</div>';
+              card.onclick=()=>{ if(!unlocked) return; state.selectedTower=tower.id; buildTowerMenu(); };
               towerListEl.appendChild(card);
             }
           }
@@ -909,23 +978,28 @@ export function renderHtml() {
             updateHud();
             renderUpgradePanel();
           }
-
           function fairWavePlan(wave) {
-            const budget=14 + wave*5; const plan=[]; let left=budget;
-            const unlocked=["normal"]; if (wave>=2) unlocked.push("fast","swarm"); if (wave>=3) unlocked.push("strong","splitter"); if (wave>=4) unlocked.push("stunner"); if (wave>=5) unlocked.push("tank");
-            if (wave>=7) unlocked.push("juggernaut","bulwark","phalanx");
-            if (wave>=10) unlocked.push("warden","fortifier","chronotitan","nullwalker");
-            if (wave>=12) unlocked.push("titan","ironback","phasejuggernaut","disruptor");
-            if (wave>=14) unlocked.push("colossus","warengine","voidbrute","plaguehulk","mirrorknight");
-            if (wave>=16) unlocked.push("leviathan","sentinelprime","oblivionguard","grimcarrier","dreadhowler");
-            if (wave>=18) unlocked.push("voidshield","flametyrant","cryocolossus","blackwall");
-            if (wave>=20) unlocked.push("voidemperor");
-            if (isLavaMap()) { unlocked.push("magmawalker","ashwraith","coreling","obsidiantank"); if (wave >= 40) plan.push("cavertitan"); }
-            const limits={ fast:Math.max(4,wave*2), stunner:Math.max(1,Math.floor(wave/2)), tank:Math.max(1,Math.floor(wave/3))}; const c={fast:0,stunner:0,tank:0};
-            while (left>0.8) { const pool=unlocked.filter((t)=>ENEMY_TYPES[t].budget<=left+0.2 && (limits[t]===undefined || c[t]<limits[t])); if(!pool.length) break; const p=pool[Math.floor(Math.random()*pool.length)]; if(p==="swarm"){ const count=5+Math.floor(Math.random()*6); for(let i=0;i<count;i++) plan.push("swarm"); left-=ENEMY_TYPES.swarm.budget*count; } else { plan.push(p); left-=ENEMY_TYPES[p].budget; if(c[p]!==undefined)c[p]++; } }
-            if (plan.filter((x)=>x==="normal").length<3) plan.push("normal","normal","normal");
+            const plan=[];
+            const tier = Math.floor((wave - 1) / 2);
+            const evenWave = wave % 2 === 0;
+            const diff = getDifficulty();
+            const density = Math.max(1, diff.enemyMult || 1);
+            const basics = Math.round((10 + (evenWave ? 5 : 0) + Math.floor(wave / 12) * 2) * density);
+            const fast = Math.round(Math.max(0, tier * 5 + (evenWave ? 5 : 0)) * Math.min(1.6, 0.8 + density * 0.4));
+            const slow = Math.round(Math.max(0, (tier - 1) * 5 + (evenWave ? 5 : 0)) * Math.min(1.4, 0.85 + density * 0.35));
+            for (let i=0;i<basics;i++) plan.push("normal");
+            for (let i=0;i<fast;i++) plan.push("fast");
+            for (let i=0;i<slow;i++) plan.push("strong");
+            if (wave >= 12) for (let i=0;i<Math.floor(wave/6);i++) plan.push("swarm");
+            if (wave >= 20) for (let i=0;i<Math.floor(wave/10);i++) plan.push("tank");
+            if (isLavaMap() && wave >= 25 && wave % 10 === 0) plan.push("obsidiantank");
             if (wave % 20 === 0) plan.push("endbringer");
-            const mult = getDifficulty().enemyMult || 1; const target = Math.max(plan.length, Math.round(plan.length * mult)); while (plan.length < target) plan.push(plan[Math.floor(Math.random()*plan.length)] || "normal"); return plan.sort(()=>Math.random()-0.5);
+            if (wave === 40 || wave === 60 || wave === 80 || wave === 100) plan.push("voidemperor");
+            for (let i = plan.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [plan[i], plan[j]] = [plan[j], plan[i]];
+            }
+            return plan;
           }
 
           function createEnemy(typeKey) {
@@ -933,7 +1007,7 @@ export function renderHtml() {
             const diff = getDifficulty(); const deathScale = getDeathDifficultyScale(); const trackIndex = Math.floor(Math.random() * (state.paths.length || 1)); const spawnPath = getPath(trackIndex); const hp = Math.round(type.hp * (diff.hpMult || 1) * deathScale * (state.enemyHpBuff || 1)); return { id:crypto.randomUUID(), type:typeKey, x:spawnPath[0].x, y:spawnPath[0].y, hp:hp, maxHp:hp, speed:type.speed*SPEED_SCALE*(diff.speedMult||1)*deathScale*(state.enemySpeedBuff||1), defense:type.defense, reward:type.reward, pathIndex:1, trackIndex, baseDamage:type.baseDamage, burnTicks:0, burnDps:3, slowTicks:0, slowAmount:0.45, vulnMult:0, acidTicks:0, acidDps:0, stunTicks:0, weakenedDamage:0, permaSlow:0, frozenVuln:0, debuffImmune:!!type.debuffImmune, dotImmune:!!type.dotImmune, burnImmune:!!type.burnImmune, knockbackImmune:!!type.knockbackImmune, stunImmune:!!type.stunImmune, noPierce:!!type.noPierce, noShred:!!type.noShred, shieldHalf:!!type.shieldHalf, aoeResist:type.aoeResist||0, beamResist:type.beamResist||0, allDamageHalf:type.allDamageHalf||0, minSpeedMult:type.minSpeedMult||0, phaseCycle:type.phaseCycle||0, phaseDuration:type.phaseDuration||0, phaseTick:0, disableTowerOnHit:type.disableTowerOnHit||0, reflect:type.reflect||0, defAura:type.defAura||0, speedAura:type.speedAura||0, globalSpeedAura:type.globalSpeedAura||0, mirrorCd:type.mirrorCd||0, mirrorTick:0, spawnOnDeath:type.spawnOnDeath||null, spawnPeriodic:type.spawnPeriodic||null, spawnTick:0, empAura:!!type.empAura, buffsAll:!!type.buffsAll, poisonAura:!!type.poisonAura, fireTrail:!!type.fireTrail, regenOnBase:type.regenOnBase||0, frozenHits:0 };
           }
 
-          function startWave(){ if(state.spawning||state.lives<=0) return; state.wave++; const map=getMap(); if (map.dynamicPathEvery && (state.wave === 1 || state.wave - state.lastPathShiftWave >= map.dynamicPathEvery)) { state.paths = copyStats(map.makePaths()); state.lastPathShiftWave = state.wave; } state.queue=fairWavePlan(state.wave); state.spawning=true; state.spawnCooldown=0; if(isLavaMap() && state.wave % 4 === 0) state.ventTick = 180; updateHud(); }
+          function startWave(){ if(state.spawning||state.lives<=0) return; if (state.wave >= getWaveCap()) return; state.wave++; const map=getMap(); if (map.dynamicPathEvery && (state.wave === 1 || state.wave - state.lastPathShiftWave >= map.dynamicPathEvery)) { state.paths = copyStats(map.makePaths()); state.lastPathShiftWave = state.wave; } state.queue=fairWavePlan(state.wave); state.spawning=true; state.spawnCooldown=0; if(isLavaMap() && state.wave % 4 === 0) state.ventTick = 180; updateHud(); saveProgress(); }
           function spawnEnemyTick(){ if(!state.spawning) return; state.spawnCooldown--; if(state.spawnCooldown>0) return; if(!state.queue.length){state.spawning=false;return;} state.enemies.push(createEnemy(state.queue.shift())); state.spawnCooldown=10+Math.floor(Math.random()*12); }
 
           function applyDamage(enemy, amount, options={}) {
@@ -1489,13 +1563,14 @@ export function renderHtml() {
             const model=TOWERS.find((t)=>t.id===state.selectedTower);
             if(!model || state.gold<model.cost) return;
             if(!canPlaceTower(x,y)) return;
+            if (!state.towerUnlocked[model.id]) return;
 
             state.gold -= model.cost;
             const stats = copyStats(model);
             if (NERF_IDS.has(stats.id)) stats.range = +(stats.range * NERF_RANGE_MULT).toFixed(2);
             if (BUFF_IDS.has(stats.id)) stats.range = +(stats.range + BUFF_RANGE_BONUS).toFixed(2);
             state.towers.push({ id:crypto.randomUUID(), baseId:model.id, baseName:model.name, x, y, stats, rangePx:stats.range*RANGE_UNIT, cooldown:0, stunTicks:0, upgradePath:null, upgradeTier:0, shotCount:0, invested:model.cost });
-            updateHud(); buildTowerMenu(); renderUpgradePanel();
+            updateHud(); buildTowerMenu(); renderUpgradePanel(); saveProgress();
           });
 
           function sellSelectedTower() {
@@ -1507,6 +1582,7 @@ export function renderHtml() {
             state.selectedPlacedTowerId = null;
             renderUpgradePanel();
             updateHud();
+            saveProgress();
           }
 
           function buildMapMenu() {
@@ -1523,12 +1599,18 @@ export function renderHtml() {
 
           function buildDifficultyMenu() {
             menuDifficultiesEl.innerHTML = "";
+            const modeBtn = document.createElement("button");
+            modeBtn.className = "menu-btn";
+            modeBtn.textContent = state.endlessMode ? "Mode: Endless (no XP gain)" : "Mode: Capped waves (XP enabled)";
+            modeBtn.onclick = () => { state.endlessMode = !state.endlessMode; buildDifficultyMenu(); updateHud(); saveProgress(); };
+            menuDifficultiesEl.appendChild(modeBtn);
             for (const diffId of Object.keys(DIFFICULTIES)) {
               const diff = DIFFICULTIES[diffId];
               const btn = document.createElement("button");
               btn.className = "menu-btn";
-              btn.textContent = diff.name + (diff.deathRamp ? " — starts normal, after wave 10 ramps HP/speed up to x5" : " — enemies x" + diff.enemyMult + ", hp x" + diff.hpMult + ", speed x" + diff.speedMult);
-              btn.onclick = () => { resetRun(state.mapId, diffId); hideMenu(); };
+              const waveLabel = (state.endlessMode ? "Endless" : ("W" + (diff.maxWave || 40)));
+              btn.textContent = diff.name + " (" + waveLabel + ")" + (diff.deathRamp ? " — starts normal, after wave 10 ramps HP/speed up to x5" : " — enemies x" + diff.enemyMult + ", hp x" + diff.hpMult + ", speed x" + diff.speedMult);
+              btn.onclick = () => { resetRun(state.mapId, diffId); hideMenu(); saveProgress(); };
               menuDifficultiesEl.appendChild(btn);
             }
           }
@@ -1552,6 +1634,11 @@ export function renderHtml() {
 
           startWaveButton.addEventListener("click", startWave);
           sellTowerButtonEl.addEventListener("click", sellSelectedTower);
+          unlockTowerButtonEl.addEventListener("click", unlockRandomTower);
+          initTowerProgression();
+          loadProgress();
+          initTowerProgression();
+          window.addEventListener("beforeunload", saveProgress);
           buildTowerMenu();
           buildMapMenu();
           buildDifficultyMenu();
