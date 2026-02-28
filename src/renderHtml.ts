@@ -24,6 +24,7 @@ export function renderHtml() {
           .tower-card.active { border-color:var(--selected); box-shadow:0 0 0 1px var(--selected); }
           .tower-title { font-weight:700; margin-bottom:4px; }
           .tower-meta { font-size:0.82rem; opacity:0.85; line-height:1.35; }
+          .tower-category { font-size:0.78rem; letter-spacing:0.06em; color:#9fb3d9; margin-top:4px; margin-bottom:2px; font-weight:800; }
           .upgrade { border-top:1px solid #334058; padding-top:8px; display:grid; gap:8px; }
           .upgrade-paths { display:grid; gap:6px; max-height:260px; overflow:auto; }
           .u-btn { width:100%; text-align:left; font-size:0.8rem; background:#2e3d58; color:#fff; }
@@ -657,6 +658,16 @@ export function renderHtml() {
             "Growth Spire":"Wave-based support spire that permanently grows nearby towers."
           };
 
+          const TOWER_CATEGORIES = [
+            { label:"🔥 FIRE", ids:["firetotem","thermalray","moltenmortar","embertrap","flame","heatsink"] },
+            { label:"❄️ COLD", ids:["cryomines","frostnet","cryobeam","frostflare","cryoturbine","frost"] },
+            { label:"⚡ CHAIN", ids:["fence","volt","chainblaster","stormpillar","arcshotgun","tesla"] },
+            { label:"🛡 SUPPORT / BUFF", ids:["void","echo","heatsink","decaytotem","overwatch","rift","commander","farm","factory","growthspire"] },
+            { label:"☠ DEBUFFS", ids:["gravity","wind","poison","emp","static","snare","spore","shocknet","nanoswarm","timespire","arctrap","gravcannon","plaguetower","pulsemine","magnet","bleed","corrosion","acid"] },
+            { label:"💥 DPS (Single Target Focus)", ids:["laser","burst","kinetic","obsidian","ion","sentry","bastion","basic","gatling","sniper","railgun"] },
+            { label:"💣 AOE (Splash / Multi-Target Burst)", ids:["soulharvester","pulse","mine","shard","arcmortar","needle","beamsplit","flak","shardmortar","spikewall","shrapnel","shardfan","pulsebarrage","shockwavetotem","scatterlaser","bomb","ricochet"] },
+          ];
+
           function getWaveCap() { return (getDifficulty().maxWave || 40); }
           function generateUnlockCost() { return randomInt(200, 2000); }
           function ensureTowerUnlockCosts() { for (const t of TOWERS) if (!state.towerUnlockCosts[t.id]) state.towerUnlockCosts[t.id] = t.unlockXp || generateUnlockCost(); state.towerUnlockCosts.basic = 0; }
@@ -772,7 +783,9 @@ export function renderHtml() {
 
           function buildTowerMenu() {
             towerListEl.innerHTML="";
-            for (const tower of TOWERS) {
+            const byId = Object.fromEntries(TOWERS.map((t)=>[t.id,t]));
+            const used = new Set();
+            const renderTowerCard = (tower) => {
               const card=document.createElement("div");
               card.className="tower-card" + (state.selectedTower===tower.id ? " active" : "");
               const unlocked = state.unlockedTowerIds.includes(tower.id);
@@ -782,6 +795,23 @@ export function renderHtml() {
               card.onclick=()=>{ if (!unlocked) return; state.selectedTower=tower.id; buildTowerMenu(); };
               if (!unlocked) card.style.opacity = '0.55';
               towerListEl.appendChild(card);
+            };
+            for (const category of TOWER_CATEGORIES) {
+              const inCat = category.ids.map((id)=>byId[id]).filter(Boolean);
+              if (!inCat.length) continue;
+              const header = document.createElement("div");
+              header.className = "tower-category";
+              header.textContent = category.label;
+              towerListEl.appendChild(header);
+              for (const tower of inCat) { used.add(tower.id); renderTowerCard(tower); }
+            }
+            const leftovers = TOWERS.filter((t)=>!used.has(t.id));
+            if (leftovers.length) {
+              const header = document.createElement("div");
+              header.className = "tower-category";
+              header.textContent = "🧩 OTHER";
+              towerListEl.appendChild(header);
+              for (const tower of leftovers) renderTowerCard(tower);
             }
           }
 
@@ -811,8 +841,9 @@ export function renderHtml() {
             if (s.hitStun) extras.push("Stun: " + s.hitStun + "f");
             if (s.supportVuln) extras.push("Vuln: +" + Math.round(s.supportVuln * 100) + "%");
             if (s.weakenDamage) extras.push("Weaken: " + Math.round(s.weakenDamage * 100) + "%");
-            if (s.acidDotDps) extras.push("DoT: " + s.acidDotDps + "/s");
-            if (s.burnDps) extras.push("Burn: " + s.burnDps + "/s");
+            const buffs = computeBuffsForTower(tower);
+            if (s.acidDotDps) extras.push("DoT: " + formatBaseBuffed(s.acidDotDps, (s.acidDotDps || 0) * (1 + (buffs.dmg || 0)), "/s"));
+            if (s.burnDps) extras.push("Burn: " + formatBaseBuffed(s.burnDps, (s.burnDps || 0) * (1 + (buffs.dmg || 0)), "/s"));
             if (s.stripDefense) extras.push("Armor Strip: " + s.stripDefense);
             if (s.fireVuln) extras.push("Fire Vuln: +" + Math.round(s.fireVuln * 100) + "%");
             if (s.pullStrength) extras.push("Pull: " + s.pullStrength);
@@ -821,7 +852,6 @@ export function renderHtml() {
             if (s.burstCount) extras.push("Burst: " + s.burstCount);
             if (s.splashRadius) extras.push("Splash: " + Math.round(s.splashRadius));
             if (s.placeMine) extras.push("Mine Layer");
-            const buffs = computeBuffsForTower(tower);
             const baseDamage = s.damage ?? 0;
             const buffedDamage = baseDamage * (1 + (buffs.dmg || 0));
             const baseAtkSpeed = s.atkSpeed ?? 0;
@@ -1196,6 +1226,7 @@ export function renderHtml() {
           function towerShoot(tower, target, buffs) {
             const s=tower.stats;
             let dmg=s.damage*(1+buffs.dmg);
+            const dotMult = 1 + (buffs.dmg || 0);
             if (NERF_IDS.has(s.id)) dmg *= NERF_DMG_MULT;
             if (BUFF_IDS.has(s.id)) dmg *= BUFF_DMG_MULT;
             if (s.rampOnTarget && tower.lastTargetId === (target && target.id)) { tower.rampStacks = Math.min((tower.rampStacks || 0) + 1, 20); } else { tower.rampStacks = 0; }
@@ -1245,18 +1276,18 @@ export function renderHtml() {
                 if (s.supportVuln) enemy.vulnMult = Math.max(enemy.vulnMult, s.supportVuln);
                 if (s.hitSlow) { enemy.slowTicks = Math.max(enemy.slowTicks, 90); enemy.slowAmount = Math.max(enemy.slowAmount, s.hitSlow); }
                 if (s.hitStun && !enemy.stunImmune) enemy.stunTicks = Math.max(enemy.stunTicks, s.hitStun);
-                if (s.acidDotDps) { enemy.acidTicks = Math.max(enemy.acidTicks, s.poisonDuration || 360); enemy.acidDps = Math.max(enemy.acidDps, s.acidDotDps); if (s.acidSpreadOnDeath) enemy.acidSpreadOnDeath = true; }
-                if (s.burn) { enemy.burnTicks = Math.max(enemy.burnTicks, s.burnDuration || 240); enemy.burnDps = Math.max(enemy.burnDps, s.burnDps || 3); }
+                if (s.acidDotDps) { enemy.acidTicks = Math.max(enemy.acidTicks, s.poisonDuration || 360); enemy.acidDps = Math.max(enemy.acidDps, s.acidDotDps * dotMult); if (s.acidSpreadOnDeath) enemy.acidSpreadOnDeath = true; }
+                if (s.burn) { enemy.burnTicks = Math.max(enemy.burnTicks, s.burnDuration || 240); enemy.burnDps = Math.max(enemy.burnDps, (s.burnDps || 3) * dotMult); }
                 if (s.stripDefense) enemy.defense = Math.max(0, enemy.defense - s.stripDefense);
                 if (s.fireVuln) enemy.vulnMult = Math.max(enemy.vulnMult, s.fireVuln);
-                if (s.damage > 0) applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, hitStun:s.hitStun||0, supportVuln:s.supportVuln||0, stripDefense:s.stripDefense||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, acidDotDps:s.acidDotDps||0 });
+                if (s.damage > 0) applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, hitStun:s.hitStun||0, supportVuln:s.supportVuln||0, stripDefense:s.stripDefense||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:(s.burnDps||3) * dotMult, acidDotDps:(s.acidDotDps||0) * dotMult });
               }
               return;
             }
 
             if (isLavaMap() && isOnLava(target.x, target.y) && ["frost","cryobeam","frostflare","frostnet","cryoturbine","frostwave","cryomines"].includes(s.id)) dmg *= 2;
             if (BEAM_TOWERS.has(s.id)) {
-              const options = { burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, ignoreDefense:!!s.ignoreDefense, antiArmorBonus:s.antiArmorBonus||0 };
+              const options = { burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:(s.burnDps||3) * dotMult, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, ignoreDefense:!!s.ignoreDefense, antiArmorBonus:s.antiArmorBonus||0 };
               applyDamage(target, dmg, options);
               let beams = s.splitBeams || 0;
               for (const enemy of state.enemies) {
@@ -1342,7 +1373,7 @@ export function renderHtml() {
               const shots = s.coneShots || randomInt(s.coneShotMin || 1, s.coneShotMax || 1);
               for (let k=0; k<Math.min(shots, coneTargets.length); k++) {
                 const enemy = coneTargets[k];
-                const dealt = applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, armoredBonus:s.armoredBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, hitStun:s.hitStun||0, shred:s.shred||0 });
+                const dealt = applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:(s.burnDps||3) * dotMult, armoredBonus:s.armoredBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, hitStun:s.hitStun||0, shred:s.shred||0 });
                 if (s.chain && dealt > 0) {
                   const cap = s.chainCount || 2;
                   let prev = enemy;
@@ -1358,7 +1389,7 @@ export function renderHtml() {
               return;
             }
 
-            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:{ pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:s.burnDps||3, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:s.acidDotDps||0, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:buffs.lifesteal||0, weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, lifesteal:s.lifesteal||0, knockback:s.knockback||0, fireVuln:s.fireVuln||0, stripDefense:s.stripDefense||0 }, pierceTargets:s.pierceTargets||0, doubleShockwave:!!s.doubleShockwave, perPierceProjectileBonus:s.perPierceProjectileBonus||0, splitBeams:s.splitBeams||0, burstCount:s.burstCount||0, echoNearby:!!s.echoNearby, echoPower:s.echoPower||0.5, echoCount:s.echoCount||1 });
+            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:{ pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:(s.burnDps||3) * dotMult, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:(s.acidDotDps||0) * dotMult, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:buffs.lifesteal||0, weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, lifesteal:s.lifesteal||0, knockback:s.knockback||0, fireVuln:s.fireVuln||0, stripDefense:s.stripDefense||0 }, pierceTargets:s.pierceTargets||0, doubleShockwave:!!s.doubleShockwave, perPierceProjectileBonus:s.perPierceProjectileBonus||0, splitBeams:s.splitBeams||0, burstCount:s.burstCount||0, echoNearby:!!s.echoNearby, echoPower:s.echoPower||0.5, echoCount:s.echoCount||1 });
           }
 
           function updateTowers() {
