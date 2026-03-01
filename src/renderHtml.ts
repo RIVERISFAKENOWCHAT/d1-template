@@ -883,7 +883,7 @@ export function renderHtml() {
             const baseAtkSpeed = s.atkSpeed ?? 0;
             const buffedAtkSpeed = baseAtkSpeed > 0 ? baseAtkSpeed / (1 + (buffs.spd || 0)) : baseAtkSpeed;
 
-            towerStatsEl.innerHTML = "<strong>Placed Tower Stats</strong><br>DMG: " + formatBaseBuffed(baseDamage, buffedDamage) +
+            towerStatsEl.innerHTML = "<strong>Placed Tower Stats</strong><br>Targeting: " + (tower.targetMode || "First") + "<br>DMG: " + formatBaseBuffed(baseDamage, buffedDamage) +
               "<br>ATK SPD: " + formatBaseBuffed(baseAtkSpeed, buffedAtkSpeed, "s") +
               "<br>Range: " + formatBaseBuffed((s.range ?? 0), (s.range ?? 0) * (1 + (buffs.range || 0))) +
               (extras.length ? "<br>" + extras.join(" | ") : "");
@@ -1254,7 +1254,19 @@ export function renderHtml() {
           }
 
           function getTowerRangePx(t){ const penalty = (isLavaMap() && state.heat >= 85) ? 0.8 : 1; const buffs = computeBuffsForTower(t); return t.rangePx * (1 + (buffs.range || 0)) * penalty; }
-          function findTargetForTower(t){ const rangePx=getTowerRangePx(t); const mode=t.targetMode||"First"; const candidates=state.enemies.filter((e)=>isEnemyVisible(e)&&distance(t,e)<=rangePx&&!(e.phaseDuration&&e.phaseTick>0)&&!(e.mirrorCd&&e.mirrorTick===0)); if(!candidates.length) return null; if(mode==="Random") return candidates[Math.floor(Math.random()*candidates.length)]; if(mode==="First") return candidates.sort((a,b)=>b.pathIndex-a.pathIndex)[0]; if(mode==="Last") return candidates.sort((a,b)=>a.pathIndex-b.pathIndex)[0]; if(mode==="Strong") return candidates.sort((a,b)=>b.hp-a.hp)[0]; if(mode==="Weak") return candidates.sort((a,b)=>a.hp-b.hp)[0]; return candidates[0]; }
+          function getEnemyPathProgress(enemy){ const path=getPath(enemy.trackIndex); const prev=path[Math.max(0, enemy.pathIndex-1)] || path[0] || {x:enemy.x,y:enemy.y}; const next=path[enemy.pathIndex] || prev; const seg=Math.max(1, Math.hypot(next.x-prev.x,next.y-prev.y)); const along=Math.hypot(enemy.x-prev.x, enemy.y-prev.y); return enemy.pathIndex + Math.min(1, along/seg); }
+          function findTargetForTower(t){
+            const rangePx=getTowerRangePx(t);
+            const mode=t.targetMode||"First";
+            const candidates=state.enemies.filter((e)=>isEnemyVisible(e)&&distance(t,e)<=rangePx&&!(e.phaseDuration&&e.phaseTick>0)&&!(e.mirrorCd&&e.mirrorTick===0));
+            if(!candidates.length) return null;
+            if(mode==="Random") return candidates[Math.floor(Math.random()*candidates.length)];
+            if(mode==="First") return candidates.sort((a,b)=>getEnemyPathProgress(b)-getEnemyPathProgress(a))[0];
+            if(mode==="Last") return candidates.sort((a,b)=>getEnemyPathProgress(a)-getEnemyPathProgress(b))[0];
+            if(mode==="Strong") return candidates.sort((a,b)=>(b.maxHp*1000+b.hp)-(a.maxHp*1000+a.hp))[0];
+            if(mode==="Weak") return candidates.sort((a,b)=>a.hp-b.hp)[0];
+            return candidates[0];
+          }
           function pointToSegmentDistance(px,py,x1,y1,x2,y2){ const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy; if(l2===0)return Math.hypot(px-x1,py-y1); let t=((px-x1)*dx+(py-y1)*dy)/l2; t=Math.max(0,Math.min(1,t)); const qx=x1+t*dx,qy=y1+t*dy; return Math.hypot(px-qx,py-qy); }
 
           function enemiesInCone(origin, target, range, coneAngle) {
