@@ -74,6 +74,9 @@ export function renderHtml() {
                 <button id="saveRun">Save progress</button>
                 <button id="loadRun">Load progress</button>
                 <button id="toggleEndless">Mode: Limited</button>
+                <button id="pauseGame">Pause: Off</button>
+                <button id="speedToggle">Speed: x1</button>
+                <button id="autoStart">Auto Start: Off</button>
               </div>
               <div class="stats">
                 <span>❤️ Lives: <strong id="lives">20</strong></span>
@@ -128,6 +131,9 @@ export function renderHtml() {
           const saveRunButton = document.getElementById("saveRun");
           const loadRunButton = document.getElementById("loadRun");
           const toggleEndlessButton = document.getElementById("toggleEndless");
+          const pauseGameButton = document.getElementById("pauseGame");
+          const speedToggleButton = document.getElementById("speedToggle");
+          const autoStartButton = document.getElementById("autoStart");
 
           const RANGE_UNIT = 22;
           const SPEED_SCALE = 0.08;
@@ -579,7 +585,7 @@ export function renderHtml() {
 
           ensureTierFiveUpgrades();
 
-          const state = { lives:20, gold:220, wave:0, exp:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", endlessMode:false, paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0, lastWaveExpPayout:0, heat:0, heatFlags:{scorch:false,molten:false,overheat:false}, tempLavaTiles:[], permBlockedTiles:[], eruptions:0, enemyHpBuff:1, enemySpeedBuff:1, ventTick:0, globalUpgradeDiscount:0, unlockedTowerIds:["basic"], towerUnlockCosts:{} };
+          const state = { lives:20, gold:220, wave:0, exp:0, towers:[], enemies:[], projectiles:[], mines:[], alliedTurrets:[], spawning:false, queue:[], spawnCooldown:0, selectedTower:TOWERS[0].id, selectedPlacedTowerId:null, mapId:"beginner", difficultyId:"normal", endlessMode:false, paths: MAPS.beginner.makePaths(), menuStep:"main", lastWavePayout:0, lastWaveExpPayout:0, heat:0, heatFlags:{scorch:false,molten:false,overheat:false}, tempLavaTiles:[], permBlockedTiles:[], eruptions:0, enemyHpBuff:1, enemySpeedBuff:1, ventTick:0, globalUpgradeDiscount:0, paused:false, gameSpeed:1, autoStart:false, unlockedTowerIds:["basic"], towerUnlockCosts:{} };
 
           const copyStats = (m) => JSON.parse(JSON.stringify(m));
           const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -741,6 +747,9 @@ export function renderHtml() {
             state.enemySpeedBuff = 1;
             state.ventTick = 0;
             state.globalUpgradeDiscount = 0;
+            state.paused = false;
+            state.gameSpeed = 1;
+            state.autoStart = false;
             state.endlessMode = false;
             ensureTowerUnlockCosts();
             if (!state.unlockedTowerIds.includes(state.selectedTower)) state.selectedTower = state.unlockedTowerIds[0] || "basic";
@@ -785,7 +794,10 @@ export function renderHtml() {
             const affordable = locked.filter((t)=>state.exp >= (state.towerUnlockCosts[t.id]||0));
             const minCost = locked.length ? Math.min(...locked.map((t)=>state.towerUnlockCosts[t.id]||0)) : 0;
             unlockTowerButton.textContent = locked.length ? ("Unlock random tower (" + minCost + "+ XP)") : "All towers unlocked";
-            unlockTowerButton.disabled = !affordable.length; }
+            unlockTowerButton.disabled = !affordable.length;
+            pauseGameButton.textContent = "Pause: " + (state.paused ? "On" : "Off");
+            speedToggleButton.textContent = "Speed: x" + state.gameSpeed;
+            autoStartButton.textContent = "Auto Start: " + (state.autoStart ? "On" : "Off"); }
 
           function buildTowerMenu() {
             towerListEl.innerHTML="";
@@ -1537,7 +1549,16 @@ export function renderHtml() {
           function drawProjectiles(){ for(const p of state.projectiles){ if(p.mode==="bolt"){ctx.strokeStyle="#f7f45f";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p.x,p.y);if(p.target)ctx.lineTo(p.target.x,p.target.y);ctx.stroke();} else if(p.mode==="beam"){ctx.strokeStyle=p.color||"#d9d9d9";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(p.x,p.y);if(p.target)ctx.lineTo(p.target.x,p.target.y);ctx.stroke();} else {ctx.fillStyle=p.color||"#fff";ctx.beginPath();ctx.arc(p.x,p.y,3.5,0,Math.PI*2);ctx.fill();} } }
           function drawGameOver(){ if(state.lives>0)return; ctx.fillStyle="rgba(0,0,0,0.72)";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 52px system-ui";ctx.fillText("Game Over",canvas.width/2,canvas.height/2-20);ctx.font="24px system-ui";ctx.fillText("Refresh to try again",canvas.width/2,canvas.height/2+24); }
 
-          function tick(){ ctx.clearRect(0,0,canvas.width,canvas.height); spawnEnemyTick(); updateEnemies(); processHeatSystem(); if (isLavaMap() && state.ventTick > 0) { state.ventTick--; if (state.ventTick % 120 === 0 && state.towers.length) { const t=state.towers[Math.floor(Math.random()*state.towers.length)]; t.stunTicks=Math.max(t.stunTicks,300); addHeat(6); } } awardFarmWaveIncome(); awardWaveExp(); updateMines(); updateAlliedTurrets(); updateTowers(); updateProjectiles(); updateHud(); drawPath(); for(const t of state.towers) drawTower(t);
+          function tick(){
+            const steps = state.paused ? 0 : Math.max(1, state.gameSpeed || 1);
+            for (let step = 0; step < steps; step++) {
+              spawnEnemyTick(); updateEnemies(); processHeatSystem();
+              if (isLavaMap() && state.ventTick > 0) { state.ventTick--; if (state.ventTick % 120 === 0 && state.towers.length) { const t=state.towers[Math.floor(Math.random()*state.towers.length)]; t.stunTicks=Math.max(t.stunTicks,300); addHeat(6); } }
+              awardFarmWaveIncome(); awardWaveExp(); updateMines(); updateAlliedTurrets(); updateTowers(); updateProjectiles();
+              if (state.autoStart && !state.spawning && state.enemies.length===0 && state.lives>0 && (state.endlessMode || state.wave < getWaveCap())) startWave();
+            }
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            updateHud(); drawPath(); for(const t of state.towers) drawTower(t);
             for (const m of state.mines) { ctx.fillStyle = "#d4af37"; ctx.beginPath(); ctx.arc(m.x, m.y, 5, 0, Math.PI * 2); ctx.fill(); }
             drawAlliedTurrets(); for(const e of state.enemies) drawEnemy(e); drawProjectiles(); drawGameOver(); requestAnimationFrame(tick); }
 
@@ -1628,6 +1649,10 @@ export function renderHtml() {
           toggleEndlessButton.addEventListener("click", () => { state.endlessMode = !state.endlessMode; updateHud(); saveRun(); });
           window.addEventListener("beforeunload", saveRun);
           setInterval(saveRun, 3000);
+
+          pauseGameButton.addEventListener("click", () => { state.paused = !state.paused; updateHud(); });
+          speedToggleButton.addEventListener("click", () => { state.gameSpeed = state.gameSpeed === 2 ? 1 : 2; updateHud(); });
+          autoStartButton.addEventListener("click", () => { state.autoStart = !state.autoStart; updateHud(); });
 
           startWaveButton.addEventListener("click", startWave);
           ensureTowerUnlockCosts();
