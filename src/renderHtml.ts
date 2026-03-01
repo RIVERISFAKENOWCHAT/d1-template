@@ -304,6 +304,7 @@ export function renderHtml() {
             { id:"frostwave", name:"Frostwave Conduit", cost:80, damage:2, atkSpeed:1, range:7, color:"#2ec4b6", shape:"frostwave", hitSlow:0.2 },
             { id:"tsunami", name:"Tsunami Beacon", cost:150, damage:6, atkSpeed:3, range:12, color:"#1d4ed8", shape:"tsunami", splashRadius:70 },
 
+            { id:"bloodhunter", name:"Blood Hunter", cost:250, unlockXp:2200, damage:3, atkSpeed:1.0, range:7, color:"#b00020", shape:"bloodhunter", splashRadius:50, pierce:true, pierceTargets:2, bloodSurgeDmgPer10:0.5, bloodSurgeSpdPer10:0.04 },
             { id:"soulharvester", name:"Soul Harvester", cost:120, unlockXp:1600, damage:2, atkSpeed:1, range:6, color:"#9d4edd", shape:"void", splashRadius:45, soulKillGain:0.05, supportVuln:0.05 },
             { id:"ricochet", name:"Ricochet Cannon", cost:150, unlockXp:1450, damage:4, atkSpeed:1.2, range:8, color:"#4ea8de", shape:"railgun", pierceTargets:1, perPierceProjectileBonus:0.1 },
             { id:"growthspire", name:"Growth Spire", cost:200, unlockXp:1900, damage:0, atkSpeed:0, range:5, color:"#52b788", shape:"timespire", growthRangeWaveBonus:1 },
@@ -458,6 +459,11 @@ export function renderHtml() {
               A:[{cost:100,set:{damage:5}},{cost:200,set:{pierceTargets:2}},{cost:500,set:{damage:7,perPierceProjectileBonus:0.2}},{cost:1200,set:{pierceTargets:4,range:10}},{cost:3500,set:{damage:12,pierceTargets:8,perPierceProjectileBonus:0.4,ignoreDefense:true}}],
               B:[{cost:120,set:{damage:6}},{cost:300,set:{splashRadius:45}},{cost:600,set:{damage:8,hitStun:18}},{cost:1300,set:{splashRadius:66,burnExplode:8}},{cost:3400,set:{damage:16,splashRadius:90,hitStun:24,weakenDamage:0.2}}],
               C:[{cost:100,set:{atkSpeed:1.0}},{cost:250,set:{atkSpeed:0.8}},{cost:550,set:{atkSpeed:0.6}},{cost:1200,set:{atkSpeed:0.5,splitBeams:3,doubleEvery:3}},{cost:3600,set:{atkSpeed:0.3,splitBeams:5,pierceTargets:999}}],
+            },
+            bloodhunter: {
+              A:[{cost:300,set:{damage:4,atkSpeed:0.9,range:7.5,splashRadius:60,bloodSurgeDmgPer10:0.6,bloodSurgeSpdPer10:0.05}},{cost:550,set:{damage:6,atkSpeed:0.8,range:8,splashRadius:70,bloodSurgeDmgPer10:0.8,bloodSurgeSpdPer10:0.06}},{cost:600,set:{damage:9,atkSpeed:0.7,range:8.5,splashRadius:85,bloodSurgeDmgPer10:1,bloodSurgeSpdPer10:0.08}},{cost:800,set:{damage:15,atkSpeed:0.55,range:9,splashRadius:100,bloodSurgeDmgPer10:1.5,bloodSurgeSpdPer10:0.1}},{cost:1200,set:{damage:25,atkSpeed:0.4,range:10,splashRadius:125,bloodSurgeDmgPer10:2,bloodSurgeSpdPer10:0.12,auraDamage:0.2,supportAtkAura:0.2,auraRange:0.15}}],
+              B:[{cost:300,set:{damage:4,atkSpeed:0.95,splashRadius:55,hitSlow:0.1}},{cost:500,set:{damage:5,atkSpeed:0.9,splashRadius:65,hitSlow:0.2}},{cost:600,set:{damage:7,atkSpeed:0.8,splashRadius:75,hitSlow:0.3}},{cost:800,set:{damage:11,atkSpeed:0.65,splashRadius:90,hitSlow:0.4}},{cost:1400,set:{damage:18,atkSpeed:0.5,range:9.5,splashRadius:110,hitSlow:0.5,lowHpBonus:0.15}}],
+              C:[{cost:300,set:{damage:3.5,atkSpeed:0.95,splashRadius:55,auraDamage:0.05}},{cost:650,set:{damage:5,atkSpeed:0.85,splashRadius:65,auraDamage:0.1}},{cost:1200,set:{damage:7,atkSpeed:0.75,splashRadius:80,auraDamage:0.15,supportAtkAura:0.1}},{cost:800,set:{damage:10,atkSpeed:0.6,splashRadius:95,auraDamage:0.2,supportAtkAura:0.15}},{cost:1200,set:{damage:14,atkSpeed:0.45,range:10,splashRadius:110,auraDamage:0.3,supportAtkAura:0.25,auraRange:0.15}}],
             },
             growthspire: {
               A:[{cost:120,set:{range:6,growthRangeWaveBonus:1}},{cost:300,set:{range:7,growthRangeWaveBonus:2}},{cost:600,set:{range:8,growthRangeWaveBonus:4}},{cost:1300,set:{range:10,growthRangeWaveBonus:6}},{cost:3800,set:{range:14,growthRangeWaveBonus:8}}],
@@ -668,7 +674,8 @@ export function renderHtml() {
             "Farm Tower":"Economic tower that generates gold or reduces upgrade costs.",
             "Soul Harvester":"Scaling reaper that permanently gains damage from nearby kills.",
             "Ricochet Cannon":"Bouncing artillery that scales damage through rebounds and splits.",
-            "Growth Spire":"Wave-based support spire that permanently grows nearby towers."
+            "Growth Spire":"Wave-based support spire that permanently grows nearby towers.",
+            "Blood Hunter":"Piercing blood mage that scales with enemy count and splash damage."
           };
 
           const TOWER_CATEGORIES = [
@@ -678,7 +685,7 @@ export function renderHtml() {
             { label:"🛡 SUPPORT / BUFF", ids:["void","echo","heatsink","decaytotem","overwatch","rift","commander","farm","factory","growthspire"] },
             { label:"☠ DEBUFFS", ids:["gravity","wind","poison","emp","static","snare","spore","shocknet","nanoswarm","timespire","arctrap","gravcannon","plaguetower","pulsemine","magnet","bleed","corrosion","acid"] },
             { label:"💥 DPS (Single Target Focus)", ids:["laser","burst","kinetic","obsidian","ion","sentry","bastion","basic","gatling","sniper","railgun"] },
-            { label:"💣 AOE (Splash / Multi-Target Burst)", ids:["soulharvester","pulse","mine","shard","arcmortar","needle","beamsplit","flak","shardmortar","spikewall","shrapnel","shardfan","pulsebarrage","shockwavetotem","scatterlaser","bomb","ricochet"] },
+            { label:"💣 AOE (Splash / Multi-Target Burst)", ids:["soulharvester","bloodhunter","pulse","mine","shard","arcmortar","needle","beamsplit","flak","shardmortar","spikewall","shrapnel","shardfan","pulsebarrage","shockwavetotem","scatterlaser","bomb","ricochet"] },
           ];
 
           function getWaveCap() { return (getDifficulty().maxWave || 40); }
@@ -887,6 +894,12 @@ export function renderHtml() {
             sellBtn.textContent = "Sell Tower - " + sellValue + "g";
             sellBtn.onclick = () => { state.gold += sellValue; state.towers = state.towers.filter((t)=>t.id!==tower.id); state.selectedPlacedTowerId = null; updateHud(); buildTowerMenu(); renderUpgradePanel(); saveRun(); };
             upgradePathsEl.appendChild(sellBtn);
+            const targetModes=["First","Last","Strong","Weak","Random"];
+            const targetBtn=document.createElement("button");
+            targetBtn.className="u-btn";
+            targetBtn.textContent="Targeting: "+(tower.targetMode||"First");
+            targetBtn.onclick=()=>{ const i=targetModes.indexOf(tower.targetMode||"First"); tower.targetMode=targetModes[(i+1)%targetModes.length]; renderUpgradePanel(); };
+            upgradePathsEl.appendChild(targetBtn);
 
             for (const pathKey of ["A","B","C"]) {
               const tiers = defs[pathKey];
@@ -1039,7 +1052,7 @@ export function renderHtml() {
             }
             base.ultimateFusion = true;
             for (const t of trio) state.towers = state.towers.filter((x)=>x.id!==t.id);
-            const ult = { id:crypto.randomUUID(), baseId:baseId, baseName:base.name, x, y, stats:base, rangePx:base.range*RANGE_UNIT, cooldown:0, stunTicks:0, upgradePath:"U", upgradeTier:6, shotCount:0, invested: Math.round(trio.reduce((sum,t)=>sum+(t.invested||0),0)*1.5) };
+            const ult = { id:crypto.randomUUID(), baseId:baseId, baseName:base.name, x, y, stats:base, rangePx:base.range*RANGE_UNIT, cooldown:0, stunTicks:0, upgradePath:"U", upgradeTier:6, shotCount:0, invested: Math.round(trio.reduce((sum,t)=>sum+(t.invested||0),0)*1.5), targetMode:"First" };
             state.towers.push(ult);
             state.selectedPlacedTowerId = ult.id;
             updateHud();
@@ -1215,7 +1228,7 @@ export function renderHtml() {
           function computeBuffsForTower(tower) {
             const out = { dmg:0, spd:0, crit:0, range:0, immuneStun:false, trueDamage:false, lifesteal:0 };
             for (const src of state.towers) {
-              if (!src.stats.auraDamage && !src.stats.auraSpeed && !src.stats.auraCrit && !src.stats.supportAtkAura && !src.stats.fireAuraDamage && !src.stats.fireAuraSpeed && !src.stats.fireAuraRange) continue;
+              if (!src.stats.auraDamage && !src.stats.auraSpeed && !src.stats.auraCrit && !src.stats.supportAtkAura && !src.stats.auraRange && !src.stats.fireAuraDamage && !src.stats.fireAuraSpeed && !src.stats.fireAuraRange) continue;
               if (src === tower) continue;
               if (!src.stats.globalAuraHalf && distance(src,tower) > src.rangePx) continue;
               const auraScale = src.stats.globalAuraHalf ? 0.5 : 1;
@@ -1228,7 +1241,7 @@ export function renderHtml() {
               }
               out.dmg = Math.max(out.dmg, (src.stats.auraDamage || 0) * auraScale, (src.stats.supportDmgAura || 0) * auraScale, extraFireAuraDamage * auraScale);
               out.spd = Math.max(out.spd, (src.stats.auraSpeed || 0) * auraScale, (src.stats.supportAtkAura || 0) * auraScale, extraFireAuraSpeed * auraScale);
-              out.range = Math.max(out.range, extraFireAuraRange * auraScale);
+              out.range = Math.max(out.range, (src.stats.auraRange || 0) * auraScale, extraFireAuraRange * auraScale);
               out.crit = Math.max(out.crit, (src.stats.auraCrit || 0) * auraScale);
               if (src.stats.trueDamageWindow) {
                 const phase = Math.floor(performance.now() / 1000) % 10;
@@ -1241,7 +1254,7 @@ export function renderHtml() {
           }
 
           function getTowerRangePx(t){ const penalty = (isLavaMap() && state.heat >= 85) ? 0.8 : 1; const buffs = computeBuffsForTower(t); return t.rangePx * (1 + (buffs.range || 0)) * penalty; }
-          function findTargetForTower(t){ let target=null,fur=-1; const rangePx=getTowerRangePx(t); for(const e of state.enemies){ if(!isEnemyVisible(e)) continue; if(distance(t,e)<=rangePx && e.pathIndex>fur && !(e.phaseDuration && e.phaseTick>0) && !(e.mirrorCd && e.mirrorTick===0)){target=e;fur=e.pathIndex;} } return target; }
+          function findTargetForTower(t){ const rangePx=getTowerRangePx(t); const mode=t.targetMode||"First"; const candidates=state.enemies.filter((e)=>isEnemyVisible(e)&&distance(t,e)<=rangePx&&!(e.phaseDuration&&e.phaseTick>0)&&!(e.mirrorCd&&e.mirrorTick===0)); if(!candidates.length) return null; if(mode==="Random") return candidates[Math.floor(Math.random()*candidates.length)]; if(mode==="First") return candidates.sort((a,b)=>b.pathIndex-a.pathIndex)[0]; if(mode==="Last") return candidates.sort((a,b)=>a.pathIndex-b.pathIndex)[0]; if(mode==="Strong") return candidates.sort((a,b)=>b.hp-a.hp)[0]; if(mode==="Weak") return candidates.sort((a,b)=>a.hp-b.hp)[0]; return candidates[0]; }
           function pointToSegmentDistance(px,py,x1,y1,x2,y2){ const dx=x2-x1,dy=y2-y1,l2=dx*dx+dy*dy; if(l2===0)return Math.hypot(px-x1,py-y1); let t=((px-x1)*dx+(py-y1)*dy)/l2; t=Math.max(0,Math.min(1,t)); const qx=x1+t*dx,qy=y1+t*dy; return Math.hypot(px-qx,py-qy); }
 
           function enemiesInCone(origin, target, range, coneAngle) {
@@ -1258,7 +1271,7 @@ export function renderHtml() {
 
           function towerShoot(tower, target, buffs) {
             const s=tower.stats;
-            let dmg=s.damage*(1+buffs.dmg);
+            let dmg=(s.damage + (tower.surgeDamage || 0))*(1+buffs.dmg);
             const dotMult = 1 + (buffs.dmg || 0);
             if (NERF_IDS.has(s.id)) dmg *= NERF_DMG_MULT;
             if (BUFF_IDS.has(s.id)) dmg *= BUFF_DMG_MULT;
@@ -1433,6 +1446,8 @@ export function renderHtml() {
               tower.cooldown--; if(tower.cooldown>0) continue;
               const target=findTargetForTower(tower); if(!target && !tower.stats.summonFactoryTurret && !tower.stats.placeMine) continue;
               let atkSpeed = tower.stats.atkSpeed > 0 ? tower.stats.atkSpeed / (1 + buffs.spd) : 99999;
+              let surgeDamage = 0;
+              if (tower.stats.bloodSurgeDmgPer10 || tower.stats.bloodSurgeSpdPer10) { const packs=Math.floor(state.enemies.length/10); surgeDamage = packs * (tower.stats.bloodSurgeDmgPer10 || 0); atkSpeed = Math.max(0.03, atkSpeed - packs * (tower.stats.bloodSurgeSpdPer10 || 0)); }
               if (isLavaMap() && state.heat >= 30) atkSpeed *= 1.1;
               if (isLavaMap()) { const unstable = inAnyZone(tower.x, tower.y, getMap().unstableZones); if (unstable) tower.unstableTicks = (tower.unstableTicks||0)+1; else tower.unstableTicks=0; if ((tower.unstableTicks||0) > 1200 && !tower.unstableChecked) { tower.unstableChecked = true; if (Math.random() < 0.2) { state.towers = state.towers.filter((t)=>t.id!==tower.id); continue; } } }
               if (NERF_IDS.has(tower.stats.id)) atkSpeed *= 1.08;
@@ -1442,6 +1457,7 @@ export function renderHtml() {
               tower.tempFreezeTicks = 0;
               if (tower.stats.freezeEvery && tower.shotCount % tower.stats.freezeEvery === 0) tower.tempFreezeTicks = tower.stats.freezeOnHitTicks || 60;
               if (tower.stats.executeChance && target && target.hp <= target.maxHp * (tower.stats.executeHp || 0.4) && Math.random() < tower.stats.executeChance && target.type !== "tank") target.hp = 0;
+              tower.surgeDamage = surgeDamage || 0;
               towerShoot(tower,target||{x:tower.x,y:tower.y},buffs);
               if (tower.stats.doubleEvery && tower.shotCount % tower.stats.doubleEvery === 0 && target) towerShoot(tower,target,buffs);
             }
@@ -1531,6 +1547,7 @@ export function renderHtml() {
             else if(m.shape==="emp"){polygon(x,y,12,3,"#111",Math.PI/2);ctx.strokeStyle="#4cc9f0";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.stroke();}
             else if(m.shape==="shard"){polygon(x,y,12,3,"#4deeea",-Math.PI/2);}
             else if(m.shape==="void"){ctx.fillStyle="#000";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();ctx.fillStyle="#7b2cbf";ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();}
+            else if(m.shape==="bloodhunter"){ctx.fillStyle="#b00020";ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();polygon(x,y,7,3,"#111",-Math.PI/2);}
             else if(m.shape==="echo"){ctx.fillStyle="#7d8597";ctx.fillRect(x-14,y-6,28,12);ctx.beginPath();ctx.arc(x-10,y,4,0,Math.PI*2);ctx.arc(x+10,y,4,0,Math.PI*2);ctx.fill();}
             else if(m.shape==="arcmortar"){ctx.fillStyle="#495057";ctx.beginPath();ctx.arc(x,y+2,14,Math.PI,0);ctx.fill();}
             else if(m.shape==="cryomines"){ctx.fillStyle="#7bdff2";ctx.beginPath();ctx.arc(x,y,11,0,Math.PI*2);ctx.fill();}
@@ -1595,7 +1612,7 @@ export function renderHtml() {
             const stats = copyStats(model);
             if (NERF_IDS.has(stats.id)) stats.range = +(stats.range * NERF_RANGE_MULT).toFixed(2);
             if (BUFF_IDS.has(stats.id)) stats.range = +(stats.range + BUFF_RANGE_BONUS).toFixed(2);
-            state.towers.push({ id:crypto.randomUUID(), baseId:model.id, baseName:model.name, x, y, stats, rangePx:stats.range*RANGE_UNIT, cooldown:0, stunTicks:0, upgradePath:null, upgradeTier:0, shotCount:0, invested:model.cost });
+            state.towers.push({ id:crypto.randomUUID(), baseId:model.id, baseName:model.name, x, y, stats, rangePx:stats.range*RANGE_UNIT, cooldown:0, stunTicks:0, upgradePath:null, upgradeTier:0, shotCount:0, invested:model.cost, targetMode:"First" });
             updateHud(); buildTowerMenu(); renderUpgradePanel();
           });
 
