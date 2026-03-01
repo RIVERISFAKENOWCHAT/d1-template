@@ -1137,7 +1137,7 @@ export function renderHtml() {
             for (const t of state.towers) if (t.stats.killBounty) awardGold(t.stats.killBounty);
             for (const tower of state.towers) {
               if (tower.baseId !== "soulharvester") continue;
-              if (enemy.lastHitTowerId !== tower.id) continue;
+              if (distance(tower, enemy) > getTowerRangePx(tower)) continue;
               tower.soulKills = (tower.soulKills || 0) + 1;
               const gain = tower.stats.soulKillGain || 0.05;
               tower.stats.damage = (tower.stats.damage || 0) + gain;
