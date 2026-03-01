@@ -460,9 +460,9 @@ export function renderHtml() {
               C:[{cost:100,set:{atkSpeed:1.0}},{cost:250,set:{atkSpeed:0.8}},{cost:550,set:{atkSpeed:0.6}},{cost:1200,set:{atkSpeed:0.5,splitBeams:3,doubleEvery:3}},{cost:3600,set:{atkSpeed:0.3,splitBeams:5,pierceTargets:999}}],
             },
             growthspire: {
-              A:[{cost:120,set:{range:6,growthRangeWaveBonus:1}},{cost:300,set:{range:7,growthRangeWaveBonus:1.5}},{cost:600,set:{range:8,growthRangeWaveBonus:2}},{cost:1300,set:{range:10,growthRangeWaveBonus:3}},{cost:3800,set:{range:14,growthRangeWaveBonus:5,growthGlobalRangeWaveBonus:1}}],
-              B:[{cost:150,set:{growthDamageWaveBonus:0.5}},{cost:350,set:{growthDamageWaveBonus:1}},{cost:700,set:{growthDamageWaveBonus:2}},{cost:1400,set:{growthDamageWaveBonus:3}},{cost:4000,set:{growthDamageWaveBonus:5,growthGlobalDamage:true}}],
-              C:[{cost:120,set:{supportAtkAura:0.05}},{cost:300,set:{supportAtkAura:0.1}},{cost:650,set:{supportAtkAura:0.12,supportVuln:0.05}},{cost:1500,set:{supportAtkAura:0.2,supportVuln:0.1}},{cost:4200,set:{supportAtkAura:0.3,supportVuln:0.2,growthUpgradeDiscountWave:0.03}}],
+              A:[{cost:120,set:{range:6,growthRangeWaveBonus:1}},{cost:300,set:{range:7,growthRangeWaveBonus:2}},{cost:600,set:{range:8,growthRangeWaveBonus:4}},{cost:1300,set:{range:10,growthRangeWaveBonus:6}},{cost:3800,set:{range:14,growthRangeWaveBonus:8}}],
+              B:[{cost:150,set:{growthDamageWaveBonus:5}},{cost:350,set:{growthDamageWaveBonus:10}},{cost:700,set:{growthDamageWaveBonus:20}},{cost:1400,set:{growthDamageWaveBonus:30}},{cost:4000,set:{growthDamageWaveBonus:50}}],
+              C:[{cost:120,set:{growthAtkSpeedWaveBonus:0.2}},{cost:300,set:{growthAtkSpeedWaveBonus:0.4}},{cost:650,set:{growthAtkSpeedWaveBonus:0.7}},{cost:1500,set:{growthAtkSpeedWaveBonus:0.9}},{cost:4200,set:{growthAtkSpeedWaveBonus:2}}],
             },
             tsunami: {
               A:[{cost:260,set:{damage:9}},{cost:480,set:{damage:11,splashRadius:90}},{cost:900,set:{damage:14,splashRadius:105,knockback:12}},{cost:1700,set:{damage:30,splashRadius:130,pulseEvery:8,pulseAllInRange:true}}],
@@ -978,11 +978,15 @@ export function renderHtml() {
               const inAura = (tower) => tower.id !== spire.id && distance(tower, spire) <= (spire.rangePx || 0);
               for (const tower of state.towers) {
                 if (tower.id === spire.id) continue;
-                const target = (s.growthGlobalRangeWaveBonus || s.growthGlobalDamage) ? tower : (inAura(tower) ? tower : null);
+                const hasGlobal = !!(s.growthGlobalRangeWaveBonus || s.growthGlobalDamageWaveBonus || s.growthGlobalAtkSpeedWaveBonus);
+                const target = hasGlobal ? tower : (inAura(tower) ? tower : null);
                 if (!target) continue;
                 if (s.growthRangeWaveBonus) { target.stats.range = (target.stats.range || 0) + s.growthRangeWaveBonus; target.rangePx = (target.stats.range || 0) * RANGE_UNIT; }
                 if (s.growthGlobalRangeWaveBonus) { target.stats.range = (target.stats.range || 0) + s.growthGlobalRangeWaveBonus; target.rangePx = (target.stats.range || 0) * RANGE_UNIT; }
                 if (s.growthDamageWaveBonus) target.stats.damage = (target.stats.damage || 0) + s.growthDamageWaveBonus;
+                if (s.growthGlobalDamageWaveBonus) target.stats.damage = (target.stats.damage || 0) + s.growthGlobalDamageWaveBonus;
+                if (s.growthAtkSpeedWaveBonus) target.stats.atkSpeed = Math.max(0.03, (target.stats.atkSpeed || 1) - s.growthAtkSpeedWaveBonus);
+                if (s.growthGlobalAtkSpeedWaveBonus) target.stats.atkSpeed = Math.max(0.03, (target.stats.atkSpeed || 1) - s.growthGlobalAtkSpeedWaveBonus);
               }
               if (s.growthUpgradeDiscountWave) state.globalUpgradeDiscount = Math.min(0.5, (state.globalUpgradeDiscount || 0) + s.growthUpgradeDiscountWave);
             }
@@ -1028,6 +1032,11 @@ export function renderHtml() {
             base.splitBeams = Math.max(...trio.map((t)=>t.stats.splitBeams||0), 2);
             base.splashRadius = Math.max(...trio.map((t)=>t.stats.splashRadius||0), 55);
             base.name = (trio[0].baseName || "Tower") + " Ultimate";
+            if (baseId === "growthspire") {
+              base.growthGlobalDamageWaveBonus = 25;
+              base.growthGlobalAtkSpeedWaveBonus = 1.5;
+              base.growthGlobalRangeWaveBonus = 10;
+            }
             base.ultimateFusion = true;
             for (const t of trio) state.towers = state.towers.filter((x)=>x.id!==t.id);
             const ult = { id:crypto.randomUUID(), baseId:baseId, baseName:base.name, x, y, stats:base, rangePx:base.range*RANGE_UNIT, cooldown:0, stunTicks:0, upgradePath:"U", upgradeTier:6, shotCount:0, invested: Math.round(trio.reduce((sum,t)=>sum+(t.invested||0),0)*1.5) };
