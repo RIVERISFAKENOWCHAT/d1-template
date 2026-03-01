@@ -1111,6 +1111,7 @@ export function renderHtml() {
               else if (enemy.defense > 0 && !options.pierce) dmg = Math.max(0, dmg - enemy.defense);
             }
             enemy.hp -= dmg;
+            if (dmg > 0 && options.sourceTowerId) enemy.lastHitTowerId = options.sourceTowerId;
             if (options.shred && !enemy.noShred) enemy.defense = Math.max(0, enemy.defense - options.shred);
             if (options.stripDefense) enemy.defense = Math.max(0, enemy.defense - options.stripDefense);
             if (options.hitSlow) { enemy.slowTicks = Math.max(enemy.slowTicks, 60); enemy.slowAmount = Math.max(enemy.slowAmount, options.hitSlow); }
@@ -1136,7 +1137,7 @@ export function renderHtml() {
             for (const t of state.towers) if (t.stats.killBounty) awardGold(t.stats.killBounty);
             for (const tower of state.towers) {
               if (tower.baseId !== "soulharvester") continue;
-              if (distance(tower, enemy) > (tower.rangePx || 0)) continue;
+              if (enemy.lastHitTowerId !== tower.id) continue;
               tower.soulKills = (tower.soulKills || 0) + 1;
               const gain = tower.stats.soulKillGain || 0.05;
               tower.stats.damage = (tower.stats.damage || 0) + gain;
@@ -1199,7 +1200,7 @@ export function renderHtml() {
               let exploded = false;
               for (const enemy of state.enemies) {
                 if (distance(mine, enemy) <= mine.radius) {
-                  if (mine.damage > 0) applyDamage(enemy, mine.damage, { supportVuln: mine.vuln || 0 });
+                  if (mine.damage > 0) applyDamage(enemy, mine.damage, { supportVuln: mine.vuln || 0, sourceTowerId: mine.ownerTowerId || null });
                   if (mine.slow) { enemy.slowTicks = Math.max(enemy.slowTicks, 90); enemy.slowAmount = Math.max(enemy.slowAmount, mine.slow); }
                   if (mine.root) enemy.stunTicks = Math.max(enemy.stunTicks, mine.root);
                   if (mine.freeze) enemy.stunTicks = Math.max(enemy.stunTicks, mine.freeze);
@@ -1315,7 +1316,7 @@ export function renderHtml() {
                 if (!candidates.length) break;
                 const pick = candidates[Math.floor(Math.random() * candidates.length)];
                 const nearLava = isLavaMap() && isOnLava(pick.x, pick.y);
-                state.mines.push({ x: pick.x, y: pick.y, damage: s.mineDamage || s.damage || 0, radius: s.mineRadius || 32, slow: s.mineSlow || 0, root: s.mineRoot || 0, freeze: s.mineFreeze || 0, vuln: s.mineVuln || 0, splash: s.mineSplash || 0, ttl: nearLava ? 1 : 900 });
+                state.mines.push({ x: pick.x, y: pick.y, damage: s.mineDamage || s.damage || 0, radius: s.mineRadius || 32, slow: s.mineSlow || 0, root: s.mineRoot || 0, freeze: s.mineFreeze || 0, vuln: s.mineVuln || 0, splash: s.mineSplash || 0, ttl: nearLava ? 1 : 900, ownerTowerId: tower.id });
               }
               return;
             }
@@ -1338,14 +1339,14 @@ export function renderHtml() {
                 if (s.burn) { enemy.burnTicks = Math.max(enemy.burnTicks, s.burnDuration || 240); enemy.burnDps = Math.max(enemy.burnDps, (s.burnDps || 3) * dotMult); }
                 if (s.stripDefense) enemy.defense = Math.max(0, enemy.defense - s.stripDefense);
                 if (s.fireVuln) enemy.vulnMult = Math.max(enemy.vulnMult, s.fireVuln);
-                if (s.damage > 0) applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, hitStun:s.hitStun||0, supportVuln:s.supportVuln||0, stripDefense:s.stripDefense||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:(s.burnDps||3) * dotMult, acidDotDps:(s.acidDotDps||0) * dotMult });
+                if (s.damage > 0) applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, hitStun:s.hitStun||0, supportVuln:s.supportVuln||0, stripDefense:s.stripDefense||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:(s.burnDps||3) * dotMult, acidDotDps:(s.acidDotDps||0) * dotMult, sourceTowerId:tower.id });
               }
               return;
             }
 
             if (isLavaMap() && isOnLava(target.x, target.y) && ["frost","cryobeam","frostflare","frostnet","cryoturbine","frostwave","cryomines"].includes(s.id)) dmg *= 2;
             if (BEAM_TOWERS.has(s.id)) {
-              const options = { burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:(s.burnDps||3) * dotMult, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, ignoreDefense:!!s.ignoreDefense, antiArmorBonus:s.antiArmorBonus||0 };
+              const options = { burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:(s.burnDps||3) * dotMult, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, ignoreDefense:!!s.ignoreDefense, antiArmorBonus:s.antiArmorBonus||0, sourceTowerId:tower.id };
               applyDamage(target, dmg, options);
               let beams = s.splitBeams || 0;
               for (const enemy of state.enemies) {
@@ -1375,21 +1376,21 @@ export function renderHtml() {
                   enemy.slowTicks = Math.max(enemy.slowTicks, 120);
                   enemy.slowAmount = Math.max(enemy.slowAmount, slowAmount);
                   if (s.freezeOnMaxSlow && slowAmount >= 0.5) { enemy.stunTicks = Math.max(enemy.stunTicks, s.freezeOnMaxSlow); if (s.frozenVuln) enemy.vulnMult = Math.max(enemy.vulnMult, s.frozenVuln); }
-                  if (s.damage > 0) applyDamage(enemy, dmg, { hitSlow: s.cryoHitSlow ? slowAmount : 0 });
+                  if (s.damage > 0) applyDamage(enemy, dmg, { hitSlow: s.cryoHitSlow ? slowAmount : 0, sourceTowerId:tower.id });
                   if (s.permaSlowInRange) enemy.permaSlow = Math.max(enemy.permaSlow, s.permaSlowInRange);
                 }
               }
             }
 
             if (s.pulseAllInRange && tower.shotCount && s.pulseEvery && tower.shotCount % s.pulseEvery === 0) {
-              for (const enemy of state.enemies) if (distance(tower, enemy) <= tower.rangePx) applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, weakenDamage:s.weakenDamage||0 });
+              for (const enemy of state.enemies) if (distance(tower, enemy) <= tower.rangePx) applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, weakenDamage:s.weakenDamage||0, sourceTowerId:tower.id });
             }
 
             if (s.chain) {
               const impacted=[target];
-              applyDamage(target,dmg,{ hitSlow:s.hitSlow||0 });
+              applyDamage(target,dmg,{ hitSlow:s.hitSlow||0, sourceTowerId:tower.id });
               const cap = s.chainCount || 3;
-              for(const enemy of state.enemies){ if(impacted.length>=cap) break; if(enemy===target) continue; if(distance(enemy, impacted[impacted.length-1])<=110){ impacted.push(enemy); applyDamage(enemy,s.chainNoFalloff ? dmg : dmg/2,{ hitSlow:s.hitSlow||0 }); } }
+              for(const enemy of state.enemies){ if(impacted.length>=cap) break; if(enemy===target) continue; if(distance(enemy, impacted[impacted.length-1])<=110){ impacted.push(enemy); applyDamage(enemy,s.chainNoFalloff ? dmg : dmg/2,{ hitSlow:s.hitSlow||0, sourceTowerId:tower.id }); } }
               state.projectiles.push({x:tower.x,y:tower.y,target,mode:"bolt",ttl:8});
               if (s.lightningExplosion) explodeAt(target.x, target.y, 42, dmg * 0.35, false);
               return;
@@ -1414,7 +1415,7 @@ export function renderHtml() {
                 if (distance(tower, enemy) > getTowerRangePx(tower)) continue;
                 if (pointToSegmentDistance(enemy.x, enemy.y, tower.x, tower.y, target.x, target.y) <= 14) {
                   const scaledDamage = dmg * (1 + (s.perPierceBeamBonus || 0) * hits);
-                  const dealt = applyDamage(enemy, scaledDamage, { pierce:true, beam:true, armoredBonus:s.armoredBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0 });
+                  const dealt = applyDamage(enemy, scaledDamage, { pierce:true, beam:true, armoredBonus:s.armoredBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, sourceTowerId:tower.id });
                   if (enemy.reflect && dealt>0) tower.stunTicks = Math.max(tower.stunTicks, Math.round(dealt * enemy.reflect));
                   hits++;
                   if (hits >= (s.linePierceCount || 999)) break;
@@ -1431,14 +1432,14 @@ export function renderHtml() {
               const shots = s.coneShots || randomInt(s.coneShotMin || 1, s.coneShotMax || 1);
               for (let k=0; k<Math.min(shots, coneTargets.length); k++) {
                 const enemy = coneTargets[k];
-                const dealt = applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:(s.burnDps||3) * dotMult, armoredBonus:s.armoredBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, hitStun:s.hitStun||0, shred:s.shred||0 });
+                const dealt = applyDamage(enemy, dmg, { hitSlow:s.hitSlow||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:(s.burnDps||3) * dotMult, armoredBonus:s.armoredBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, hitStun:s.hitStun||0, shred:s.shred||0, sourceTowerId:tower.id });
                 if (s.chain && dealt > 0) {
                   const cap = s.chainCount || 2;
                   let prev = enemy;
                   for (let c=0;c<cap;c++) {
                     const next = state.enemies.find((e)=>e!==prev && distance(e,prev)<=110);
                     if (!next) break;
-                    applyDamage(next, dmg * 0.7, { hitSlow:s.hitSlow||0 });
+                    applyDamage(next, dmg * 0.7, { hitSlow:s.hitSlow||0, sourceTowerId:tower.id });
                     prev = next;
                   }
                 }
@@ -1447,7 +1448,7 @@ export function renderHtml() {
               return;
             }
 
-            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:{ pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:(s.burnDps||3) * dotMult, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:(s.acidDotDps||0) * dotMult, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:buffs.lifesteal||0, weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, lifesteal:s.lifesteal||0, knockback:s.knockback||0, fireVuln:s.fireVuln||0, stripDefense:s.stripDefense||0 }, pierceTargets:s.pierceTargets||0, doubleShockwave:!!s.doubleShockwave, perPierceProjectileBonus:s.perPierceProjectileBonus||0, splitBeams:s.splitBeams||0, burstCount:s.burstCount||0, echoNearby:!!s.echoNearby, echoPower:s.echoPower||0.5, echoCount:s.echoCount||1 });
+            state.projectiles.push({ x:tower.x, y:tower.y, target, speed:6, damage:dmg, color:s.projectileColor||"#ffffff", splashRadius:s.splashRadius||0, clusterCount:s.clusterCount||0, options:{ pierce:!!s.pierce, armoredBonus:s.armoredBonus||0, burn:!!s.burn, burnDuration:s.burnDuration||240, burnDps:(s.burnDps||3) * dotMult, burnExplode:s.burnExplode||0, shred:s.shred||0, hitSlow:s.hitSlow||0, supportVuln:s.supportVuln||0, acidDotDps:(s.acidDotDps||0) * dotMult, hitStun:s.hitStun||0, lowHpBonus:s.lowHpBonus||0, ignoreDefense:!!s.ignoreDefense || buffs.trueDamage, antiArmorBonus:s.antiArmorBonus||0, lifesteal:buffs.lifesteal||0, weakenDamage:s.weakenDamage||0, spreadVuln:s.spreadVuln||0, splashAppliesAcid:!!s.splashAppliesAcid, chainStun:!!s.chainStun, igniteOnExplode:!!s.igniteOnExplode, acidSpreadOnDeath:!!s.acidSpreadOnDeath, freezeOnHitTicks:tower.tempFreezeTicks||0, lifesteal:s.lifesteal||0, knockback:s.knockback||0, fireVuln:s.fireVuln||0, stripDefense:s.stripDefense||0, sourceTowerId:tower.id }, pierceTargets:s.pierceTargets||0, doubleShockwave:!!s.doubleShockwave, perPierceProjectileBonus:s.perPierceProjectileBonus||0, splitBeams:s.splitBeams||0, burstCount:s.burstCount||0, echoNearby:!!s.echoNearby, echoPower:s.echoPower||0.5, echoCount:s.echoCount||1 });
           }
 
           function updateTowers() {
